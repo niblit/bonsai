@@ -5,6 +5,7 @@ pub enum Team {
 }
 
 impl Team {
+    #[must_use]
     pub fn opposite(&self) -> Self {
         match self {
             Self::White => Self::Black,
