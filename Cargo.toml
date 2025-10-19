@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "bonsai-chess",
+    "bonsai-engine",
+    "bonsai-cli",
+    "bonsai-gui"
+]
