@@ -1,11 +1,10 @@
 use crate::{
-    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE, coordinates::Coordinates, kind::Kind,
-    located_piece::LocatedPiece, piece::Piece, team::Team,
+    coordinates::Coordinates, kind::Kind, located_piece::LocatedPiece, piece::Piece, team::Team, BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE
 };
 
 pub type GridSquare = Option<Piece>;
 
-pub type Grid = [[GridSquare; BOARD_COLUMNS]; BOARD_COLUMNS];
+pub type Grid = [[GridSquare; BOARD_COLUMNS]; BOARD_ROWS];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct BoardGrid {
@@ -55,8 +54,8 @@ impl BoardGrid {
     }
 
     #[must_use]
-    pub fn grid(&self) -> Grid {
-        self.grid
+    pub fn grid(&self) -> &Grid {
+        &self.grid
     }
 
     pub fn set(&mut self, piece: Piece, coordinates: Coordinates) {
