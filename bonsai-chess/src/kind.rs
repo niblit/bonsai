@@ -5,5 +5,5 @@ pub enum Kind {
     Rook,
     Bishop,
     Knight,
-    Pawn
+    Pawn,
 }
