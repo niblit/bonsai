@@ -31,10 +31,7 @@ impl Coordinates {
             return None;
         }
 
-        Coordinates::new(
-            self.row - 1,
-            self.column
-        )
+        Coordinates::new(self.row - 1, self.column)
     }
 
     #[must_use]
@@ -42,10 +39,7 @@ impl Coordinates {
         if self.row >= (BOARD_ROWS - 1) {
             return None;
         }
-        Coordinates::new(
-            self.row + 1,
-            self.column
-        )
+        Coordinates::new(self.row + 1, self.column)
     }
 
     #[must_use]
@@ -53,10 +47,7 @@ impl Coordinates {
         if self.column == 0 {
             return None;
         }
-        Coordinates::new(
-            self.row,
-            self.column - 1
-        )
+        Coordinates::new(self.row, self.column - 1)
     }
 
     #[must_use]
@@ -64,9 +55,6 @@ impl Coordinates {
         if self.column >= (BOARD_COLUMNS - 1) {
             return None;
         }
-        Coordinates::new(
-            self.row,
-            self.column + 1
-        )
+        Coordinates::new(self.row, self.column + 1)
     }
 }

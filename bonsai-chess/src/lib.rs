@@ -1,8 +1,9 @@
 mod coordinates;
+mod grid;
 mod kind;
+mod located_piece;
 mod piece;
 mod team;
-mod grid;
 
 pub const BOARD_ROWS: usize = 8;
 pub const BOARD_COLUMNS: usize = 8;
