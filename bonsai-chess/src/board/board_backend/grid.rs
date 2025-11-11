@@ -1,10 +1,8 @@
 use crate::{
-    coordinates::Coordinates, kind::Kind, located_piece::LocatedPiece, piece::Piece, team::Team, BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE
+    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE, board::square::Square, coordinates::Coordinates, kind::Kind, located_piece::LocatedPiece, piece::Piece, team::Team
 };
 
-pub type GridSquare = Option<Piece>;
-
-pub type Grid = [[GridSquare; BOARD_COLUMNS]; BOARD_ROWS];
+pub type Grid = [[Square; BOARD_COLUMNS]; BOARD_ROWS];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct BoardGrid {
@@ -67,7 +65,7 @@ impl BoardGrid {
     }
 
     #[must_use]
-    pub fn get(&self, coordinates: Coordinates) -> GridSquare {
+    pub fn get(&self, coordinates: Coordinates) -> Square {
         self.grid[coordinates.row()][coordinates.column()]
     }
 

@@ -1,9 +1,12 @@
 mod coordinates;
-mod grid;
 mod kind;
 mod located_piece;
 mod piece;
 mod team;
+mod board;
+mod castling_rights;
+mod ply;
+mod special_move;
 
 pub const BOARD_ROWS: usize = 8;
 pub const BOARD_COLUMNS: usize = 8;
