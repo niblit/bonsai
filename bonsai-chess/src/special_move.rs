@@ -1,8 +1,8 @@
-use crate::{coordinates::Coordinates, piece::Piece};
+use crate::{coordinates::Coordinates, kind::Kind};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SpecialMove {
-    EnPassant(Coordinates),
+    EnPassant(Coordinates), //The coordinates of the pawn that got captured
     Castle,
-    Promotion(Piece)
+    Promotion(Kind) // The piece kind the pawn has promoted into
 }

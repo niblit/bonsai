@@ -86,14 +86,13 @@ impl BoardGrid {
         for row in BOARD_ROWS_RANGE {
             for column in BOARD_COLUMNS_RANGE {
                 if let Some(current) = self.grid[row][column]
-                    && filter(current)
-                {
-                    let located_piece = LocatedPiece {
-                        piece: current,
-                        position: Coordinates::new(row, column).unwrap(),
-                    };
-                    filtered_pieces.push(located_piece);
-                }
+                    && filter(current) {
+                        let location = Coordinates::new(row, column).expect("Board iteration produced invalid coordinates, either BOARD_ROWS_RANGE or BOARD_COLUMNS_RANGE is not correctly defined");
+
+                        let located_piece = LocatedPiece::new(current, location);
+                        
+                        filtered_pieces.push(located_piece);
+                    }
             }
         }
 
