@@ -38,15 +38,15 @@ impl CastlingRights {
         self.white_king_side
     }
 
-    pub fn white_queen_side(&mut self) -> bool {
+    pub fn white_queen_side(&self) -> bool {
         self.white_queen_side
     }
 
-    pub fn black_king_side(&mut self) -> bool {
+    pub fn black_king_side(&self) -> bool {
         self.black_king_side
     }
 
-    pub fn black_queen_side(&mut self) -> bool {
+    pub fn black_queen_side(&self) -> bool {
         self.black_queen_side
     }
 

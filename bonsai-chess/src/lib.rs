@@ -7,6 +7,7 @@ mod board;
 mod castling_rights;
 mod ply;
 mod special_move;
+mod outcome;
 
 pub const BOARD_ROWS: usize = 8;
 pub const BOARD_COLUMNS: usize = 8;
