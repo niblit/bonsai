@@ -1,3 +1,5 @@
 mod board_backend;
-pub mod square;
 mod board;
+
+pub use board_backend::BoardBackend;
+pub mod square;
