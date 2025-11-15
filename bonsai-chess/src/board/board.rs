@@ -1,10 +1,17 @@
 use std::collections::HashMap;
 
-use crate::{board::board_backend::BoardGrid, castling_rights::CastlingRights, coordinates::Coordinates, outcome::Outcome, ply::Ply, team::Team};
+use crate::{
+    board::{BoardBackend, board_backend::BoardGrid},
+    castling_rights::CastlingRights,
+    coordinates::Coordinates,
+    outcome::Outcome,
+    ply::Ply,
+    team::Team,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Board {
-    board_backend: BoardGrid,
+pub struct Board<T: BoardBackend> {
+    board_backend: T,
     turn: Team,
     castling_rights: CastlingRights,
     en_passant_target: Option<Coordinates>,
@@ -16,10 +23,10 @@ pub struct Board {
 
     repetition_table: HashMap<BoardGrid, usize>,
 
-    outcome: Outcome
+    outcome: Outcome,
 }
 
-impl Board {
+impl Board<BoardGrid> {
     pub fn from_starting_position() -> Self {
         todo!()
     }
@@ -32,9 +39,7 @@ impl Board {
         todo!()
     }
 
-    pub fn make_move(&mut self) {
-
-    }
+    pub fn make_move(&mut self) {}
 
     pub fn undo_last_move(&mut self) {
         todo!()
@@ -43,7 +48,4 @@ impl Board {
     pub fn redo_move(&mut self) {
         todo!()
     }
-
-
-
 }

@@ -1,14 +1,14 @@
+mod board;
+mod castling_rights;
 mod coordinates;
 mod kind;
 mod located_piece;
+mod move_generator;
+mod outcome;
 mod piece;
-mod team;
-mod board;
-mod castling_rights;
 mod ply;
 mod special_move;
-mod outcome;
-mod move_generator;
+mod team;
 
 pub const BOARD_ROWS: usize = 8;
 pub const BOARD_COLUMNS: usize = 8;

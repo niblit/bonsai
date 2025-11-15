@@ -12,7 +12,7 @@ impl CastlingRights {
             white_king_side: true,
             white_queen_side: true,
             black_king_side: true,
-            black_queen_side: true
+            black_queen_side: true,
         }
     }
 
@@ -21,16 +21,21 @@ impl CastlingRights {
             white_king_side: false,
             white_queen_side: false,
             black_king_side: false,
-            black_queen_side: false
+            black_queen_side: false,
         }
     }
 
-    pub fn from(white_king_side: bool, white_queen_side: bool, black_king_side: bool, black_queen_side: bool) -> Self {
+    pub fn from(
+        white_king_side: bool,
+        white_queen_side: bool,
+        black_king_side: bool,
+        black_queen_side: bool,
+    ) -> Self {
         Self {
             white_king_side,
             white_queen_side,
             black_king_side,
-            black_queen_side
+            black_queen_side,
         }
     }
 

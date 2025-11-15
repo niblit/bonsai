@@ -1,5 +1,5 @@
 use crate::{
-    board::square::Square, coordinates::Coordinates, piece::Piece, special_move::SpecialMove
+    board::square::Square, coordinates::Coordinates, piece::Piece, special_move::SpecialMove,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -15,7 +15,13 @@ pub struct Ply {
 
 impl Ply {
     #[must_use]
-    pub fn new(starting_square: Coordinates, ending_square: Coordinates, piece_moved: Piece, piece_captured: Square, special_move: Option<SpecialMove>) -> Self {
+    pub fn new(
+        starting_square: Coordinates,
+        ending_square: Coordinates,
+        piece_moved: Piece,
+        piece_captured: Square,
+        special_move: Option<SpecialMove>,
+    ) -> Self {
         Self {
             starting_square,
             ending_square,

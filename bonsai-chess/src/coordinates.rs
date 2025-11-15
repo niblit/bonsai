@@ -1,4 +1,4 @@
-use crate::{BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE};
+use crate::{BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Coordinates {
@@ -8,12 +8,21 @@ pub struct Coordinates {
 
 impl Coordinates {
     #[must_use]
-    pub fn new(row: usize, column: usize) -> Option<Self> {
-    if BOARD_ROWS_RANGE.contains(&row) && BOARD_COLUMNS_RANGE.contains(&column) {
-        Some(Self { row, column })
-    } else {
-        None
-    }
+    pub fn new<Integer>(row: Integer, column: Integer) -> Option<Self>
+    where
+        Integer: TryInto<usize>,
+    {
+        let row_usize = row.try_into().ok()?;
+        let column_usize = column.try_into().ok()?;
+
+        if BOARD_ROWS_RANGE.contains(&row_usize) && BOARD_COLUMNS_RANGE.contains(&column_usize) {
+            Some(Self {
+                row: row_usize,
+                column: column_usize,
+            })
+        } else {
+            None
+        }
     }
 
     #[must_use]
@@ -69,11 +78,12 @@ impl Coordinates {
     pub fn diagonal_down_left(&self) -> Option<Coordinates> {
         self.down()?.left()
     }
-
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::{BOARD_COLUMNS, BOARD_ROWS};
+
     use super::*;
 
     #[test]
@@ -88,14 +98,23 @@ mod tests {
 
     #[test]
     fn test_new_invalid() {
-        assert!(
-            Coordinates::new(BOARD_ROWS, BOARD_COLUMNS).is_none()
-        );
-        assert!(
-            Coordinates::new(BOARD_ROWS, 0).is_none()
-        );
-        assert!(
-            Coordinates::new(0, BOARD_COLUMNS).is_none()
-        );
+        assert!(Coordinates::new(BOARD_ROWS, BOARD_COLUMNS).is_none());
+        assert!(Coordinates::new(BOARD_ROWS, 0).is_none());
+        assert!(Coordinates::new(0, BOARD_COLUMNS).is_none());
+    }
+
+    #[test]
+    fn test_mixed_integer_types() {
+        // usize (standard)
+        assert!(Coordinates::new(0usize, 0usize).is_some());
+
+        // i32
+        assert!(Coordinates::new(0i32, 0i32).is_some());
+
+        // u8
+        assert!(Coordinates::new(0u8, 108).is_some());
+
+        // i8 (negative check)
+        assert!(Coordinates::new(-1i8, 0i8).is_none());
     }
 }

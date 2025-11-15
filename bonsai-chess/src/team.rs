@@ -18,12 +18,12 @@ impl Team {
 mod tests {
     use crate::team::Team;
 
-     #[test]
-     fn double_opposite() {
+    #[test]
+    fn double_opposite() {
         let t = Team::White;
         assert_eq!(t, t.opposite().opposite());
 
         let t = Team::Black;
         assert_eq!(t, t.opposite().opposite());
-     }
+    }
 }

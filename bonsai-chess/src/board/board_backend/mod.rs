@@ -1,11 +1,15 @@
 mod grid;
 pub use grid::BoardGrid;
 
-use crate::{board::square::Square, coordinates::Coordinates, located_piece::LocatedPiece, piece::Piece};
+use crate::{
+    board::square::Square, coordinates::Coordinates, located_piece::LocatedPiece, piece::Piece,
+};
 
 pub trait BoardBackend {
     #[must_use]
-    fn from_starting_position() -> Self where Self: std::marker::Sized;
+    fn from_starting_position() -> Self
+    where
+        Self: std::marker::Sized;
 
     fn set(&mut self, piece: Piece, coordinates: Coordinates);
 
