@@ -63,7 +63,7 @@ pub enum DrawReason {
     /// See FIDE Articles 7.4.b and 12.3.b.
     Forfeit,
 
-    // The game is a stalemate (no legal moves, king not in check).
+    /// The game is a stalemate (no legal moves, king not in check).
     Stalemate,
 
     /// The game has reached a "dead position" where checkmate is impossible

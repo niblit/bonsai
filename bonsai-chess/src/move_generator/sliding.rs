@@ -4,7 +4,7 @@ pub fn slide(
     start: LocatedPiece,
     distance: usize,
     directions: &[(isize, isize)],
-    backend: impl BoardBackend,
+    backend: &impl BoardBackend,
 ) -> Vec<Ply> {
     let mut moves = Vec::new();
 
@@ -24,11 +24,13 @@ pub fn slide(
                         if captured_piece.team() != start.piece().team() {
                             moves.push(potential_move);
                         }
+                        // A piece blocks further movement
                         break 'distance_loop;
                     }
                 };
             }
             else {
+                // Out of bounds
                 break 'distance_loop;
             }
         }

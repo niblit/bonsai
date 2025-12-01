@@ -5,18 +5,18 @@ mod pawn;
 mod queen;
 mod rook;
 mod sliding;
+mod directions;
 
 use crate::{
     board::BoardBackend,
     kind::Kind,
-    located_piece::{self, LocatedPiece},
-    piece::Piece,
+    located_piece::LocatedPiece,
     ply::Ply,
 };
 
 pub fn generate_pseudo_legal_moves(
     what_to_move: LocatedPiece,
-    backend: impl BoardBackend,
+    backend: &impl BoardBackend,
 ) -> Vec<Ply> {
     assert_eq!(
         backend.get(what_to_move.position()),

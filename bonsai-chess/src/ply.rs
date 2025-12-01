@@ -15,11 +15,13 @@ pub struct Ply {
 
 impl Ply {
     #[must_use]
-    pub fn new(
+    pub const fn new(
         starting_square: Coordinates,
         ending_square: Coordinates,
+
         piece_moved: Piece,
         piece_captured: Square,
+        
         special_move: Option<SpecialMove>,
     ) -> Self {
         Self {
@@ -32,27 +34,27 @@ impl Ply {
     }
 
     #[must_use]
-    pub fn starting_square(&self) -> Coordinates {
+    pub const fn starting_square(&self) -> Coordinates {
         self.starting_square
     }
 
     #[must_use]
-    pub fn ending_square(&self) -> Coordinates {
+    pub const fn ending_square(&self) -> Coordinates {
         self.ending_square
     }
 
     #[must_use]
-    pub fn piece_moved(&self) -> Piece {
+    pub const fn piece_moved(&self) -> Piece {
         self.piece_moved
     }
 
     #[must_use]
-    pub fn piece_captured(&self) -> Square {
+    pub const fn piece_captured(&self) -> Square {
         self.piece_captured
     }
 
     #[must_use]
-    pub fn special_move(&self) -> Option<SpecialMove> {
+    pub const fn special_move(&self) -> Option<SpecialMove> {
         self.special_move
     }
 }

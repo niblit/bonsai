@@ -1,4 +1,5 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct CastlingRights {
     white_king_side: bool,
     white_queen_side: bool,
@@ -7,7 +8,7 @@ pub struct CastlingRights {
 }
 
 impl CastlingRights {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             white_king_side: true,
             white_queen_side: true,
@@ -16,7 +17,7 @@ impl CastlingRights {
         }
     }
 
-    pub fn no_rights() -> Self {
+    pub const fn no_rights() -> Self {
         Self {
             white_king_side: false,
             white_queen_side: false,
@@ -25,7 +26,8 @@ impl CastlingRights {
         }
     }
 
-    pub fn from(
+    #[allow(clippy::fn_params_excessive_bools)]
+    pub const fn from(
         white_king_side: bool,
         white_queen_side: bool,
         black_king_side: bool,
@@ -39,51 +41,51 @@ impl CastlingRights {
         }
     }
 
-    pub fn white_king_side(&self) -> bool {
+    pub const fn white_king_side(&self) -> bool {
         self.white_king_side
     }
 
-    pub fn white_queen_side(&self) -> bool {
+    pub const fn white_queen_side(&self) -> bool {
         self.white_queen_side
     }
 
-    pub fn black_king_side(&self) -> bool {
+    pub const fn black_king_side(&self) -> bool {
         self.black_king_side
     }
 
-    pub fn black_queen_side(&self) -> bool {
+    pub const fn black_queen_side(&self) -> bool {
         self.black_queen_side
     }
 
-    pub fn enable_white_king_side(&mut self) {
+    pub const fn enable_white_king_side(&mut self) {
         self.white_king_side = true;
     }
 
-    pub fn enable_white_queen_side(&mut self) {
+    pub const fn enable_white_queen_side(&mut self) {
         self.white_queen_side = true;
     }
 
-    pub fn enable_black_king_side(&mut self) {
+    pub const fn enable_black_king_side(&mut self) {
         self.black_king_side = true;
     }
 
-    pub fn enable_black_queen_side(&mut self) {
+    pub const fn enable_black_queen_side(&mut self) {
         self.black_queen_side = true;
     }
 
-    pub fn disable_white_king_side(&mut self) {
+    pub const fn disable_white_king_side(&mut self) {
         self.white_king_side = false;
     }
 
-    pub fn disable_white_queen_side(&mut self) {
+    pub const fn disable_white_queen_side(&mut self) {
         self.white_queen_side = false;
     }
 
-    pub fn disable_black_king_side(&mut self) {
+    pub const fn disable_black_king_side(&mut self) {
         self.black_king_side = false;
     }
 
-    pub fn disable_black_queen_side(&mut self) {
+    pub const fn disable_black_queen_side(&mut self) {
         self.black_queen_side = false;
     }
 }

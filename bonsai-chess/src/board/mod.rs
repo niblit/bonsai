@@ -1,4 +1,4 @@
-mod board;
+mod board_frontend;
 mod board_backend;
 
 pub use board_backend::BoardBackend;
