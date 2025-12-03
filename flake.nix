@@ -1,9 +1,13 @@
 {
-  description = "Bonsai Chess Development Environment";
+  description = "Rust development environment";
 
   inputs = {
+    # Official NixOS package source
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # Community overlay for latest Rust toolchains
     rust-overlay.url = "github:oxalica/rust-overlay";
+
   };
 
   outputs = { self, nixpkgs, rust-overlay, ... }:
@@ -24,32 +28,8 @@
           
           # Build Tools
           pkg-config
-          gcc # Provides the linker (cc)
-
-          # Common Runtime Dependencies (Wayland, X11, Audio, Vulkan)
-          udev
-          alsa-lib
-          vulkan-loader
-          xorg.libX11
-          xorg.libXcursor
-          xorg.libXi
-          xorg.libXrandr
-          libxkbcommon
-          wayland
+          clang
         ];
-
-        # Set LD_LIBRARY_PATH so libraries are found during compilation/runtime
-        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath (with pkgs; [
-          udev
-          alsa-lib
-          vulkan-loader
-          xorg.libX11
-          xorg.libXcursor
-          xorg.libXi
-          xorg.libXrandr
-          libxkbcommon
-          wayland
-        ]);
       };
     };
 }
