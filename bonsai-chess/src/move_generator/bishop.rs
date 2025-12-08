@@ -1,5 +1,5 @@
 use crate::{
-    board::BoardBackend,
+    board::BoardGrid,
     located_piece::LocatedPiece,
     move_generator::{
         directions::{
@@ -10,7 +10,7 @@ use crate::{
     ply::Ply,
 };
 
-pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &impl BoardBackend) -> Vec<Ply> {
+pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardGrid) -> Vec<Ply> {
     let directions = [
         DIAGONALLY_UP_LEFT,
         DIAGONALLY_UP_RIGHT,

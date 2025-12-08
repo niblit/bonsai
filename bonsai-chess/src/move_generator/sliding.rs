@@ -1,10 +1,10 @@
-use crate::{board::BoardBackend, coordinates::Coordinates, located_piece::LocatedPiece, ply::Ply};
+use crate::{board::BoardGrid, coordinates::Coordinates, located_piece::LocatedPiece, ply::Ply};
 
 pub fn slide(
     start: LocatedPiece,
     distance: usize,
     directions: &[(isize, isize)],
-    backend: &impl BoardBackend,
+    backend: &BoardGrid,
 ) -> Vec<Ply> {
     let mut moves = Vec::new();
 

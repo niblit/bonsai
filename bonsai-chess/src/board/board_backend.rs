@@ -1,6 +1,6 @@
 use crate::{
     BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE,
-    board::{BoardBackend, square::Square},
+    board::square::Square,
     coordinates::Coordinates,
     kind::Kind,
     located_piece::LocatedPiece,
@@ -15,8 +15,9 @@ pub struct BoardGrid {
     grid: Grid,
 }
 
-impl BoardBackend for BoardGrid {
-    fn from_starting_position() -> Self
+impl BoardGrid {
+    #[must_use] 
+    pub const fn from_starting_position() -> Self
     where
         Self: std::marker::Sized,
     {
@@ -54,28 +55,29 @@ impl BoardBackend for BoardGrid {
         }
     }
 
-    fn set(&mut self, piece: Piece, coordinates: Coordinates) {
+    pub const fn set(&mut self, piece: Piece, coordinates: Coordinates) {
         self.grid[coordinates.row()][coordinates.column()] = Some(piece);
     }
 
-    fn unset(&mut self, coordinates: Coordinates) {
+    pub const fn unset(&mut self, coordinates: Coordinates) {
         self.grid[coordinates.row()][coordinates.column()] = None;
     }
 
-    fn get(&self, coordinates: Coordinates) -> Square {
+    #[must_use]
+    pub const fn get(&self, coordinates: Coordinates) -> Square {
         self.grid[coordinates.row()][coordinates.column()]
     }
 
-    fn get_white_pieces(&self) -> Vec<LocatedPiece> {
+    #[must_use]
+    pub fn get_white_pieces(&self) -> Vec<LocatedPiece> {
         self.filter_pieces(|p: Piece| p.team() == Team::White)
     }
 
-    fn get_black_pieces(&self) -> Vec<LocatedPiece> {
+    #[must_use]
+    pub fn get_black_pieces(&self) -> Vec<LocatedPiece> {
         self.filter_pieces(|p: Piece| p.team() == Team::Black)
     }
-}
 
-impl BoardGrid {
     #[must_use]
     pub const fn new(grid: Grid) -> Self {
         Self { grid }
