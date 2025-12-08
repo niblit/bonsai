@@ -40,13 +40,13 @@ pub enum WinReason {
     /// * The opponent arrives late (Article 6.5).
     /// * The opponent completes a third illegal move (Article 7.4.b).
     /// * The opponent's mobile phone or electronic device produces a sound
-    ///     (Article 12.3.b).
+    ///   (Article 12.3.b).
     /// * The opponent persistently refuses to comply with the laws
-    ///     (Article 12.8).
+    ///   (Article 12.8).
     /// * The opponent has an illegal, ambiguous, or unverifiable sealed
-    ///     move in an adjourned game (Article 8).
+    ///   move in an adjourned game (Article 8).
     /// * The opponent arrives more than one hour late for the resumption
-    ///     of an adjourned game (Article 10).
+    ///   of an adjourned game (Article 10).
     Forfeit,
 }
 

@@ -77,12 +77,12 @@ impl BoardBackend for BoardGrid {
 
 impl BoardGrid {
     #[must_use]
-    pub fn new(grid: Grid) -> Self {
+    pub const fn new(grid: Grid) -> Self {
         Self { grid }
     }
 
     #[must_use]
-    pub fn grid(&self) -> &Grid {
+    pub const fn grid(&self) -> &Grid {
         &self.grid
     }
 

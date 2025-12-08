@@ -38,7 +38,7 @@ impl Coordinates {
     #[must_use]
     pub fn up(&self) -> Option<Self> {
         let new_row = self.row.checked_sub(1)?;
-        Coordinates::new(new_row, self.column)
+        Self::new(new_row, self.column)
     }
 
     #[must_use]

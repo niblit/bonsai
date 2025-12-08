@@ -41,19 +41,19 @@ impl CastlingRights {
         }
     }
 
-    pub const fn white_king_side(&self) -> bool {
+    pub const fn white_king_side(self) -> bool {
         self.white_king_side
     }
 
-    pub const fn white_queen_side(&self) -> bool {
+    pub const fn white_queen_side(self) -> bool {
         self.white_queen_side
     }
 
-    pub const fn black_king_side(&self) -> bool {
+    pub const fn black_king_side(self) -> bool {
         self.black_king_side
     }
 
-    pub const fn black_queen_side(&self) -> bool {
+    pub const fn black_queen_side(self) -> bool {
         self.black_queen_side
     }
 

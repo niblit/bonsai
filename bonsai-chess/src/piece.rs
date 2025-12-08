@@ -9,7 +9,7 @@ pub struct Piece {
 impl Piece {
     #[must_use]
     pub const fn new(team: Team, kind: Kind) -> Self {
-        Self { team, kind }
+        Self { kind, team }
     }
 
     #[must_use]

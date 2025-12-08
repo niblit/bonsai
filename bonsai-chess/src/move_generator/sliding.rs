@@ -27,7 +27,7 @@ pub fn slide(
                         // A piece blocks further movement
                         break 'distance_loop;
                     }
-                };
+                }
             }
             else {
                 // Out of bounds

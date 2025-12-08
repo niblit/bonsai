@@ -8,6 +8,8 @@ description = "crate that keeps track of the entire chess game"
 readme = "./README.md"
 repository = "https://github.com/niblit/bonsai"
 license = "GPL-3.0-or-later"
+keywords = ["chess"]
+categories = ["chess"]
 
 [dependencies]
 
@@ -19,4 +21,3 @@ unsafe_code = "forbid"
 pedantic = "warn"
 nursery = "warn"
 cargo = "warn"
-dead_code = "allow"
