@@ -8,6 +8,7 @@ mod outcome;
 mod piece;
 mod ply;
 mod special_move;
+mod square;
 mod team;
 
 pub const BOARD_ROWS: usize = 8;

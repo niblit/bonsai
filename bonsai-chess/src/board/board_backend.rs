@@ -1,6 +1,6 @@
 use crate::{
-    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE, board::square::Square,
-    coordinates::Coordinates, kind::Kind, located_piece::LocatedPiece, piece::Piece, team::Team,
+    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE, coordinates::Coordinates,
+    kind::Kind, located_piece::LocatedPiece, piece::Piece, square::Square, team::Team,
 };
 
 pub type Grid = [[Square; BOARD_COLUMNS]; BOARD_ROWS];
