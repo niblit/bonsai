@@ -1,13 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
-    board::board_backend::BoardGrid,
-    castling_rights::CastlingRights,
-    coordinates::Coordinates,
-    move_generator,
-    outcome::Outcome,
-    ply::Ply,
-    team::Team,
+    board::board_backend::BoardGrid, castling_rights::CastlingRights, coordinates::Coordinates,
+    move_generator, outcome::Outcome, ply::Ply, team::Team,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

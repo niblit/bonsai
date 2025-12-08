@@ -1,11 +1,6 @@
 use crate::{
-    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE,
-    board::square::Square,
-    coordinates::Coordinates,
-    kind::Kind,
-    located_piece::LocatedPiece,
-    piece::Piece,
-    team::Team,
+    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE, board::square::Square,
+    coordinates::Coordinates, kind::Kind, located_piece::LocatedPiece, piece::Piece, team::Team,
 };
 
 pub type Grid = [[Square; BOARD_COLUMNS]; BOARD_ROWS];
@@ -16,7 +11,7 @@ pub struct BoardGrid {
 }
 
 impl BoardGrid {
-    #[must_use] 
+    #[must_use]
     pub const fn from_starting_position() -> Self
     where
         Self: std::marker::Sized,
