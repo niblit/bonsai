@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use crate::{
-    board::board_backend::BoardGrid, castling_rights::CastlingRights, coordinates::Coordinates,
+    board::board_backend::BoardBackend, castling_rights::CastlingRights, coordinates::Coordinates,
     move_generator, outcome::Outcome, ply::Ply, team::Team,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Board {
-    grid: BoardGrid,
+pub struct BoardFrontend {
+    backend: BoardBackend,
 
     turn: Team,
     castling_rights: CastlingRights,
@@ -19,16 +19,16 @@ pub struct Board {
     move_log: Vec<Ply>,
     undo_log: Vec<Ply>,
 
-    repetition_table: HashMap<BoardGrid, usize>,
+    repetition_table: HashMap<BoardBackend, usize>,
 
     outcome: Option<Outcome>,
 }
 
-impl Board {
+impl BoardFrontend {
     #[must_use]
     pub fn from_starting_position() -> Self {
         Self {
-            grid: BoardGrid::from_starting_position(),
+            backend: BoardBackend::from_starting_position(),
             turn: Team::White,
             castling_rights: CastlingRights::new(),
             en_passant_target: None,
@@ -53,12 +53,12 @@ impl Board {
     pub fn get_legal_moves(&mut self) -> Vec<Ply> {
         let mut legal_moves = Vec::new();
         let pieces = match self.turn {
-            Team::White => self.grid.get_white_pieces(),
-            Team::Black => self.grid.get_black_pieces(),
+            Team::White => self.backend.get_white_pieces(),
+            Team::Black => self.backend.get_black_pieces(),
         };
         for current_piece in pieces {
             let mut current_piece_legal_moves =
-                move_generator::generate_pseudo_legal_moves(current_piece, &self.grid);
+                move_generator::generate_pseudo_legal_moves(current_piece, &self.backend);
             legal_moves.append(&mut current_piece_legal_moves);
         }
         legal_moves

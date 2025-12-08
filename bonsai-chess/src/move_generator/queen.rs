@@ -1,11 +1,11 @@
 use crate::{
-    board::BoardGrid,
+    board::BoardBackend,
     located_piece::LocatedPiece,
     move_generator::{bishop, rook},
     ply::Ply,
 };
 
-pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardGrid) -> Vec<Ply> {
+pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend) -> Vec<Ply> {
     let mut add_rook_and_bishop = Vec::new();
 
     add_rook_and_bishop.append(&mut rook::pseudo_legal_moves(what_to_move, backend));

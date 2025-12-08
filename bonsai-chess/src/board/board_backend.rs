@@ -6,11 +6,11 @@ use crate::{
 pub type Grid = [[Square; BOARD_COLUMNS]; BOARD_ROWS];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct BoardGrid {
+pub struct BoardBackend {
     grid: Grid,
 }
 
-impl BoardGrid {
+impl BoardBackend {
     #[must_use]
     pub const fn from_starting_position() -> Self
     where
