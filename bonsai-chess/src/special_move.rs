@@ -1,4 +1,4 @@
-use crate::{coordinates::Coordinates, kind::{ValidPromotions}};
+use crate::{coordinates::Coordinates, kind::ValidPromotions};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SpecialMove {

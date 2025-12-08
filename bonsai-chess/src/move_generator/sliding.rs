@@ -28,8 +28,7 @@ pub fn slide(
                         break 'distance_loop;
                     }
                 }
-            }
-            else {
+            } else {
                 // Out of bounds
                 break 'distance_loop;
             }

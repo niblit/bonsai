@@ -1,7 +1,13 @@
 use std::collections::HashMap;
 
 use crate::{
-    board::{BoardBackend, board_backend::BoardGrid}, castling_rights::CastlingRights, coordinates::Coordinates, move_generator, outcome::Outcome, ply::Ply, team::Team
+    board::{BoardBackend, board_backend::BoardGrid},
+    castling_rights::CastlingRights,
+    coordinates::Coordinates,
+    move_generator,
+    outcome::Outcome,
+    ply::Ply,
+    team::Team,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -55,7 +61,8 @@ impl Board<BoardGrid> {
             Team::Black => self.board_backend.get_black_pieces(),
         };
         for current_piece in pieces {
-            let mut current_piece_legal_moves= move_generator::generate_pseudo_legal_moves(current_piece, &self.board_backend);
+            let mut current_piece_legal_moves =
+                move_generator::generate_pseudo_legal_moves(current_piece, &self.board_backend);
             legal_moves.append(&mut current_piece_legal_moves);
         }
         legal_moves
@@ -64,7 +71,6 @@ impl Board<BoardGrid> {
     pub fn make_move(&mut self, ply: Ply) {
         self.undo_log.clear();
         self.move_log.push(ply);
-        
     }
 
     pub fn undo_last_move(&mut self) {

@@ -21,7 +21,7 @@ impl Ply {
 
         piece_moved: Piece,
         piece_captured: Square,
-        
+
         special_move: Option<SpecialMove>,
     ) -> Self {
         Self {

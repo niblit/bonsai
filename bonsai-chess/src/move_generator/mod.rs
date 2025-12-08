@@ -1,18 +1,13 @@
 mod bishop;
+mod directions;
 mod king;
 mod knight;
 mod pawn;
 mod queen;
 mod rook;
 mod sliding;
-mod directions;
 
-use crate::{
-    board::BoardBackend,
-    kind::Kind,
-    located_piece::LocatedPiece,
-    ply::Ply,
-};
+use crate::{board::BoardBackend, kind::Kind, located_piece::LocatedPiece, ply::Ply};
 
 pub fn generate_pseudo_legal_moves(
     what_to_move: LocatedPiece,
