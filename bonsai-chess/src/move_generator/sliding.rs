@@ -8,11 +8,16 @@ pub fn slide(
 ) -> Vec<Ply> {
     let mut moves = Vec::new();
 
+    #[allow(unused_labels)]
     'direction_loop: for &(row_direction, column_direction) in directions {
         'distance_loop: for step in 1..=distance {
-            let new_row = start.position().row() as isize + (row_direction * (step as isize));
-            let new_column =
-                start.position().column() as isize + (column_direction * (step as isize));
+            let step_isize: isize = step.try_into().unwrap();
+
+            let start_row_isize: isize = start.position().row().try_into().unwrap();
+            let new_row = start_row_isize + (row_direction * step_isize);
+
+            let start_column_isize: isize = start.position().column().try_into().unwrap();
+            let new_column = start_column_isize + (column_direction * step_isize);
 
             if let Some(end) = Coordinates::new(new_row, new_column) {
                 let target_square = backend.get(end);
