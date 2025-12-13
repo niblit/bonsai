@@ -7,7 +7,7 @@ mod queen;
 mod rook;
 mod sliding;
 
-use crate::{board::BoardBackend, kind::Kind, located_piece::LocatedPiece, ply::Ply};
+use crate::{board::BoardBackend, moves::Ply, pieces::Kind, pieces::LocatedPiece};
 
 pub fn generate_pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend) -> Vec<Ply> {
     assert_eq!(

@@ -1,7 +1,7 @@
 //! Defines the possible outcomes of a chess game, such as a win or a draw,
 //! and the specific reasons for those results.
 
-use crate::team::Team;
+use crate::atoms::Team;
 
 /// Represents the final result of a chess game.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

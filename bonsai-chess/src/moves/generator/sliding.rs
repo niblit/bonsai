@@ -1,4 +1,4 @@
-use crate::{board::BoardBackend, coordinates::Coordinates, located_piece::LocatedPiece, ply::Ply};
+use crate::{atoms::Coordinates, board::BoardBackend, moves::Ply, pieces::LocatedPiece};
 
 pub fn slide(
     start: LocatedPiece,

@@ -1,15 +1,8 @@
+mod atoms;
 mod board;
-mod castling_rights;
-mod coordinates;
-mod kind;
-mod located_piece;
-mod move_generator;
-mod outcome;
-mod piece;
-mod ply;
-mod special_move;
-mod square;
-mod team;
+mod moves;
+mod pieces;
+mod rules;
 
 pub const BOARD_ROWS: usize = 8;
 pub const BOARD_COLUMNS: usize = 8;

@@ -1,4 +1,4 @@
-use crate::{coordinates::Coordinates, piece::Piece, special_move::SpecialMove, square::Square};
+use crate::{atoms::Coordinates, atoms::Square, moves::SpecialMove, pieces::Piece};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Ply {

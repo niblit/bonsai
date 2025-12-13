@@ -1,8 +1,8 @@
 use crate::{
     board::BoardBackend,
-    located_piece::LocatedPiece,
-    move_generator::{bishop, rook},
-    ply::Ply,
+    moves::Ply,
+    moves::generator::{bishop, rook},
+    pieces::LocatedPiece,
 };
 
 pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend) -> Vec<Ply> {

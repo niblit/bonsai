@@ -1,4 +1,4 @@
-use crate::{kind::Kind, team::Team};
+use crate::{atoms::Team, pieces::Kind};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Piece {

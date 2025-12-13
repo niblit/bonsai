@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
-    board::board_backend::BoardBackend, castling_rights::CastlingRights, coordinates::Coordinates,
-    move_generator, outcome::Outcome, ply::Ply, team::Team,
+    atoms::CastlingRights, atoms::Coordinates, atoms::Team, board::board_backend::BoardBackend,
+    moves::Ply, moves::generate_pseudo_legal_moves, rules::Outcome,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -58,7 +58,7 @@ impl BoardFrontend {
         };
         for current_piece in pieces {
             let mut current_piece_legal_moves =
-                move_generator::generate_pseudo_legal_moves(current_piece, &self.backend);
+                generate_pseudo_legal_moves(current_piece, &self.backend);
             legal_moves.append(&mut current_piece_legal_moves);
         }
         legal_moves

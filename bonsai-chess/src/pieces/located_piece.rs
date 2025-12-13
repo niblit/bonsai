@@ -1,4 +1,4 @@
-use crate::{coordinates::Coordinates, piece::Piece};
+use crate::{atoms::Coordinates, pieces::Piece};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct LocatedPiece {
