@@ -13,7 +13,6 @@ categories = ["chess"]
 
 [dependencies]
 
-
 [lints.rust]
 unsafe_code = "forbid"
 
