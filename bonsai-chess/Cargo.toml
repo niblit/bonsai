@@ -4,14 +4,16 @@ version = "0.1.0"
 authors = ["niblit <hi@niblit.dev>"]
 edition = "2024"
 rust-version = "1.91.1"
-description = "crate that keeps track of the entire chess game"
+description = "A modular chess library handling board representation, move generation, and game rules."
 readme = "./README.md"
 repository = "https://github.com/niblit/bonsai"
 license = "GPL-3.0-or-later"
-keywords = ["chess"]
-categories = ["chess"]
+keywords = ["chess", "game", "board-representation", "move-generation", "chess-engine"]
+categories = ["algorithms", "data-structures", "games", "simulation"]
 
 [dependencies]
+
+[dev-dependencies]
 
 [lints.rust]
 unsafe_code = "forbid"
