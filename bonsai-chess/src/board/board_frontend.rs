@@ -58,7 +58,7 @@ impl BoardFrontend {
         };
         for current_piece in pieces {
             let mut current_piece_legal_moves =
-                generate_pseudo_legal_moves(current_piece, &self.backend);
+                generate_pseudo_legal_moves(current_piece, &self.backend, self.en_passant_target);
             legal_moves.append(&mut current_piece_legal_moves);
         }
         legal_moves

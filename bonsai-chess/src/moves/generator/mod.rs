@@ -7,9 +7,18 @@ mod queen;
 mod rook;
 mod sliding;
 
-use crate::{board::BoardBackend, moves::Ply, pieces::Kind, pieces::LocatedPiece};
+use crate::{
+    atoms::Coordinates,
+    board::BoardBackend,
+    moves::Ply,
+    pieces::{Kind, LocatedPiece},
+};
 
-pub fn generate_pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend) -> Vec<Ply> {
+pub fn generate_pseudo_legal_moves(
+    what_to_move: LocatedPiece,
+    backend: &BoardBackend,
+    en_passant_target: Option<Coordinates>,
+) -> Vec<Ply> {
     assert_eq!(
         backend.get(what_to_move.position()),
         Some(what_to_move.piece())
@@ -20,6 +29,6 @@ pub fn generate_pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBa
         Kind::Rook => rook::pseudo_legal_moves(what_to_move, backend),
         Kind::Bishop => bishop::pseudo_legal_moves(what_to_move, backend),
         Kind::Knight => knight::pseudo_legal_moves(what_to_move, backend),
-        Kind::Pawn => pawn::pseudo_legal_moves(what_to_move, backend),
+        Kind::Pawn => pawn::pseudo_legal_moves(what_to_move, backend, en_passant_target),
     }
 }
