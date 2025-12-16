@@ -1,6 +1,9 @@
 use crate::{
-    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE, atoms::Coordinates,
-    atoms::Team, board::Square, pieces::Kind, pieces::LocatedPiece, pieces::Piece,
+    BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE,
+    atoms::{Coordinates, Team},
+    board::Square,
+    moves::{directions, slide},
+    pieces::{Kind, LocatedPiece, Piece},
 };
 
 pub type Grid = [[Square; BOARD_COLUMNS]; BOARD_ROWS];
@@ -81,6 +84,11 @@ impl BoardBackend {
     #[must_use]
     pub const fn grid(&self) -> &Grid {
         &self.grid
+    }
+
+    #[must_use]
+    pub fn is_square_under_attack(&self, location: Coordinates, attacker_team: Team) -> bool {
+        todo!()
     }
 
     #[must_use]

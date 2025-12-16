@@ -57,8 +57,12 @@ impl BoardFrontend {
             Team::Black => self.backend.get_black_pieces(),
         };
         for current_piece in pieces {
-            let mut current_piece_legal_moves =
-                generate_pseudo_legal_moves(current_piece, &self.backend, self.en_passant_target);
+            let mut current_piece_legal_moves = generate_pseudo_legal_moves(
+                current_piece,
+                &self.backend,
+                self.en_passant_target,
+                self.castling_rights,
+            );
             legal_moves.append(&mut current_piece_legal_moves);
         }
         legal_moves
