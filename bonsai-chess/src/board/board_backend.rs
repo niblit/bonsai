@@ -1,12 +1,10 @@
 use crate::{
     BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE,
     atoms::{Coordinates, Team},
-    board::Square,
+    board::{Grid, Square},
     moves::{directions, slide},
     pieces::{Kind, LocatedPiece, Piece},
 };
-
-pub type Grid = [[Square; BOARD_COLUMNS]; BOARD_ROWS];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct BoardBackend {
