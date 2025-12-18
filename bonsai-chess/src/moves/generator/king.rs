@@ -30,11 +30,13 @@ pub fn pseudo_legal_moves(
         DIAGONALLY_DOWN_RIGHT,
     ];
     let mut king_moves = slide(what_to_move, 1, &directions, backend);
-    king_moves.append(&mut get_castling_moves(
-        what_to_move,
-        backend,
-        castling_rights,
-    ));
+    if castling_rights != CastlingRights::no_rights() {
+        king_moves.append(&mut get_castling_moves(
+            what_to_move,
+            backend,
+            castling_rights,
+        ));
+    }
 
     king_moves
 }
@@ -50,7 +52,7 @@ fn get_castling_moves(
 
     // 1. Cannot castle if currently in check
     if backend.is_square_under_attack(what_to_move.position(), enemy) {
-        return Vec::new();
+        return castling_moves; // empty
     }
 
     let rank = match team {
