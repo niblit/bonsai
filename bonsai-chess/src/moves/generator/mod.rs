@@ -20,10 +20,6 @@ pub fn generate_pseudo_legal_moves(
     en_passant_target: Option<Coordinates>,
     castling_rights: CastlingRights,
 ) -> Vec<Ply> {
-    assert_eq!(
-        backend.get(what_to_move.position()),
-        Some(what_to_move.piece())
-    );
     match what_to_move.piece().kind() {
         Kind::King => king::pseudo_legal_moves(what_to_move, backend, castling_rights),
         Kind::Queen => queen::pseudo_legal_moves(what_to_move, backend),
