@@ -1,6 +1,6 @@
 # bonsai
 
-![bonsai Logo](static/bonsai.png)
+![bonsai Logo](static/bonsai.svg)
 
 **bonsai** is a modular chess project written in Rust. It is organized as a workspace containing the core chess logic, an engine, and user interfaces.
 
