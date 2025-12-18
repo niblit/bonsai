@@ -2,7 +2,7 @@ use crate::{
     BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE,
     atoms::{CastlingRights, Coordinates, Team},
     board::{Grid, Square, positions::STARTING_POSITION},
-    moves::{directions, generate_pseudo_legal_moves, slide},
+    moves::generate_pseudo_legal_moves,
     pieces::{Kind, LocatedPiece, Piece},
 };
 
