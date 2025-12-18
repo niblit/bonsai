@@ -57,87 +57,35 @@ impl BoardBackend {
 
     #[must_use]
     pub fn is_square_under_attack(&self, location: Coordinates, attacker_team: Team) -> bool {
-        let pawn = Piece::new(attacker_team.opposite(), Kind::Pawn);
-        let pawn_moves = generate_pseudo_legal_moves(
-            LocatedPiece::new(pawn, location),
-            self,
-            None,
-            CastlingRights::no_rights(),
-        );
-        for pm in pawn_moves {
-            if let Some(attacker) = pm.piece_captured()
-                && attacker.team() == attacker_team
-                && attacker.kind() == Kind::Pawn
-            {
-                return true;
-            }
-        }
+        // Define the probe piece type and the enemy pieces that threaten via that movement path
+        let checks = [
+            (Kind::Pawn, &[Kind::Pawn] as &[Kind]),
+            (Kind::Knight, &[Kind::Knight]),
+            (Kind::Bishop, &[Kind::Bishop, Kind::Queen]),
+            (Kind::Rook, &[Kind::Rook, Kind::Queen]),
+            (Kind::King, &[Kind::King]),
+        ];
 
-        let knight = Piece::new(attacker_team.opposite(), Kind::Knight);
-        let knight_moves = generate_pseudo_legal_moves(
-            LocatedPiece::new(knight, location),
-            self,
-            None,
-            CastlingRights::no_rights(),
-        );
-        for km in knight_moves {
-            if let Some(attacker) = km.piece_captured()
-                && attacker.team() == attacker_team
-                && attacker.kind() == Kind::Knight
-            {
-                return true;
-            }
-        }
+        let check_threat = |probe_kind: Kind, threats: &[Kind]| -> bool {
+            let probe = Piece::new(attacker_team.opposite(), probe_kind);
+            let moves = generate_pseudo_legal_moves(
+                LocatedPiece::new(probe, location),
+                self,
+                None,
+                CastlingRights::no_rights(),
+            );
 
-        let bishop = Piece::new(attacker_team.opposite(), Kind::Bishop);
-        let bishop_moves = generate_pseudo_legal_moves(
-            LocatedPiece::new(bishop, location),
-            self,
-            None,
-            CastlingRights::no_rights(),
-        );
-        for bm in bishop_moves {
-            if let Some(attacker) = bm.piece_captured()
-                && attacker.team() == attacker_team
-                && (attacker.kind() == Kind::Bishop || attacker.kind() == Kind::Queen)
-            {
-                return true;
-            }
-        }
+            moves.into_iter().any(|m| {
+                m.piece_captured().is_some_and(|captured| {
+                    captured.team() == attacker_team && threats.contains(&captured.kind())
+                })
+            })
+        };
 
-        let rook = Piece::new(attacker_team.opposite(), Kind::Rook);
-        let rook_moves = generate_pseudo_legal_moves(
-            LocatedPiece::new(rook, location),
-            self,
-            None,
-            CastlingRights::no_rights(),
-        );
-        for rm in rook_moves {
-            if let Some(attacker) = rm.piece_captured()
-                && attacker.team() == attacker_team
-                && (attacker.kind() == Kind::Rook || attacker.kind() == Kind::Queen)
-            {
-                return true;
-            }
-        }
-
-        let king = Piece::new(attacker_team.opposite(), Kind::King);
-        let king_moves = generate_pseudo_legal_moves(
-            LocatedPiece::new(king, location),
-            self,
-            None,
-            CastlingRights::no_rights(),
-        );
-        for km in king_moves {
-            if let Some(attacker) = km.piece_captured()
-                && attacker.team() == attacker_team
-                && attacker.kind() == Kind::King
-            {
-                return true;
-            }
-        }
-
-        false
+        // Iterate through checks; returns true immediately if any check passes
+        checks
+            .iter()
+            .any(|(probe, threats)| check_threat(*probe, threats))
     }
 
     #[must_use]
