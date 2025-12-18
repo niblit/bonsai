@@ -1,6 +1,7 @@
 mod board_backend;
 mod board_frontend;
 mod grid;
+mod positions;
 mod square;
 
 pub use board_backend::BoardBackend;
