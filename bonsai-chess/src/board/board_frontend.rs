@@ -50,6 +50,11 @@ impl BoardFrontend {
         todo!()
     }
 
+    #[must_use]
+    pub const fn backend(&self) -> &BoardBackend {
+        &self.backend
+    }
+
     pub fn get_legal_moves(&mut self) -> Vec<Ply> {
         let mut legal_moves = Vec::new();
         let pieces = match self.turn {
