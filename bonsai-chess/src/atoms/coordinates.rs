@@ -34,50 +34,6 @@ impl Coordinates {
     pub const fn column(&self) -> usize {
         self.column
     }
-
-    #[must_use]
-    pub fn up(&self) -> Option<Self> {
-        let new_row = self.row.checked_sub(1)?;
-        Self::new(new_row, self.column)
-    }
-
-    #[must_use]
-    pub fn down(&self) -> Option<Self> {
-        let new_row = self.row.checked_add(1)?;
-        Self::new(new_row, self.column)
-    }
-
-    #[must_use]
-    pub fn left(&self) -> Option<Self> {
-        let new_column = self.column.checked_sub(1)?;
-        Self::new(self.row, new_column)
-    }
-
-    #[must_use]
-    pub fn right(&self) -> Option<Self> {
-        let new_column = self.column.checked_add(1)?;
-        Self::new(self.row, new_column)
-    }
-
-    #[must_use]
-    pub fn diagonal_up_left(&self) -> Option<Self> {
-        self.up()?.left()
-    }
-
-    #[must_use]
-    pub fn diagonal_up_right(&self) -> Option<Self> {
-        self.up()?.right()
-    }
-
-    #[must_use]
-    pub fn diagonal_down_right(&self) -> Option<Self> {
-        self.down()?.right()
-    }
-
-    #[must_use]
-    pub fn diagonal_down_left(&self) -> Option<Self> {
-        self.down()?.left()
-    }
 }
 
 #[cfg(test)]

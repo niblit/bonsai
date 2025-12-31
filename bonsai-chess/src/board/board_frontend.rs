@@ -1,8 +1,12 @@
+use core::prelude;
 use std::collections::HashMap;
 
 use crate::{
-    atoms::CastlingRights, atoms::Coordinates, atoms::Team, board::board_backend::BoardBackend,
-    moves::Ply, moves::generate_pseudo_legal_moves, rules::Outcome,
+    atoms::{CastlingRights, Coordinates, Team},
+    board::board_backend::BoardBackend,
+    moves::{Ply, generate_pseudo_legal_moves},
+    pieces::{Kind, LocatedPiece, Piece},
+    rules::Outcome,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -22,6 +26,8 @@ pub struct BoardFrontend {
     repetition_table: HashMap<BoardBackend, usize>,
 
     outcome: Option<Outcome>,
+
+    in_check: bool,
 }
 
 impl BoardFrontend {
@@ -42,6 +48,8 @@ impl BoardFrontend {
             repetition_table: HashMap::new(),
 
             outcome: None,
+
+            in_check: false,
         }
     }
 
@@ -74,8 +82,112 @@ impl BoardFrontend {
     }
 
     pub fn make_move(&mut self, ply: Ply) {
-        self.undo_log.clear();
         self.move_log.push(ply);
+
+        self.backend.unset(ply.starting_square());
+        self.backend.set(ply.piece_moved(), ply.ending_square());
+
+        if let Some(special_move) = ply.special_move() {
+            match special_move {
+                crate::moves::SpecialMove::EnPassant(coordinates) => {
+                    self.backend.unset(coordinates);
+                }
+                crate::moves::SpecialMove::Castle => {
+                    // TODO: refactor to avoid magic numbers
+                    let (rook_start, rook_end) = if (ply.starting_square().column() as isize
+                        - ply.ending_square().column() as isize)
+                        < 0
+                    {
+                        (
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() + 1,
+                            ),
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() - 1,
+                            ),
+                        )
+                    } else {
+                        (
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() - 2,
+                            ),
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() + 1,
+                            ),
+                        )
+                    };
+
+                    if let (Some(rook_start), Some(rook_end)) = (rook_start, rook_end) {
+                        self.backend
+                            .set(self.backend.get(rook_start).unwrap(), rook_end);
+                        self.backend.unset(rook_start);
+                    }
+                }
+                crate::moves::SpecialMove::Promotion(valid_promotion) => {
+                    self.backend.set(
+                        Piece::new(
+                            ply.piece_moved().team(),
+                            Kind::from_valid_promotions(valid_promotion),
+                        ),
+                        ply.ending_square(),
+                    );
+                }
+            }
+        }
+
+        self.en_passant_target = None;
+        if ply.piece_moved().kind() == Kind::Pawn {
+            let jump_distance = ply
+                .starting_square()
+                .row()
+                .abs_diff(ply.ending_square().row());
+            if jump_distance == 2 {
+                self.en_passant_target = Some(
+                    Coordinates::new(
+                        match ply.piece_moved().team() {
+                            Team::White => ply.starting_square().row() - 1,
+                            Team::Black => ply.starting_square().row() + 1,
+                        },
+                        ply.starting_square().column(),
+                    )
+                    .unwrap(),
+                );
+            }
+        }
+
+        // TODO: update CastlingRights
+        self.change_turn();
+        self.in_check = self.is_in_check();
+    }
+
+    pub const fn change_turn(&mut self) {
+        self.turn = self.turn.opposite();
+    }
+
+    /// # Panics
+    ///
+    /// Will panic the is no king on the board
+    pub fn is_in_check(&self) -> bool {
+        let pieces = match self.turn {
+            Team::White => self.backend.get_white_pieces(),
+            Team::Black => self.backend.get_black_pieces(),
+        };
+
+        // TODO: cache both kings' position
+        // 1. Find the King
+        let king_pos = pieces
+            .iter()
+            .find(|lp| lp.piece().kind() == Kind::King)
+            .map(LocatedPiece::position)
+            .expect("Invalid Board: The King is missing!");
+
+        // 2. Check if that square is under attack
+        self.backend
+            .is_square_under_attack(king_pos, self.turn.opposite())
     }
 
     pub fn undo_last_move(&mut self) {

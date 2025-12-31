@@ -116,6 +116,8 @@ pub fn pseudo_legal_moves(
             if let Some(available_en_passant) = en_passant_target
                 && capture_coords == available_en_passant
             {
+                let captured_pawn_position =
+                    Coordinates::new((forward_row as usize), current_position.column()).unwrap();
                 pawn_moves.push(Ply::new(
                     current_position,
                     capture_coords,
@@ -125,7 +127,7 @@ pub fn pseudo_legal_moves(
                         what_to_move.piece().team().opposite(),
                         Kind::Pawn,
                     )),
-                    Some(SpecialMove::EnPassant(available_en_passant)),
+                    Some(SpecialMove::EnPassant(captured_pawn_position)),
                 ));
             }
 
