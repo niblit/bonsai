@@ -2,11 +2,19 @@ use std::collections::HashMap;
 
 use crate::{
     atoms::{CastlingRights, Coordinates, Team},
-    board::board_backend::BoardBackend,
+    board::{Grid, board_backend::BoardBackend},
     moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece},
     rules::{DrawReason, Outcome},
 };
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct PositionSnapshot {
+    pieces_positions: Grid,
+    turn: Team,
+    remaining_castling_rights: CastlingRights,
+    en_passant: Option<Coordinates>,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BoardFrontend {
@@ -21,7 +29,7 @@ pub struct BoardFrontend {
 
     move_log: Vec<Ply>,
 
-    repetition_table: HashMap<BoardBackend, usize>,
+    repetition_table: HashMap<PositionSnapshot, usize>,
 
     outcome: Option<Outcome>,
 
@@ -29,6 +37,16 @@ pub struct BoardFrontend {
 }
 
 impl BoardFrontend {
+    #[must_use]
+    pub const fn create_snapshot(&self) -> PositionSnapshot {
+        PositionSnapshot {
+            pieces_positions: *self.backend.grid(),
+            turn: self.turn,
+            remaining_castling_rights: self.castling_rights,
+            en_passant: self.en_passant_target,
+        }
+    }
+
     #[must_use]
     pub fn from_starting_position() -> Self {
         Self {
@@ -122,12 +140,11 @@ impl BoardFrontend {
         // Check if last move left opponent's king in check
         self.in_check = self.is_in_check();
 
-        // TODO: threefold repetition needs more context than just a board snapshot
-        if !self.repetition_table.contains_key(&self.backend) {
-            self.repetition_table.insert(self.backend, 0);
-        }
+        // threefold repetition
+        let snapshot = self.create_snapshot();
+        self.repetition_table.entry(snapshot).or_insert(0);
 
-        if let Some(repetitions) = self.repetition_table.get_mut(&self.backend) {
+        if let Some(repetitions) = self.repetition_table.get_mut(&snapshot) {
             *repetitions += 1;
         }
 
