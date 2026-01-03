@@ -29,11 +29,12 @@ impl BoardBackend {
                     self.unset(coordinates);
                 }
                 SpecialMove::Castle => {
+                    #[allow(clippy::cast_possible_wrap)]
+                    let king_movement_vector = ply.starting_square().column() as isize
+                        - ply.ending_square().column() as isize;
+
                     // TODO: refactor to avoid magic numbers
-                    let (rook_start, rook_end) = if (ply.starting_square().column() as isize
-                        - ply.ending_square().column() as isize)
-                        < 0
-                    {
+                    let (rook_start, rook_end) = if king_movement_vector < 0 {
                         (
                             Coordinates::new(
                                 ply.ending_square().row(),
