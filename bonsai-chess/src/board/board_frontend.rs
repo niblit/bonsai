@@ -68,6 +68,9 @@ impl BoardFrontend {
         }
     }
 
+    /// # Panics
+    ///
+    /// This function will panic if the provided fen is not valid
     #[must_use]
     pub fn from_fen(fen: &str) -> Self {
         let parts: Vec<&str> = fen.split_whitespace().collect();
