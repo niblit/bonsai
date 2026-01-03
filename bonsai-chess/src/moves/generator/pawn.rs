@@ -54,9 +54,7 @@ pub fn pseudo_legal_moves(
     let forward_row = (current_position.row() as isize) + direction;
 
     // --- 1. Forward Movement (Pushes) ---
-    if let Some(one_forward_coords) =
-        Coordinates::new(forward_row, current_position.column() as isize)
-    {
+    if let Some(one_forward_coords) = Coordinates::new(forward_row, current_position.column()) {
         // Standard Push: Target must be EMPTY (pawns cannot capture forward)
         if backend.get(one_forward_coords).is_none() {
             // A. Check for Promotion (reaching the last rank)
@@ -89,7 +87,7 @@ pub fn pseudo_legal_moves(
                     let two_forward_row = (current_position.row() as isize) + 2 * direction;
 
                     if let Some(two_forward_coords) =
-                        Coordinates::new(two_forward_row, current_position.column() as isize)
+                        Coordinates::new(two_forward_row, current_position.column())
                         && backend.get(two_forward_coords).is_none()
                     {
                         pawn_moves.push(Ply::new(

@@ -4,7 +4,7 @@ use crate::{
     atoms::{CastlingRights, Coordinates, Team},
     board::{Grid, board_backend::BoardBackend},
     moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
-    pieces::{Kind, LocatedPiece},
+    pieces::{Kind, LocatedPiece, Piece},
     rules::{DrawReason, Outcome},
 };
 
@@ -70,7 +70,123 @@ impl BoardFrontend {
 
     #[must_use]
     pub fn from_fen(fen: &str) -> Self {
-        todo!()
+        let parts: Vec<&str> = fen.split_whitespace().collect();
+
+        // 1. Placement Data
+        let placement = parts.first().expect("Invalid FEN: Missing placement data");
+        let mut grid: Grid = [[None; crate::BOARD_COLUMNS]; crate::BOARD_ROWS];
+
+        for (row_index, row_str) in placement.split('/').enumerate() {
+            if row_index >= crate::BOARD_ROWS {
+                break;
+            }
+
+            let mut column_index = 0;
+            for c in row_str.chars() {
+                if let Some(skip) = c.to_digit(10) {
+                    column_index += skip as usize;
+                } else {
+                    let team = if c.is_uppercase() {
+                        Team::White
+                    } else {
+                        Team::Black
+                    };
+                    let kind = match c.to_ascii_lowercase() {
+                        'p' => Kind::Pawn,
+                        'n' => Kind::Knight,
+                        'b' => Kind::Bishop,
+                        'r' => Kind::Rook,
+                        'q' => Kind::Queen,
+                        'k' => Kind::King,
+                        _ => panic!("Invalid FEN piece: {c}"),
+                    };
+
+                    if column_index < crate::BOARD_COLUMNS {
+                        grid[row_index][column_index] = Some(Piece::new(team, kind));
+                        column_index += 1;
+                    }
+                }
+            }
+        }
+
+        let backend = BoardBackend::new(grid);
+
+        // 2. Active Color
+        let active_color = parts.get(1).unwrap_or(&"w");
+        let turn = if *active_color == "w" {
+            Team::White
+        } else {
+            Team::Black
+        };
+
+        // 3. Castling Rights
+        let castling = parts.get(2).unwrap_or(&"-");
+        let mut castling_rights = CastlingRights::no_rights();
+        if *castling != "-" {
+            if castling.contains('K') {
+                castling_rights.enable_white_king_side();
+            }
+            if castling.contains('Q') {
+                castling_rights.enable_white_queen_side();
+            }
+            if castling.contains('k') {
+                castling_rights.enable_black_king_side();
+            }
+            if castling.contains('q') {
+                castling_rights.enable_black_queen_side();
+            }
+        }
+
+        // 4. En Passant Target
+        let en_passant_str = parts.get(3).unwrap_or(&"-");
+        let en_passant_target = if *en_passant_str == "-" {
+            None
+        } else {
+            let chars: Vec<char> = en_passant_str.chars().collect();
+
+            if chars.len() == 2 {
+                let file = chars[0];
+                let rank = chars[1];
+
+                // 'a' -> 0, 'b' -> 1...
+                let col = (file as usize).wrapping_sub('a' as usize);
+
+                // FEN Rank 8 is Row 0, Rank 1 is Row 7.
+                // Row = 8 - Rank.
+                let row = rank
+                    .to_digit(10)
+                    .map_or(99, |r| crate::BOARD_ROWS.wrapping_sub(r as usize));
+
+                Coordinates::new(row, col)
+            } else {
+                None
+            }
+        };
+
+        // 5. Clocks
+        let halfmove_clock = parts.get(4).unwrap_or(&"0").parse().unwrap_or(0);
+        let fullmove_clock = parts.get(5).unwrap_or(&"1").parse().unwrap_or(1);
+
+        let mut board = Self {
+            backend,
+            turn,
+            castling_rights,
+            en_passant_target,
+            halfmove_clock,
+            fullmove_clock,
+            move_log: Vec::new(),
+            repetition_table: HashMap::new(),
+            outcome: None,
+            in_check: false,
+        };
+
+        // Initialize derived state
+        board.in_check = board.is_in_check();
+
+        let snapshot = board.create_snapshot();
+        board.repetition_table.insert(snapshot, 1);
+
+        board
     }
 
     #[must_use]

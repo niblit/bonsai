@@ -8,9 +8,10 @@ pub struct Coordinates {
 
 impl Coordinates {
     #[must_use]
-    pub fn new<Integer>(row: Integer, column: Integer) -> Option<Self>
+    pub fn new<IntegerA, IntegerB>(row: IntegerA, column: IntegerB) -> Option<Self>
     where
-        Integer: TryInto<usize>,
+        IntegerA: TryInto<usize>,
+        IntegerB: TryInto<usize>,
     {
         let row_usize = row.try_into().ok()?;
         let column_usize = column.try_into().ok()?;
