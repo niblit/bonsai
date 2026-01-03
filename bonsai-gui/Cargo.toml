@@ -1,6 +1,24 @@
 [package]
 name = "bonsai-gui"
 version = "0.1.0"
+authors = ["niblit <hi@niblit.dev>"]
 edition = "2024"
+rust-version = "1.91.1"
+description = "A graphical chess interface for bonsai."
+readme = "./README.md"
+repository = "https://github.com/niblit/bonsai"
+license = "GPL-3.0-or-later"
+keywords = ["chess", "game", "chess-engine"]
+categories = ["algorithms", "data-structures", "games", "simulation"]
 
 [dependencies]
+
+[dev-dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"
+cargo = "warn"
