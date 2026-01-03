@@ -51,7 +51,9 @@ pub fn pseudo_legal_moves(
     };
 
     let current_position = what_to_move.position();
-    let forward_row = current_position.row().strict_add_signed(direction);
+
+    #[allow(clippy::cast_possible_wrap)]
+    let forward_row = current_position.row() as isize + direction;
 
     // --- 1. Forward Movement (Pushes) ---
     if let Some(one_forward_coords) = Coordinates::new(forward_row, current_position.column()) {
@@ -84,7 +86,8 @@ pub fn pseudo_legal_moves(
                 // 2. The path is clear (one_forward is empty, checked above).
                 // 3. The destination (two_forward) is empty.
                 if current_position.row() == starting_row {
-                    let two_forward_row = current_position.row().strict_add_signed(2 * direction);
+                    #[allow(clippy::cast_possible_wrap)]
+                    let two_forward_row = current_position.row() as isize + 2 * direction;
 
                     if let Some(two_forward_coords) =
                         Coordinates::new(two_forward_row, current_position.column())
@@ -106,7 +109,8 @@ pub fn pseudo_legal_moves(
     // --- 2. Diagonal Captures ---
     // Check both diagonals: left (-1) and right (+1) relative to the pawn.
     for col_offset in [-1, 1] {
-        let attack_col = current_position.column().strict_add_signed(col_offset);
+        #[allow(clippy::cast_possible_wrap)]
+        let attack_col = current_position.column() as isize + col_offset;
 
         if let Some(capture_coords) = Coordinates::new(forward_row, attack_col) {
             // A. En Passant
