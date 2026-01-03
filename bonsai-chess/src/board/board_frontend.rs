@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use crate::{
     atoms::{CastlingRights, Coordinates, Team},
     board::board_backend::BoardBackend,
-    moves::{Ply, generate_pseudo_legal_moves},
-    pieces::{Kind, LocatedPiece, Piece},
-    rules::Outcome,
+    moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
+    pieces::{Kind, LocatedPiece},
+    rules::{DrawReason, Outcome},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -20,7 +20,6 @@ pub struct BoardFrontend {
     fullmove_clock: usize,
 
     move_log: Vec<Ply>,
-    undo_log: Vec<Ply>,
 
     repetition_table: HashMap<BoardBackend, usize>,
 
@@ -42,7 +41,6 @@ impl BoardFrontend {
             fullmove_clock: 1,
 
             move_log: Vec::new(),
-            undo_log: Vec::new(),
 
             repetition_table: HashMap::new(),
 
@@ -62,12 +60,20 @@ impl BoardFrontend {
         &self.backend
     }
 
-    pub fn get_legal_moves(&mut self) -> Vec<Ply> {
-        let mut legal_moves = Vec::new();
+    #[must_use]
+    pub fn get_legal_moves(&self) -> Vec<Ply> {
+        self.get_pseudo_legal_moves()
+    }
+
+    #[must_use]
+    pub fn get_pseudo_legal_moves(&self) -> Vec<Ply> {
+        let mut pseudo_legal_moves = Vec::new();
+
         let pieces = match self.turn {
             Team::White => self.backend.get_white_pieces(),
             Team::Black => self.backend.get_black_pieces(),
         };
+
         for current_piece in pieces {
             let mut current_piece_legal_moves = generate_pseudo_legal_moves(
                 current_piece,
@@ -75,92 +81,130 @@ impl BoardFrontend {
                 self.en_passant_target,
                 self.castling_rights,
             );
-            legal_moves.append(&mut current_piece_legal_moves);
+            pseudo_legal_moves.append(&mut current_piece_legal_moves);
         }
-        legal_moves
+        pseudo_legal_moves
     }
 
-    pub fn make_move(&mut self, ply: Ply) {
-        self.move_log.push(ply);
+    pub fn make_move(&mut self, ply: &Ply) {
+        // Do low level board move
+        self.backend.apply_move(ply);
 
-        self.backend.unset(ply.starting_square());
-        self.backend.set(ply.piece_moved(), ply.ending_square());
+        // Add last move to move log
+        self.move_log.push(*ply);
 
-        if let Some(special_move) = ply.special_move() {
-            match special_move {
-                crate::moves::SpecialMove::EnPassant(coordinates) => {
-                    self.backend.unset(coordinates);
-                }
-                crate::moves::SpecialMove::Castle => {
-                    // TODO: refactor to avoid magic numbers
-                    let (rook_start, rook_end) = if (ply.starting_square().column() as isize
-                        - ply.ending_square().column() as isize)
-                        < 0
-                    {
-                        (
-                            Coordinates::new(
-                                ply.ending_square().row(),
-                                ply.ending_square().column() + 1,
-                            ),
-                            Coordinates::new(
-                                ply.ending_square().row(),
-                                ply.ending_square().column() - 1,
-                            ),
-                        )
-                    } else {
-                        (
-                            Coordinates::new(
-                                ply.ending_square().row(),
-                                ply.ending_square().column() - 2,
-                            ),
-                            Coordinates::new(
-                                ply.ending_square().row(),
-                                ply.ending_square().column() + 1,
-                            ),
-                        )
-                    };
-
-                    if let (Some(rook_start), Some(rook_end)) = (rook_start, rook_end) {
-                        self.backend
-                            .set(self.backend.get(rook_start).unwrap(), rook_end);
-                        self.backend.unset(rook_start);
-                    }
-                }
-                crate::moves::SpecialMove::Promotion(valid_promotion) => {
-                    self.backend.set(
-                        Piece::new(
-                            ply.piece_moved().team(),
-                            Kind::from_valid_promotions(valid_promotion),
-                        ),
-                        ply.ending_square(),
-                    );
-                }
-            }
-        }
-
+        // If move is a pawn double extension, keep track of en_passant possibility
         self.en_passant_target = None;
         if ply.piece_moved().kind() == Kind::Pawn {
             let jump_distance = ply
                 .starting_square()
                 .row()
                 .abs_diff(ply.ending_square().row());
-            if jump_distance == 2 {
-                self.en_passant_target = Some(
-                    Coordinates::new(
-                        match ply.piece_moved().team() {
-                            Team::White => ply.starting_square().row() - 1,
-                            Team::Black => ply.starting_square().row() + 1,
-                        },
-                        ply.starting_square().column(),
-                    )
-                    .unwrap(),
-                );
+            if jump_distance == 2
+                && let Some(en_passant_coords) = Coordinates::new(
+                    match ply.piece_moved().team() {
+                        Team::White => ply.starting_square().row() - 1,
+                        Team::Black => ply.starting_square().row() + 1,
+                    },
+                    ply.starting_square().column(),
+                )
+            {
+                self.en_passant_target = Some(en_passant_coords);
             }
         }
 
-        // TODO: update CastlingRights
+        // update CastlingRights
+        self.update_castling_rights(ply);
+
+        // Set turn to opponent
         self.change_turn();
+
+        // Check if last move left opponent's king in check
         self.in_check = self.is_in_check();
+
+        // TODO: threefold repetition needs more context than just a board snapshot
+        if !self.repetition_table.contains_key(&self.backend) {
+            self.repetition_table.insert(self.backend, 0);
+        }
+
+        if let Some(repetitions) = self.repetition_table.get_mut(&self.backend) {
+            *repetitions += 1;
+        }
+
+        if self
+            .repetition_table
+            .values()
+            .any(|repetitions| *repetitions >= 3)
+            && self.outcome.is_none()
+        {
+            self.outcome = Some(Outcome::Draw {
+                reason: DrawReason::ThreefoldRepetition,
+            });
+        }
+
+        // check for dead position
+        if self
+            .backend
+            .get_all_pieces()
+            .iter()
+            .all(|located_piece| located_piece.piece().kind() == Kind::King)
+        {
+            self.outcome = Some(Outcome::Draw {
+                reason: DrawReason::DeadPosition,
+            });
+        }
+
+        // check for fifty-move rule
+        // TODO: refactor for better readability
+        if let Some(SpecialMove::Promotion(_)) = ply.special_move() {
+            self.halfmove_clock = 0;
+        } else if let Some(SpecialMove::EnPassant(_)) = ply.special_move() {
+            self.halfmove_clock = 0;
+        } else if ply.piece_moved().kind() == Kind::Pawn || ply.piece_captured().is_some() {
+            self.halfmove_clock = 0;
+        } else {
+            self.halfmove_clock = self.halfmove_clock.saturating_add(1);
+        }
+
+        if self.halfmove_clock >= 100 && self.outcome.is_none() {
+            self.outcome = Some(Outcome::Draw {
+                reason: DrawReason::FiftyMoveRule,
+            });
+        }
+    }
+
+    pub fn update_castling_rights(&mut self, ply: &Ply) {
+        // TODO: castling rights should be tracked as a log
+        if ply.piece_moved().kind() == Kind::King {
+            match ply.piece_moved().team() {
+                Team::White => {
+                    self.castling_rights.disable_white_king_side();
+                    self.castling_rights.disable_white_queen_side();
+                }
+                Team::Black => {
+                    self.castling_rights.disable_black_king_side();
+                    self.castling_rights.disable_black_queen_side();
+                }
+            }
+        }
+
+        let mut check_then_ban = |x, y| match (x, y) {
+            (0, 0) => self.castling_rights.disable_black_queen_side(),
+            (0, 7) => self.castling_rights.disable_black_king_side(),
+            (7, 0) => self.castling_rights.disable_white_queen_side(),
+            (7, 7) => self.castling_rights.disable_white_king_side(),
+            _ => {}
+        };
+
+        if ply.piece_moved().kind() == Kind::Rook {
+            check_then_ban(ply.starting_square().row(), ply.starting_square().column());
+        }
+
+        if let Some(piece_captured) = ply.piece_captured()
+            && piece_captured.kind() == Kind::Rook
+        {
+            check_then_ban(ply.ending_square().row(), ply.ending_square().column());
+        }
     }
 
     pub const fn change_turn(&mut self) {
@@ -190,12 +234,6 @@ impl BoardFrontend {
     }
 
     pub fn undo_last_move(&mut self) {
-        todo!()
-    }
-
-    pub fn redo_move(&mut self) {
-        if let Some(last_move) = self.undo_log.pop() {
-            self.make_move(last_move);
-        }
+        todo!();
     }
 }

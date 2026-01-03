@@ -117,7 +117,7 @@ pub fn pseudo_legal_moves(
                 && capture_coords == available_en_passant
             {
                 let captured_pawn_position =
-                    Coordinates::new((forward_row as usize), current_position.column()).unwrap();
+                    Coordinates::new(forward_row as usize, current_position.column()).unwrap();
                 pawn_moves.push(Ply::new(
                     current_position,
                     capture_coords,

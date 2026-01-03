@@ -37,6 +37,9 @@ cargo run -p bonsai-cli
 
 # Run the GUI
 cargo run -p bonsai-gui
+
+# Run the perft from bonsai-chess
+cargo run --release -p bonsai-chess --bin perft
 ```
 ## Status
 This project is currently under active development.

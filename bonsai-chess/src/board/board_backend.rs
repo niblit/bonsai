@@ -2,7 +2,7 @@ use crate::{
     BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE,
     atoms::{CastlingRights, Coordinates, Team},
     board::{Grid, Square, positions::STARTING_POSITION},
-    moves::generate_pseudo_legal_moves,
+    moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece, Piece},
 };
 
@@ -13,12 +13,67 @@ pub struct BoardBackend {
 
 impl BoardBackend {
     #[must_use]
-    pub const fn from_starting_position() -> Self
-    where
-        Self: std::marker::Sized,
-    {
+    pub const fn from_starting_position() -> Self {
         Self {
             grid: STARTING_POSITION,
+        }
+    }
+
+    pub fn apply_move(&mut self, ply: &Ply) {
+        self.unset(ply.starting_square());
+        self.set(ply.piece_moved(), ply.ending_square());
+
+        if let Some(special_move) = ply.special_move() {
+            match special_move {
+                SpecialMove::EnPassant(coordinates) => {
+                    self.unset(coordinates);
+                }
+                SpecialMove::Castle => {
+                    // TODO: refactor to avoid magic numbers
+                    let (rook_start, rook_end) = if (ply.starting_square().column() as isize
+                        - ply.ending_square().column() as isize)
+                        < 0
+                    {
+                        (
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() + 1,
+                            ),
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() - 1,
+                            ),
+                        )
+                    } else {
+                        (
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() - 2,
+                            ),
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() + 1,
+                            ),
+                        )
+                    };
+
+                    if let (Some(rook_start), Some(rook_end)) = (rook_start, rook_end)
+                        && let Some(rook_to_move) = self.get(rook_start)
+                    {
+                        self.set(rook_to_move, rook_end);
+                        self.unset(rook_start);
+                    }
+                }
+                SpecialMove::Promotion(valid_promotion) => {
+                    self.set(
+                        Piece::new(
+                            ply.piece_moved().team(),
+                            Kind::from_valid_promotions(valid_promotion),
+                        ),
+                        ply.ending_square(),
+                    );
+                }
+            }
         }
     }
 
@@ -33,6 +88,11 @@ impl BoardBackend {
     #[must_use]
     pub const fn get(&self, coordinates: Coordinates) -> Square {
         self.grid[coordinates.row()][coordinates.column()]
+    }
+
+    #[must_use]
+    pub fn get_all_pieces(&self) -> Vec<LocatedPiece> {
+        self.filter_pieces(|_| true)
     }
 
     #[must_use]

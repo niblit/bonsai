@@ -9,6 +9,7 @@ pub enum Kind {
 }
 
 impl Kind {
+    #[must_use]
     pub const fn from_valid_promotions(vp: ValidPromotions) -> Self {
         match vp {
             ValidPromotions::Queen => Self::Queen,

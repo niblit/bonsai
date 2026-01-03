@@ -46,6 +46,14 @@ fn get_castling_moves(
     backend: &BoardBackend,
     castling_rights: CastlingRights,
 ) -> Vec<Ply> {
+    // File Indices (0-7 for A-H)
+    const FILE_C: usize = 2; // Long Castle Destination
+    const FILE_D: usize = 3; // Long Castle Cross / Rook Dest
+    const FILE_F: usize = 5; // Short Castle Cross
+    const FILE_G: usize = 6; // Short Castle Destination
+    // Note: B-file (index 1) needed for occupancy check on Long Castle
+    const FILE_B: usize = 1;
+
     let mut castling_moves = Vec::new();
     let team = what_to_move.piece().team();
     let enemy = team.opposite();
@@ -59,14 +67,6 @@ fn get_castling_moves(
         Team::White => 7,
         Team::Black => 0,
     };
-
-    // File Indices (0-7 for A-H)
-    const FILE_C: usize = 2; // Long Castle Destination
-    const FILE_D: usize = 3; // Long Castle Cross / Rook Dest
-    const FILE_F: usize = 5; // Short Castle Cross
-    const FILE_G: usize = 6; // Short Castle Destination
-    // Note: B-file (index 1) needed for occupancy check on Long Castle
-    const FILE_B: usize = 1;
 
     // Helper to get Coordinate safely
     let get_coord = |file: usize| -> Coordinates {

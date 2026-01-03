@@ -7,7 +7,14 @@ pub struct CastlingRights {
     black_queen_side: bool,
 }
 
+impl Default for CastlingRights {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CastlingRights {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             white_king_side: true,
@@ -17,6 +24,7 @@ impl CastlingRights {
         }
     }
 
+    #[must_use]
     pub const fn no_rights() -> Self {
         Self {
             white_king_side: false,
@@ -27,6 +35,7 @@ impl CastlingRights {
     }
 
     #[allow(clippy::fn_params_excessive_bools)]
+    #[must_use]
     pub const fn from(
         white_king_side: bool,
         white_queen_side: bool,
@@ -41,18 +50,22 @@ impl CastlingRights {
         }
     }
 
+    #[must_use]
     pub const fn white_king_side(self) -> bool {
         self.white_king_side
     }
 
+    #[must_use]
     pub const fn white_queen_side(self) -> bool {
         self.white_queen_side
     }
 
+    #[must_use]
     pub const fn black_king_side(self) -> bool {
         self.black_king_side
     }
 
+    #[must_use]
     pub const fn black_queen_side(self) -> bool {
         self.black_queen_side
     }

@@ -14,6 +14,7 @@ use crate::{
     pieces::{Kind, LocatedPiece},
 };
 
+#[must_use]
 pub fn generate_pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
