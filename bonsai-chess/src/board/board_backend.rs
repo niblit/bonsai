@@ -19,7 +19,7 @@ impl BoardBackend {
         }
     }
 
-    pub fn apply_move(&mut self, ply: &Ply) {
+    pub fn make_move(&mut self, ply: &Ply) {
         self.unset(ply.starting_square());
         self.set(ply.piece_moved(), ply.ending_square());
 
@@ -30,11 +30,11 @@ impl BoardBackend {
                 }
                 SpecialMove::Castle => {
                     #[allow(clippy::cast_possible_wrap)]
-                    let king_movement_vector = ply.starting_square().column() as isize
+                    let king_movement_direction = ply.starting_square().column() as isize
                         - ply.ending_square().column() as isize;
 
                     // TODO: refactor to avoid magic numbers
-                    let (rook_start, rook_end) = if king_movement_vector < 0 {
+                    let (rook_start, rook_end) = if king_movement_direction < 0 {
                         (
                             Coordinates::new(
                                 ply.ending_square().row(),
@@ -73,6 +73,66 @@ impl BoardBackend {
                         ),
                         ply.ending_square(),
                     );
+                }
+            }
+        }
+    }
+
+    pub fn undo_move(&mut self, ply: &Ply) {
+        self.set(ply.piece_moved(), ply.starting_square());
+        if let Some(piece_captured) = ply.piece_captured() {
+            self.set(piece_captured, ply.ending_square());
+        } else {
+            self.unset(ply.ending_square());
+        }
+
+        // Solve special moves
+        if let Some(special_move) = ply.special_move() {
+            match special_move {
+                SpecialMove::Castle => {
+                    #[allow(clippy::cast_possible_wrap)]
+                    let king_movement_direction = ply.starting_square().row() as isize
+                        - ply.ending_square().column() as isize;
+
+                    let (rook_start, rook_end) = if king_movement_direction < 0 {
+                        (
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() - 1,
+                            ),
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() + 1,
+                            ),
+                        )
+                    } else {
+                        (
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() + 1,
+                            ),
+                            Coordinates::new(
+                                ply.ending_square().row(),
+                                ply.ending_square().column() - 2,
+                            ),
+                        )
+                    };
+
+                    if let (Some(rook_start), Some(rook_end)) = (rook_start, rook_end)
+                        && let Some(rook_to_move) = self.get(rook_start)
+                    {
+                        self.set(rook_to_move, rook_end);
+                        self.unset(rook_start);
+                    }
+                }
+                SpecialMove::EnPassant(captured_pawn_coordinates) => {
+                    self.set(
+                        Piece::new(ply.piece_moved().team().opposite(), Kind::Pawn),
+                        captured_pawn_coordinates,
+                    );
+                }
+                SpecialMove::Promotion(_valid_promotions) => {
+                    // nothing extra to do
                 }
             }
         }

@@ -225,7 +225,7 @@ impl BoardFrontend {
 
     pub fn make_move(&mut self, ply: &Ply) {
         // Do low level board move
-        self.backend.apply_move(ply);
+        self.backend.make_move(ply);
 
         // Add last move to move log
         self.move_log.push(*ply);
@@ -309,6 +309,55 @@ impl BoardFrontend {
         }
     }
 
+    pub fn undo_last_move(&mut self) {
+        if let Some(last_move) = self.move_log.pop() {
+            self.undo_move(&last_move);
+        }
+    }
+
+    fn undo_move(&mut self, ply: &Ply) {
+        // check for dead position
+
+        // undo threefold repetition table
+        if let Some(repetitions) = self.repetition_table.get_mut(&self.create_snapshot()) {
+            *repetitions -= 1;
+        }
+
+        // Low level move
+        self.backend.undo_move(ply);
+
+        // check for fifty move rule
+
+        // Keep track of en en_passant_target
+        if let Some(possible_pawn_move) = self.move_log.last()
+            && possible_pawn_move.piece_moved().kind() == Kind::Pawn
+        {
+            let jump_distance = possible_pawn_move
+                .starting_square()
+                .row()
+                .abs_diff(possible_pawn_move.ending_square().row());
+            if jump_distance == 2
+                && let Some(en_passant_coords) = Coordinates::new(
+                    match possible_pawn_move.piece_moved().team() {
+                        Team::White => possible_pawn_move.starting_square().row() - 1,
+                        Team::Black => possible_pawn_move.starting_square().row() + 1,
+                    },
+                    possible_pawn_move.starting_square().column(),
+                )
+            {
+                self.en_passant_target = Some(en_passant_coords);
+            }
+        }
+
+        // update castling_rights
+
+        // set turn to opponent
+        self.change_turn();
+
+        // check for king check
+        self.in_check = self.is_in_check();
+    }
+
     pub fn update_castling_rights(&mut self, ply: &Ply) {
         // TODO: castling rights should be tracked as a log
         if ply.piece_moved().kind() == Kind::King {
@@ -367,9 +416,5 @@ impl BoardFrontend {
         // 2. Check if that square is under attack
         self.backend
             .is_square_under_attack(king_pos, self.turn.opposite())
-    }
-
-    pub fn undo_last_move(&mut self) {
-        todo!();
     }
 }
