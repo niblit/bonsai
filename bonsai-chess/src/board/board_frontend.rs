@@ -198,8 +198,19 @@ impl BoardFrontend {
     }
 
     #[must_use]
-    pub fn get_legal_moves(&self) -> Vec<Ply> {
-        self.get_pseudo_legal_moves()
+    pub fn get_legal_moves(&mut self) -> Vec<Ply> {
+        let mut legal_moves = Vec::new();
+        let pseudo_legal_moves = self.get_pseudo_legal_moves();
+
+        for pseudo_legal_move in pseudo_legal_moves {
+            self.backend.make_move(&pseudo_legal_move);
+            if !self.is_in_check() {
+                legal_moves.push(pseudo_legal_move);
+            }
+            self.backend.undo_move(&pseudo_legal_move);
+        }
+
+        legal_moves
     }
 
     #[must_use]
