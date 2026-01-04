@@ -34,12 +34,9 @@
           buildInputs = with pkgs; [
             rustToolchain
             
-            # Common system dependencies for Rust crates (e.g., openssl-sys)
+            # Common system dependencies for Rust crates
             pkg-config
             clang
-            
-            # Additional Cargo utilities
-            cargo-audit  # Audit dependencies for security vulnerabilities
           ];
 
           # Environment variables
