@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    atoms::{CastlingRights, Coordinates, Team},
+    atoms::{CastlingRights, Coordinates, MoveCounter, Team},
     board::{Grid, board_backend::BoardBackend},
     moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece, Piece},
@@ -24,8 +24,7 @@ pub struct BoardFrontend {
     castling_rights: CastlingRights,
     en_passant_target: Option<Coordinates>,
 
-    halfmove_clock: usize,
-    fullmove_clock: usize,
+    move_counter: MoveCounter,
 
     move_log: Vec<Ply>,
 
@@ -55,8 +54,7 @@ impl BoardFrontend {
             castling_rights: CastlingRights::new(),
             en_passant_target: None,
 
-            halfmove_clock: 0,
-            fullmove_clock: 1,
+            move_counter: MoveCounter::new(),
 
             move_log: Vec::new(),
 
@@ -170,13 +168,14 @@ impl BoardFrontend {
         let halfmove_clock = parts.get(4).unwrap_or(&"0").parse().unwrap_or(0);
         let fullmove_clock = parts.get(5).unwrap_or(&"1").parse().unwrap_or(1);
 
+        let move_counter = MoveCounter::from(halfmove_clock, 0, fullmove_clock);
+
         let mut board = Self {
             backend,
             turn,
             castling_rights,
             en_passant_target,
-            halfmove_clock,
-            fullmove_clock,
+            move_counter,
             move_log: Vec::new(),
             repetition_table: HashMap::new(),
             outcome: None,
@@ -304,16 +303,16 @@ impl BoardFrontend {
         // check for fifty-move rule
         // TODO: refactor for better readability
         if let Some(SpecialMove::Promotion(_)) = ply.special_move() {
-            self.halfmove_clock = 0;
+            self.move_counter.tick(true);
         } else if let Some(SpecialMove::EnPassant(_)) = ply.special_move() {
-            self.halfmove_clock = 0;
+            self.move_counter.tick(true);
         } else if ply.piece_moved().kind() == Kind::Pawn || ply.piece_captured().is_some() {
-            self.halfmove_clock = 0;
+            self.move_counter.tick(true);
         } else {
-            self.halfmove_clock = self.halfmove_clock.saturating_add(1);
+            self.move_counter.tick(false);
         }
 
-        if self.halfmove_clock >= 100 && self.outcome.is_none() {
+        if self.move_counter.fifty_move_rule_counter() >= 100 && self.outcome.is_none() {
             self.outcome = Some(Outcome::Draw {
                 reason: DrawReason::FiftyMoveRule,
             });
@@ -359,6 +358,9 @@ impl BoardFrontend {
                 self.en_passant_target = Some(en_passant_coords);
             }
         }
+
+        // reduce move MoveCounter
+        self.move_counter.untick();
 
         // update castling_rights
 
