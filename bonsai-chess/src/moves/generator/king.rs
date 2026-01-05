@@ -145,13 +145,5 @@ fn get_castling_moves(
         }
     }
 
-    if !castling_moves.is_empty() {
-        dbg!(what_to_move);
-        dbg!(castling_rights);
-        dbg!(backend.grid());
-        dbg!(castling_moves);
-        panic!("stop")
-    }
-
     castling_moves
 }
