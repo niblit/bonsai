@@ -360,6 +360,7 @@ impl BoardFrontend {
 
     fn undo_move(&mut self, ply: &Ply) {
         // check for dead position
+        self.outcome = None;
 
         // undo threefold repetition table
         if let Some(repetitions) = self.repetition_table.get_mut(&self.create_snapshot()) {
@@ -374,6 +375,8 @@ impl BoardFrontend {
         // Keep track of en en_passant_target
         if let Some(possible_pawn_move) = self.move_log.last() {
             self.en_passant_target = Self::get_en_passant_target(possible_pawn_move);
+        } else {
+            self.en_passant_target = None;
         }
 
         // reduce move MoveCounter
