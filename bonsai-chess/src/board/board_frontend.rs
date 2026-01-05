@@ -5,7 +5,7 @@ use crate::{
     board::{Grid, board_backend::BoardBackend},
     moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece, Piece},
-    rules::{DrawReason, Outcome},
+    rules::{DrawReason, Outcome, WinReason},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -243,6 +243,11 @@ impl BoardFrontend {
     }
 
     pub fn make_move(&mut self, ply: &Ply) {
+        // Cannot perform action if game is over
+        if self.outcome.is_some() {
+            return;
+        }
+
         // Do low level board move
         self.backend.make_move(ply);
 
@@ -325,6 +330,20 @@ impl BoardFrontend {
             self.outcome = Some(Outcome::Draw {
                 reason: DrawReason::FiftyMoveRule,
             });
+        }
+
+        let legal_moves_after_move = self.get_legal_moves();
+        if legal_moves_after_move.is_empty() {
+            if self.is_in_check() {
+                self.outcome = Some(Outcome::Win {
+                    winner: self.turn.opposite(),
+                    reason: WinReason::Checkmate,
+                });
+            } else {
+                self.outcome = Some(Outcome::Draw {
+                    reason: DrawReason::Stalemate,
+                });
+            }
         }
     }
 
@@ -446,5 +465,10 @@ impl BoardFrontend {
         // 2. Check if that square is under attack
         self.backend
             .is_square_under_attack(king_pos, self.turn.opposite())
+    }
+
+    #[must_use]
+    pub const fn outcome(&self) -> Option<Outcome> {
+        self.outcome
     }
 }

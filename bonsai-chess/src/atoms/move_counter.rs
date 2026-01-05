@@ -17,7 +17,7 @@ impl MoveCounter {
         Self {
             fifty_move_rule_counter: vec![0],
             halfmove: 0,
-            fullmove: 0,
+            fullmove: 1,
         }
     }
 
@@ -37,11 +37,10 @@ impl MoveCounter {
             *count = count.saturating_add(1);
         }
 
+        self.halfmove = self.halfmove.saturating_add(1);
         if self.halfmove.is_multiple_of(2) {
             self.fullmove = self.fullmove.saturating_add(1);
         }
-
-        self.halfmove = self.halfmove.saturating_add(1);
     }
 
     pub fn untick(&mut self) {

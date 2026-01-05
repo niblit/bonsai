@@ -21,6 +21,47 @@ pub enum Outcome {
     },
 }
 
+impl Outcome {
+    /// Returns the winner if the game was won, or None if it was a draw.
+    #[must_use]
+    pub const fn winner(&self) -> Option<Team> {
+        match self {
+            Self::Win { winner, .. } => Some(*winner),
+            Self::Draw { .. } => None,
+        }
+    }
+
+    /// Returns the specific win reason if the game was won.
+    #[must_use]
+    pub const fn win_reason(&self) -> Option<WinReason> {
+        match self {
+            Self::Win { reason, .. } => Some(*reason),
+            Self::Draw { .. } => None,
+        }
+    }
+
+    /// Returns the specific draw reason if the game was a draw.
+    #[must_use]
+    pub const fn draw_reason(&self) -> Option<DrawReason> {
+        match self {
+            Self::Draw { reason } => Some(*reason),
+            Self::Win { .. } => None,
+        }
+    }
+
+    /// Returns true if the game ended in a win.
+    #[must_use]
+    pub const fn is_win(&self) -> bool {
+        matches!(self, Self::Win { .. })
+    }
+
+    /// Returns true if the game ended in a draw.
+    #[must_use]
+    pub const fn is_draw(&self) -> bool {
+        matches!(self, Self::Draw { .. })
+    }
+}
+
 /// Represents the specific reason a chess game ended with a win.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum WinReason {
