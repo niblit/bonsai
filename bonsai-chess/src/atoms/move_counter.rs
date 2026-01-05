@@ -5,7 +5,14 @@ pub struct MoveCounter {
     fullmove: usize,
 }
 
+impl Default for MoveCounter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MoveCounter {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             fifty_move_rule_counter: vec![0],
@@ -14,6 +21,7 @@ impl MoveCounter {
         }
     }
 
+    #[must_use]
     pub fn from(fifty_move_rule_counter: usize, halfmove: usize, fullmove: usize) -> Self {
         Self {
             fifty_move_rule_counter: vec![fifty_move_rule_counter],
