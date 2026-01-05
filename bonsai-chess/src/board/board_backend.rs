@@ -80,9 +80,16 @@ impl BoardBackend {
 
     pub fn undo_move(&mut self, ply: &Ply) {
         self.set(ply.piece_moved(), ply.starting_square());
-        if let Some(piece_captured) = ply.piece_captured() {
+
+        // Check for En Passant specifically to avoid placing debris on the ending_square
+        if let Some(SpecialMove::EnPassant(_)) = ply.special_move() {
+            // For En Passant, the destination square must be empty after undo
+            self.unset(ply.ending_square());
+        } else if let Some(piece_captured) = ply.piece_captured() {
+            // Standard capture: restore the piece to the square it was on
             self.set(piece_captured, ply.ending_square());
         } else {
+            // Quiet move: the destination square becomes empty
             self.unset(ply.ending_square());
         }
 
@@ -91,7 +98,7 @@ impl BoardBackend {
             match special_move {
                 SpecialMove::Castle => {
                     #[allow(clippy::cast_possible_wrap)]
-                    let king_movement_direction = ply.starting_square().row() as isize
+                    let king_movement_direction = ply.starting_square().column() as isize
                         - ply.ending_square().column() as isize;
 
                     let (rook_start, rook_end) = if king_movement_direction < 0 {
