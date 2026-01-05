@@ -11,7 +11,7 @@ use crate::{
             sliding::slide,
         },
     },
-    pieces::LocatedPiece,
+    pieces::{Kind, LocatedPiece},
 };
 
 pub fn pseudo_legal_moves(
@@ -47,48 +47,55 @@ fn get_castling_moves(
     castling_rights: CastlingRights,
 ) -> Vec<Ply> {
     // File Indices (0-7 for A-H)
+    const FILE_B: usize = 1; // Occupancy check on long castle
     const FILE_C: usize = 2; // Long Castle Destination
     const FILE_D: usize = 3; // Long Castle Cross / Rook Dest
     const FILE_F: usize = 5; // Short Castle Cross
     const FILE_G: usize = 6; // Short Castle Destination
-    // Note: B-file (index 1) needed for occupancy check on Long Castle
-    const FILE_B: usize = 1;
+
+    const FILE_A: usize = 0; // where long side rook is
+    const FILE_H: usize = 7; // where short side rook is
 
     let mut castling_moves = Vec::new();
-    let team = what_to_move.piece().team();
-    let enemy = team.opposite();
+    let ally = what_to_move.piece().team();
+    let enemy = ally.opposite();
 
     // 1. Cannot castle if currently in check
     if backend.is_square_under_attack(what_to_move.position(), enemy) {
-        return castling_moves; // empty
+        return castling_moves;
     }
 
-    let rank = match team {
+    let castling_row = match ally {
         Team::White => 7,
         Team::Black => 0,
     };
 
     // Helper to get Coordinate safely
-    let get_coord = |file: usize| -> Coordinates {
-        Coordinates::new(file, rank).unwrap() // Assuming new(file, rank)
-    };
+    let to_coordinates =
+        |column: usize| -> Coordinates { Coordinates::new(castling_row, column).unwrap() };
 
     // --- Kingside (Short) ---
     // Checks: Rights + Path Empty (F, G) + Path Safe (F, G)
-    let can_castle_short = match team {
+    let can_castle_short = match ally {
         Team::White => castling_rights.white_king_side(),
         Team::Black => castling_rights.black_king_side(),
     };
 
     if can_castle_short {
-        let f_square = get_coord(FILE_F);
-        let g_square = get_coord(FILE_G);
+        let f_square = to_coordinates(FILE_F);
+        let g_square = to_coordinates(FILE_G);
 
-        let path_clear = backend.get(f_square).is_none() && backend.get(g_square).is_none();
-        let path_safe = !backend.is_square_under_attack(f_square, enemy)
+        let is_path_clear = backend.get(f_square).is_none() && backend.get(g_square).is_none();
+        let is_path_safe = !backend.is_square_under_attack(f_square, enemy)
             && !backend.is_square_under_attack(g_square, enemy);
 
-        if path_clear && path_safe {
+        let is_rook_in_place = backend
+            .get(Coordinates::new(castling_row, FILE_H).unwrap())
+            .is_some_and(|potential_rook| {
+                potential_rook.kind() == Kind::Rook && potential_rook.team() == ally
+            });
+
+        if is_path_clear && is_path_safe && is_rook_in_place {
             castling_moves.push(Ply::new(
                 what_to_move.position(),
                 g_square,
@@ -102,26 +109,32 @@ fn get_castling_moves(
     // --- Queenside (Long) ---
     // Checks: Rights + Path Empty (B, C, D) + Path Safe (C, D)
     // Note: B-file must be empty, but does NOT need to be safe from attack.
-    let can_castle_long = match team {
+    let can_castle_long = match ally {
         Team::White => castling_rights.white_queen_side(),
         Team::Black => castling_rights.black_queen_side(),
     };
 
     if can_castle_long {
-        let b_square = get_coord(FILE_B);
-        let c_square = get_coord(FILE_C);
-        let d_square = get_coord(FILE_D);
+        let b_square = to_coordinates(FILE_B);
+        let c_square = to_coordinates(FILE_C);
+        let d_square = to_coordinates(FILE_D);
 
         // B, C, and D must be empty
-        let path_clear = backend.get(b_square).is_none()
+        let is_path_clear = backend.get(b_square).is_none()
             && backend.get(c_square).is_none()
             && backend.get(d_square).is_none();
 
         // Only C and D (where King moves) must be safe
-        let path_safe = !backend.is_square_under_attack(c_square, enemy)
+        let is_path_safe = !backend.is_square_under_attack(c_square, enemy)
             && !backend.is_square_under_attack(d_square, enemy);
 
-        if path_clear && path_safe {
+        let is_rook_in_place = backend
+            .get(Coordinates::new(castling_row, FILE_A).unwrap())
+            .is_some_and(|potential_rook| {
+                potential_rook.kind() == Kind::Rook && potential_rook.team() == ally
+            });
+
+        if is_path_clear && is_path_safe && is_rook_in_place {
             castling_moves.push(Ply::new(
                 what_to_move.position(),
                 c_square,
@@ -130,6 +143,14 @@ fn get_castling_moves(
                 Some(SpecialMove::Castle),
             ));
         }
+    }
+
+    if !castling_moves.is_empty() {
+        dbg!(what_to_move);
+        dbg!(castling_rights);
+        dbg!(backend.grid());
+        dbg!(castling_moves);
+        panic!("stop")
     }
 
     castling_moves
