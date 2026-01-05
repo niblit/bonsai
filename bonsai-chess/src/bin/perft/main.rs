@@ -11,7 +11,7 @@ use perft::perft;
 use crate::expected::PERFT_EXPECTED;
 
 fn main() {
-    for (depth, expected) in PERFT_EXPECTED.iter().enumerate() {
+    for (depth, &expected) in PERFT_EXPECTED.iter().enumerate() {
         let mut game = BoardFrontend::from_starting_position();
 
         println!("--- Depth: {depth} ---");
@@ -23,6 +23,6 @@ fn main() {
         println!("{result:?}");
         println!("Took: {} seconds\n", end.as_secs_f64());
 
-        assert_eq!(result, *expected);
+        assert_eq!(result, expected);
     }
 }

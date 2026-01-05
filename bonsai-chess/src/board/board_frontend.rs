@@ -242,20 +242,8 @@ impl BoardFrontend {
         pseudo_legal_moves
     }
 
-    pub fn make_move(&mut self, ply: &Ply) {
-        // Cannot perform action if game is over
-        if self.outcome.is_some() {
-            return;
-        }
-
-        // Do low level board move
-        self.backend.make_move(ply);
-
-        // Add last move to move log
-        self.move_log.push(*ply);
-
-        // If move is a pawn double extension, keep track of en_passant possibility
-        self.en_passant_target = None;
+    #[must_use]
+    fn get_en_passant_target(ply: &Ply) -> Option<Coordinates> {
         if ply.piece_moved().kind() == Kind::Pawn {
             let jump_distance = ply
                 .starting_square()
@@ -270,9 +258,26 @@ impl BoardFrontend {
                     ply.starting_square().column(),
                 )
             {
-                self.en_passant_target = Some(en_passant_coords);
+                return Some(en_passant_coords);
             }
         }
+        None
+    }
+
+    pub fn make_move(&mut self, ply: &Ply) {
+        // Cannot perform action if game is over
+        if self.outcome.is_some() {
+            return;
+        }
+
+        // Do low level board move
+        self.backend.make_move(ply);
+
+        // Add last move to move log
+        self.move_log.push(*ply);
+
+        // If move is a pawn double extension, keep track of en_passant possibility
+        self.en_passant_target = Self::get_en_passant_target(ply);
 
         // update CastlingRights
         self.update_castling_rights(ply);
@@ -367,31 +372,17 @@ impl BoardFrontend {
         // check for fifty move rule
 
         // Keep track of en en_passant_target
-        if let Some(possible_pawn_move) = self.move_log.last()
-            && possible_pawn_move.piece_moved().kind() == Kind::Pawn
-        {
-            let jump_distance = possible_pawn_move
-                .starting_square()
-                .row()
-                .abs_diff(possible_pawn_move.ending_square().row());
-            if jump_distance == 2
-                && let Some(en_passant_coords) = Coordinates::new(
-                    match possible_pawn_move.piece_moved().team() {
-                        Team::White => possible_pawn_move.starting_square().row() - 1,
-                        Team::Black => possible_pawn_move.starting_square().row() + 1,
-                    },
-                    possible_pawn_move.starting_square().column(),
-                )
-            {
-                self.en_passant_target = Some(en_passant_coords);
-            }
+        if let Some(possible_pawn_move) = self.move_log.last() {
+            self.en_passant_target = Self::get_en_passant_target(possible_pawn_move);
         }
 
         // reduce move MoveCounter
         self.move_counter.untick();
 
         // update castling_rights
-        self.castling_rights_log.pop();
+        if self.castling_rights_log.len() > 1 {
+            self.castling_rights_log.pop();
+        }
 
         // set turn to opponent
         self.change_turn();
