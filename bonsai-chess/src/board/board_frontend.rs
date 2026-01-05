@@ -21,7 +21,7 @@ pub struct BoardFrontend {
     backend: BoardBackend,
 
     turn: Team,
-    castling_rights: CastlingRights,
+    castling_rights_log: Vec<CastlingRights>,
     en_passant_target: Option<Coordinates>,
 
     move_counter: MoveCounter,
@@ -37,11 +37,15 @@ pub struct BoardFrontend {
 
 impl BoardFrontend {
     #[must_use]
-    pub const fn create_snapshot(&self) -> PositionSnapshot {
+    pub fn create_snapshot(&self) -> PositionSnapshot {
         PositionSnapshot {
             pieces_positions: *self.backend.grid(),
             turn: self.turn,
-            remaining_castling_rights: self.castling_rights,
+            remaining_castling_rights: self
+                .castling_rights_log
+                .last()
+                .copied()
+                .unwrap_or(CastlingRights::no_rights()),
             en_passant: self.en_passant_target,
         }
     }
@@ -51,7 +55,7 @@ impl BoardFrontend {
         Self {
             backend: BoardBackend::from_starting_position(),
             turn: Team::White,
-            castling_rights: CastlingRights::new(),
+            castling_rights_log: vec![CastlingRights::new()],
             en_passant_target: None,
 
             move_counter: MoveCounter::new(),
@@ -138,6 +142,8 @@ impl BoardFrontend {
             }
         }
 
+        let castling_rights_log = vec![castling_rights];
+
         // 4. En Passant Target
         let en_passant_str = parts.get(3).unwrap_or(&"-");
         let en_passant_target = if *en_passant_str == "-" {
@@ -173,7 +179,7 @@ impl BoardFrontend {
         let mut board = Self {
             backend,
             turn,
-            castling_rights,
+            castling_rights_log,
             en_passant_target,
             move_counter,
             move_log: Vec::new(),
@@ -226,7 +232,10 @@ impl BoardFrontend {
                 current_piece,
                 &self.backend,
                 self.en_passant_target,
-                self.castling_rights,
+                self.castling_rights_log
+                    .last()
+                    .copied()
+                    .unwrap_or(CastlingRights::no_rights()),
             );
             pseudo_legal_moves.append(&mut current_piece_legal_moves);
         }
@@ -363,6 +372,7 @@ impl BoardFrontend {
         self.move_counter.untick();
 
         // update castling_rights
+        self.castling_rights_log.pop();
 
         // set turn to opponent
         self.change_turn();
@@ -372,25 +382,30 @@ impl BoardFrontend {
     }
 
     pub fn update_castling_rights(&mut self, ply: &Ply) {
+        let mut castling_rights = self
+            .castling_rights_log
+            .last()
+            .copied()
+            .unwrap_or(CastlingRights::no_rights());
         // TODO: castling rights should be tracked as a log
         if ply.piece_moved().kind() == Kind::King {
             match ply.piece_moved().team() {
                 Team::White => {
-                    self.castling_rights.disable_white_king_side();
-                    self.castling_rights.disable_white_queen_side();
+                    castling_rights.disable_white_king_side();
+                    castling_rights.disable_white_queen_side();
                 }
                 Team::Black => {
-                    self.castling_rights.disable_black_king_side();
-                    self.castling_rights.disable_black_queen_side();
+                    castling_rights.disable_black_king_side();
+                    castling_rights.disable_black_queen_side();
                 }
             }
         }
 
         let mut check_then_ban = |x, y| match (x, y) {
-            (0, 0) => self.castling_rights.disable_black_queen_side(),
-            (0, 7) => self.castling_rights.disable_black_king_side(),
-            (7, 0) => self.castling_rights.disable_white_queen_side(),
-            (7, 7) => self.castling_rights.disable_white_king_side(),
+            (0, 0) => castling_rights.disable_black_queen_side(),
+            (0, 7) => castling_rights.disable_black_king_side(),
+            (7, 0) => castling_rights.disable_white_queen_side(),
+            (7, 7) => castling_rights.disable_white_king_side(),
             _ => {}
         };
 
@@ -403,6 +418,8 @@ impl BoardFrontend {
         {
             check_then_ban(ply.ending_square().row(), ply.ending_square().column());
         }
+
+        self.castling_rights_log.push(castling_rights);
     }
 
     pub const fn change_turn(&mut self) {
