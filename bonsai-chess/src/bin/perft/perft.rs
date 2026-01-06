@@ -2,6 +2,47 @@ use bonsai_chess::prelude::*;
 
 use crate::perft_results::PerftResults;
 
+pub fn root_level_perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
+    // 1. Handle Depth 0 (Base Case)
+    // Perft(0) is just the current board state itself (1 node).
+    if depth == 0 {
+        let mut res = PerftResults::new();
+        res.nodes = 1;
+        return res;
+    }
+
+    // 2. Optimization for Depth 1
+    // Threading is slower than serial execution for shallow depths.
+    if depth == 1 {
+        return perft(game, 1);
+    }
+
+    let moves = game.get_legal_moves();
+    let mut handles = Vec::new();
+
+    for m in moves {
+        let mut board_clone = game.clone();
+
+        let handle = std::thread::spawn(move || {
+            board_clone.make_move(&m);
+            // This is now safe because we ensured depth > 0 above
+            perft(&mut board_clone, depth - 1)
+        });
+
+        handles.push(handle);
+    }
+
+    let mut total_results = PerftResults::new();
+
+    for handle in handles {
+        if let Ok(result) = handle.join() {
+            total_results += result;
+        }
+    }
+
+    total_results
+}
+
 pub fn perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
     let mut results = PerftResults::new();
 

@@ -6,9 +6,7 @@ mod expected;
 mod perft;
 mod perft_results;
 
-use perft::perft;
-
-use crate::expected::PERFT_EXPECTED;
+use crate::{expected::PERFT_EXPECTED, perft::root_level_perft};
 
 fn main() {
     for (depth, &expected) in PERFT_EXPECTED.iter().enumerate() {
@@ -17,7 +15,7 @@ fn main() {
         println!("--- Depth: {depth} ---");
 
         let start = Instant::now();
-        let result = perft(&mut game, depth);
+        let result = root_level_perft(&mut game, depth);
         let end = start.elapsed();
 
         println!("{result:?}");
