@@ -1,26 +1,60 @@
 # bonsai-chess
 
-`bonsai-chess` is the core library for the bonsai project. It handles the fundamental rules of chess, including board representation, piece movement, and game states.
+`bonsai-chess` is the core library for the Bonsai chess workspace. It implements the domain logic of chess, including board representation, strictly-typed move generation, and rule enforcement (checkmate, stalemate, 50-move rule, etc.).
+
+It is designed to be modular and type-safe, preventing invalid board states through the type system wherever possible.
 
 ## Features
 
-* **Strongly Typed Coordinates**: Uses a `Coordinates` struct to ensure safe and valid board access, preventing out-of-bounds errors.
-* **Board Abstraction**: Defines a `BoardBackend` trait, allowing for different internal representations of the chess board (e.g., `BoardGrid`).
-* **Move Generation**: Includes a modular move generator.
-    * Supports pseudo-legal move generation logic.
-    * Specific handling for sliding pieces (Rook, Bishop, Queen) via generic direction and distance logic.
-    * *Note: Move generation for Leapers (Knights, King) and Pawns is currently under construction.*
-* **Game Outcomes**: Comprehensive definitions for game results, including specific win reasons (Checkmate, Resignation, Time) and draw reasons (Stalemate, Threefold Repetition, 50-Move Rule).
+* **Strongly Typed Coordinates**: Uses a `Coordinates` struct to guarantee safe array indexing, making out-of-bounds errors impossible at the logic level.
+* **Dual-Layer Board Architecture**:
+    * **`BoardBackend`**: Manages the raw 8x8 grid and low-level piece placement.
+    * **`BoardFrontend`**: Manages high-level game state, including turn cycles, castling rights, move history, and repetition detection.
+* **Complete Move Generation**:
+    * Generates pseudo-legal moves for all piece types (Pawns, Knights, Kings, and Sliding pieces).
+    * Validates moves against check constraints to produce strictly legal moves.
+    * Handles special moves: Castling, En Passant, and Pawn Promotion.
+* **Perft Tested**: Validated against standard Perft (Performance Test) positions to ensure strict adherence to move generation rules.
+* **Rich Game Outcomes**: Distinguishes between various end-game states, including Checkmate, Stalemate, Threefold Repetition, Insufficient Material, and the 50-Move Rule.
 
 ## Architecture
 
-* **`Board`**: The central struct managing the game state, turn, castling rights, and move history.
-* **`Piece` & `Kind`**: Enums and structs representing the standard chess pieces and their teams (White/Black).
-* **`Ply`**: Represents a single half-move, tracking the start/end squares and any captured pieces or special moves (like En Passant or Castling).
+The library is organized into the following modules:
+
+* **`atoms`**: Fundamental types like `Square`, `Color` (Team), `CastlingRights`, and `Coordinates`.
+* **`board`**: The core state containers (`BoardFrontend`, `BoardBackend`).
+* **`moves`**: Move definitions (`Ply`, `SpecialMove`) and the move generator logic.
+* **`pieces`**: Piece definitions (`Piece`, `Kind`) and location wrappers (`LocatedPiece`).
+* **`rules`**: Enums describing game results (`Outcome`, `WinReason`, `DrawReason`).
 
 ## Usage
 
-*This library is currently a work in progress. APIs may change.*
+Add `bonsai-chess` to your dependencies, then use the `prelude` to access core types:
+
+```rust
+use bonsai_chess::prelude::*;
+
+fn main() {
+    // 1. Initialize the game with the standard starting position
+    let mut game = BoardFrontend::from_starting_position();
+
+    // 2. Generate legal moves for the current side (White)
+    let legal_moves = game.get_legal_moves();
+    println!("Number of legal moves: {}", legal_moves.len());
+
+    // 3. Make a move (e.g., picking the first available one)
+    if let Some(first_move) = legal_moves.first() {
+        game.make_move(first_move);
+        println!("Moved piece from {:?} to {:?}", first_move.starting_square(), first_move.ending_square());
+    }
+
+    // 4. Check game status
+    if let Some(outcome) = game.outcome() {
+        println!("Game over: {:?}", outcome);
+    } else {
+        println!("Game is ongoing.");
+    }
+}
 
 ## License
-Part of the Bonsai project workspace.
+Part of the Bonsai project workspace. Licensed under GPL-3.0-or-later.

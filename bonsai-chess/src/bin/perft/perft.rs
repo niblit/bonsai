@@ -2,6 +2,20 @@ use bonsai_chess::prelude::*;
 
 use crate::perft_results::PerftResults;
 
+/// Executes a Perft run starting from the current board state, using multiple threads.
+///
+/// This function acts as the parallelized root of the recursion. Instead of processing
+/// the entire tree on a single thread, it generates the first ply of moves and spawns
+/// a separate thread for each move to calculate the sub-results.
+///
+/// # Arguments
+///
+/// * `game`: The board state at the root of the tree.
+/// * `depth`: The target depth to traverse.
+///
+/// # Returns
+///
+/// The aggregated [`PerftResults`] from all threads.
 pub fn root_level_perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
     // 1. Handle Depth 0 (Base Case)
     // Perft(0) is just the current board state itself (1 node).
@@ -20,12 +34,12 @@ pub fn root_level_perft(game: &mut BoardFrontend, depth: usize) -> PerftResults 
     let moves = game.get_legal_moves();
     let mut handles = Vec::new();
 
+    // Spawn a thread for each legal move available at the root.
     for m in moves {
         let mut board_clone = game.clone();
 
         let handle = std::thread::spawn(move || {
             board_clone.make_move(&m);
-            // This is now safe because we ensured depth > 0 above
             perft(&mut board_clone, depth - 1)
         });
 
@@ -34,6 +48,7 @@ pub fn root_level_perft(game: &mut BoardFrontend, depth: usize) -> PerftResults 
 
     let mut total_results = PerftResults::new();
 
+    // Collect and sum results from all threads.
     for handle in handles {
         if let Ok(result) = handle.join() {
             total_results += result;
@@ -43,8 +58,22 @@ pub fn root_level_perft(game: &mut BoardFrontend, depth: usize) -> PerftResults 
     total_results
 }
 
+/// Recursively calculates the number of leaf nodes at a specific depth.
+///
+/// This is the core single-threaded worker function.
+///
+/// # Bulk Counting Optimization
+/// When `depth == 1`, we do not need to `make_move` and recurse further. We simply
+/// generate the legal moves and count them. This provides a massive speedup at the
+/// leaf nodes of the tree.
 pub fn perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
     let mut results = PerftResults::new();
+
+    // BASE CASE (Should only happen if perft called with depth 0)
+    if depth == 0 {
+        results.nodes = 1;
+        return results;
+    }
 
     // BULK COUNTING OPTIMIZATION:
     // If we are at depth 1, the number of nodes is simply the number of legal moves.
@@ -68,12 +97,6 @@ pub fn perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
             }
         }
 
-        return results;
-    }
-
-    // BASE CASE (Should only happen if perft called with depth 0)
-    if depth == 0 {
-        results.nodes = 1;
         return results;
     }
 

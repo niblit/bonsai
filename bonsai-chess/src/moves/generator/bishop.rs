@@ -13,6 +13,14 @@ use crate::{
     pieces::LocatedPiece,
 };
 
+/// Generates pseudo-legal moves for a Bishop.
+///
+/// The Bishop moves any number of squares along the diagonals, stopping at the first
+/// obstacle. It remains bound to squares of the color it started on.
+///
+/// # Movement Logic
+/// * **Directions**: Four diagonals (Up-Left, Up-Right, Down-Left, Down-Right).
+/// * **Distance**: Unlimited (up to 7 squares).
 pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend) -> Vec<Ply> {
     let directions = [
         DIAGONALLY_UP_LEFT,

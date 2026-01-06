@@ -2,50 +2,70 @@
 
 ![bonsai Logo](static/bonsai.svg)
 
-**bonsai** is a modular chess project written in Rust. It is organized as a workspace containing the core chess logic, an engine, and user interfaces.
+**bonsai** is a modular chess workspace written in Rust. It aims to be a high-performance, strictly typed chess engine with clean architecture and multiple user interfaces.
+
+The project is designed as a Cargo workspace, separating the core domain logic from the engine heuristics and user interfaces.
 
 ## Project Structure
 
-The project is divided into the following crates:
-
-* **[`bonsai-chess`](./bonsai-chess)**: The core library containing game logic, board representation, piece definitions, and move generation.
-* **[`bonsai-engine`](./bonsai-engine)**: My implementation of a chess engine (evaluation functions and search algorithms).
-* **[`bonsai-cli`](./bonsai-cli)**: A command-line interface for interacting with the chess engine and playing games in the terminal.
-* **[`bonsai-gui`](./bonsai-gui)**: A graphical user interface for the application.
+* **[`bonsai-chess`](./bonsai-chess)**: The core library. Handles board representation, strictly typed coordinates, move generation, and rule enforcement (checkmate, stalemate, 50-move rule).
+* **[`bonsai-engine`](./bonsai-engine)**: *[WIP]* The chess engine implementation, featuring evaluation functions and search algorithms (Minimax/AlphaBeta).
+* **[`bonsai-cli`](./bonsai-cli)**: *[WIP]* A terminal-based user interface (TUI) for playing against the engine or analyzing positions.
+* **[`bonsai-gui`](./bonsai-gui)**: *[WIP]* A graphical user interface (GUI) for the application.
 
 ## Getting Started
 
 ### Prerequisites
 
-* [Rust](https://www.rust-lang.org/tools/install) (Edition 2024)
+* **Rust**: This project targets **Rust Edition 2024**. Ensure you have the latest stable toolchain installed.
+* **Nix (Optional)**: If you use Nix, a `flake.nix` is provided for a reproducible development environment.
+
+### Development Environment
+
+If you have `direnv` and `nix` installed, simply run:
+
+```bash
+direnv allow
+```
+
+Otherwise, install the Rust toolchain manually via rustup.
 
 ### Building
-
-To build the entire workspace, run:
-
+To build the entire workspace (all crates):
 ```bash
-cargo build
+cargo build --release
 ```
 
-### Running
-To run a specific interface, use the -p flag:
-
+### Running Components
+You can run specific components of the workspace using the -p (package) flag.
+1. **Performance Test (Perft)** Verify the correctness of the move generator in `bonsai-chess`:
 
 ```bash
-# Run the CLI
-cargo run -p bonsai-cli
-
-# Run the GUI
-cargo run -p bonsai-gui
-
-# Run the perft from bonsai-chess
 cargo run --release -p bonsai-chess --bin perft
 ```
+
+2. **Command Line Interface** Run the terminal interface (currently a skeleton):
+
+```bash
+cargo run -p bonsai-cli
+```
+
+3. **Graphical Interface** Run the GUI (currently a skeleton):
+
+```bash
+cargo run -p bonsai-gui
+```
+
 ## Status
-This project is currently under active development.
+- ✅ **Move Generation**: Complete for all pieces (Pawns, Knights, Kings, Sliding Pieces).
 
-- Core data structures (Board, Piece, Coordinates) are implemented.
+- ✅ **Game Rules**: Checkmate, Stalemate, Threefold Repetition, and 50-Move Rule detection are implemented.
 
-- Move generation infrastructure is in place, with logic for sliding pieces partially implemented.
+- ✅ **Testing**: The core logic passes standard Perft (Performance Test) benchmarks.
 
-- Engine and Interface implementations are initializing.
+- 🚧 **Engine**: Evaluation and Search are currently in development.
+
+- 🚧 **Interfaces**: CLI and GUI are initialized but not yet functional.
+
+## License
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0-or-later). See the **[`LICENSE`](./LICENSE)** file for details.

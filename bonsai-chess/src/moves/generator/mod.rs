@@ -14,6 +14,21 @@ use crate::{
     pieces::{Kind, LocatedPiece},
 };
 
+/// Calculates all mechanically valid moves for a specific piece.
+///
+/// "Pseudo-legal" means the moves satisfy the movement rules for the piece type
+/// (e.g., sliding diagonally, jumping in an L-shape) and board occupancy rules
+/// (capturing enemies, blocked by friends).
+///
+/// **Important:** This function does **not** filter out moves that leave the King in check.
+/// That validation step is handled by [`crate::board::BoardFrontend::get_legal_moves`].
+///
+/// # Arguments
+///
+/// * `what_to_move`: The piece and its current location.
+/// * `backend`: The current state of the board grid.
+/// * `en_passant_target`: The coordinate of a pawn that can be captured en passant (if any).
+/// * `castling_rights`: The current castling permissions.
 #[must_use]
 pub fn generate_pseudo_legal_moves(
     what_to_move: LocatedPiece,

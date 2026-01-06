@@ -8,6 +8,11 @@ use crate::{
     rules::{DrawReason, Outcome, WinReason},
 };
 
+/// A hashable representation of the board state used to detect Threefold Repetition.
+///
+/// This struct captures only the essential data required to uniquely identify a position
+/// according to FIDE rules (piece placement, active color, castling rights, and en passant).
+/// It excludes move counters or history logs.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PositionSnapshot {
     pieces_positions: Grid,
@@ -16,26 +21,47 @@ pub struct PositionSnapshot {
     en_passant: Option<Coordinates>,
 }
 
+/// The main game controller for a chess game.
+///
+/// `BoardFrontend` wraps the low-level [`BoardBackend`] and enforces the rules of chess.
+/// It manages:
+/// * **Turn Cycle**: Whose turn it is.
+/// * **Move Validation**: Generating legal moves and preventing illegal ones (like moving into check).
+/// * **Game History**: Tracking moves for undo functionality and the 50-move rule.
+/// * **Game Endings**: Detecting Checkmate, Stalemate, Draws (Repetition, Insufficient Material, etc.).
+/// * **FEN Parsing**: Loading game states from standard notation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BoardFrontend {
+    /// The physical state of the board (grid).
     backend: BoardBackend,
 
+    /// The player currently authorized to move.
     turn: Team,
+
+    /// A history of castling rights. Used to restore rights when undoing moves.
     castling_rights_log: Vec<CastlingRights>,
+
+    /// The specific square available for En Passant capture, if any.
     en_passant_target: Option<Coordinates>,
 
+    /// Tracks halfmoves, fullmoves, and the 50-move rule counter.
     move_counter: MoveCounter,
 
+    /// A stack of all moves played in the game so far.
     move_log: Vec<Ply>,
 
+    /// Tracks how many times a specific position has occurred (for Threefold Repetition).
     repetition_table: HashMap<PositionSnapshot, usize>,
 
+    /// The final result of the game, if it has ended.
     outcome: Option<Outcome>,
 
+    /// Cached status indicating if the current player's King is in check.
     in_check: bool,
 }
 
 impl BoardFrontend {
+    /// Creates a hashable snapshot of the current position.
     #[must_use]
     pub fn create_snapshot(&self) -> PositionSnapshot {
         PositionSnapshot {
@@ -50,6 +76,7 @@ impl BoardFrontend {
         }
     }
 
+    /// Initializes a new game with the standard chess starting position.
     #[must_use]
     pub fn from_starting_position() -> Self {
         Self {
@@ -70,14 +97,27 @@ impl BoardFrontend {
         }
     }
 
+    /// Creates a game state from a Forsyth–Edwards Notation (FEN) string.
+    ///
     /// # Panics
     ///
-    /// This function will panic if the provided fen is not valid
+    /// This function will panic if the provided FEN string is malformed or contains
+    /// invalid characters for pieces, ranks, or files.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bonsai_chess::prelude::BoardFrontend;
+    ///
+    /// // Standard start
+    /// let start = BoardFrontend::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    /// ```
     #[must_use]
     pub fn from_fen(fen: &str) -> Self {
         let parts: Vec<&str> = fen.split_whitespace().collect();
 
         // 1. Placement Data
+        // Parses ranks 8 down to 1.
         let placement = parts.first().expect("Invalid FEN: Missing placement data");
         let mut grid: Grid = [[None; crate::BOARD_COLUMNS]; crate::BOARD_ROWS];
 
@@ -197,27 +237,42 @@ impl BoardFrontend {
         board
     }
 
+    /// Returns a reference to the low-level board backend.
     #[must_use]
     pub const fn backend(&self) -> &BoardBackend {
         &self.backend
     }
 
+    /// Generates all fully legal moves for the current position.
+    ///
+    /// This process involves:
+    /// 1. Generating all "pseudo-legal" moves (geometry + capture rules).
+    /// 2. Filtering out moves that would leave the King in check.
     #[must_use]
     pub fn get_legal_moves(&mut self) -> Vec<Ply> {
         let mut legal_moves = Vec::new();
         let pseudo_legal_moves = self.get_pseudo_legal_moves();
 
         for pseudo_legal_move in pseudo_legal_moves {
+            // Tentatively make the move on the backend
             self.backend.make_move(&pseudo_legal_move);
+
+            // If the King is safe, the move is legal
             if !self.is_in_check() {
                 legal_moves.push(pseudo_legal_move);
             }
+
+            // Undo the move to restore state
             self.backend.undo_move(&pseudo_legal_move);
         }
 
         legal_moves
     }
 
+    /// Generates all pseudo-legal moves for the current turn.
+    ///
+    /// Pseudo-legal moves satisfy piece movement rules (e.g., Bishop moves diagonally)
+    /// but do not account for the safety of the King.
     #[must_use]
     pub fn get_pseudo_legal_moves(&self) -> Vec<Ply> {
         let mut pseudo_legal_moves = Vec::new();
@@ -242,6 +297,7 @@ impl BoardFrontend {
         pseudo_legal_moves
     }
 
+    /// Helper to identify if a move is a pawn double-push that enables En Passant.
     #[must_use]
     fn get_en_passant_target(ply: &Ply) -> Option<Coordinates> {
         if ply.piece_moved().kind() == Kind::Pawn {
@@ -264,6 +320,15 @@ impl BoardFrontend {
         None
     }
 
+    /// Executes a move and updates the game state.
+    ///
+    /// This function handles:
+    /// * Making the move on the backend.
+    /// * Logging the move.
+    /// * Updating Castling Rights and En Passant targets.
+    /// * Switching turns.
+    /// * Detecting Check, Threefold Repetition, the 50-Move Rule, and Dead Positions.
+    /// * Determining the Game Outcome (Checkmate/Stalemate/Draw).
     pub fn make_move(&mut self, ply: &Ply) {
         // Cannot perform action if game is over
         if self.outcome.is_some() {
@@ -288,7 +353,7 @@ impl BoardFrontend {
         // Check if last move left opponent's king in check
         self.in_check = self.is_in_check();
 
-        // threefold repetition
+        // --- Draw Detection: Threefold Repetition ---
         let snapshot = self.create_snapshot();
         self.repetition_table.entry(snapshot).or_insert(0);
 
@@ -307,7 +372,9 @@ impl BoardFrontend {
             });
         }
 
-        // check for dead position
+        // --- Draw Detection: Dead Position (Insufficient Material) ---
+        // Currently only checks for King vs King.
+        // TODO: Expand to K vs K+N, K vs K+B, etc.
         if self
             .backend
             .get_all_pieces()
@@ -319,7 +386,8 @@ impl BoardFrontend {
             });
         }
 
-        // check for fifty-move rule
+        // --- Draw Detection: 50-Move Rule ---
+        // The rule resets if a Pawn is moved or a capture is made.
         // TODO: refactor for better readability
         if let Some(SpecialMove::Promotion(_)) = ply.special_move() {
             self.move_counter.tick(true);
@@ -337,14 +405,18 @@ impl BoardFrontend {
             });
         }
 
+        // --- Win/Loss Detection: Checkmate & Stalemate ---
+        // If the current player has NO legal moves...
         let legal_moves_after_move = self.get_legal_moves();
         if legal_moves_after_move.is_empty() {
             if self.is_in_check() {
+                // ...and is in check -> Checkmate.
                 self.outcome = Some(Outcome::Win {
                     winner: self.turn.opposite(),
                     reason: WinReason::Checkmate,
                 });
             } else {
+                // ...and is NOT in check -> Stalemate.
                 self.outcome = Some(Outcome::Draw {
                     reason: DrawReason::Stalemate,
                 });
@@ -352,12 +424,17 @@ impl BoardFrontend {
         }
     }
 
+    /// Reverts the most recent move played.
+    ///
+    /// Restores the board, turn, castling rights, and move counters to their previous state.
+    /// Commonly used in search algorithms (Perft, Minimax).
     pub fn undo_last_move(&mut self) {
         if let Some(last_move) = self.move_log.pop() {
             self.undo_move(&last_move);
         }
     }
 
+    /// Internal logic for reverting a move.
     fn undo_move(&mut self, ply: &Ply) {
         // check for dead position
         self.outcome = None;
@@ -369,8 +446,6 @@ impl BoardFrontend {
 
         // Low level move
         self.backend.undo_move(ply);
-
-        // check for fifty move rule
 
         // Keep track of en en_passant_target
         if let Some(possible_pawn_move) = self.move_log.last() {
@@ -394,13 +469,16 @@ impl BoardFrontend {
         self.in_check = self.is_in_check();
     }
 
+    /// Updates castling rights based on the move played.
+    ///
+    /// Disables rights if the King moves, or if a Rook moves or is captured.
     pub fn update_castling_rights(&mut self, ply: &Ply) {
         let mut castling_rights = self
             .castling_rights_log
             .last()
             .copied()
             .unwrap_or(CastlingRights::no_rights());
-        // TODO: castling rights should be tracked as a log
+
         if ply.piece_moved().kind() == Kind::King {
             match ply.piece_moved().team() {
                 Team::White => {
@@ -435,13 +513,16 @@ impl BoardFrontend {
         self.castling_rights_log.push(castling_rights);
     }
 
+    /// Switches the active turn to the opposite team.
     pub const fn change_turn(&mut self) {
         self.turn = self.turn.opposite();
     }
 
+    /// Checks if the current player's King is under attack.
+    ///
     /// # Panics
     ///
-    /// Will panic the is no king on the board
+    /// This function will panic if there is no King of the current turn's color on the board.
     pub fn is_in_check(&self) -> bool {
         let pieces = match self.turn {
             Team::White => self.backend.get_white_pieces(),
@@ -461,6 +542,7 @@ impl BoardFrontend {
             .is_square_under_attack(king_pos, self.turn.opposite())
     }
 
+    /// Returns the game outcome (Win, Draw, or None if ongoing).
     #[must_use]
     pub const fn outcome(&self) -> Option<Outcome> {
         self.outcome

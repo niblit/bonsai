@@ -14,6 +14,13 @@ use crate::{
     pieces::{Kind, LocatedPiece},
 };
 
+/// Generates pseudo-legal moves for a King.
+///
+/// The King moves exactly one square in any direction.
+/// Additionally, if conditions are met, it can perform a special "Castling" move.
+///
+/// # Arguments
+/// * `castling_rights`: Needed to determine if castling is even a candidate move.
 pub fn pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
@@ -30,6 +37,7 @@ pub fn pseudo_legal_moves(
         DIAGONALLY_DOWN_RIGHT,
     ];
     let mut king_moves = slide(what_to_move, 1, &directions, backend);
+
     if castling_rights != CastlingRights::no_rights() {
         king_moves.append(&mut get_castling_moves(
             what_to_move,
@@ -41,6 +49,13 @@ pub fn pseudo_legal_moves(
     king_moves
 }
 
+/// Helper to generate Castling moves if valid.
+///
+/// Castling is valid only if:
+/// 1. The King is not currently in check.
+/// 2. The player has the right to castle (King/Rook haven't moved).
+/// 3. The path between King and Rook is empty.
+/// 4. The squares the King travels through (and lands on) are not under attack.
 fn get_castling_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
@@ -85,7 +100,10 @@ fn get_castling_moves(
         let f_square = to_coordinates(FILE_F);
         let g_square = to_coordinates(FILE_G);
 
+        // You cannot go through other pieces
         let is_path_clear = backend.get(f_square).is_none() && backend.get(g_square).is_none();
+
+        // FIDE Rule: You cannot castle *through* check.
         let is_path_safe = !backend.is_square_under_attack(f_square, enemy)
             && !backend.is_square_under_attack(g_square, enemy);
 
@@ -125,6 +143,7 @@ fn get_castling_moves(
             && backend.get(d_square).is_none();
 
         // Only C and D (where King moves) must be safe
+        // The Rook passes through B, but the King does not, so B need not be safe.
         let is_path_safe = !backend.is_square_under_attack(c_square, enemy)
             && !backend.is_square_under_attack(d_square, enemy);
 

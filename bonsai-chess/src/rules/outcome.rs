@@ -4,6 +4,28 @@
 use crate::atoms::Team;
 
 /// Represents the final result of a chess game.
+///
+/// This enum combines the result (Win/Draw) with the specific context ([`WinReason`]/[`DrawReason`]).
+///
+/// # Examples
+///
+/// ```rust
+/// use bonsai_chess::prelude::{Team, Outcome, WinReason, DrawReason};
+///
+/// fn describe_result(outcome: Outcome) -> String {
+///     match outcome {
+///         Outcome::Win { winner, reason } => {
+///             format!("{:?} wins by {:?}", winner, reason)
+///         },
+///         Outcome::Draw { reason } => {
+///             format!("Draw declared due to {:?}", reason)
+///         }
+///     }
+/// }
+///
+/// let mate = Outcome::Win { winner: Team::White, reason: WinReason::Checkmate };
+/// assert_eq!(describe_result(mate), "White wins by Checkmate");
+/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Outcome {
     /// The game ended in a decisive win for one team.
