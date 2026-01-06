@@ -55,6 +55,7 @@ fn main() {
         println!("Game is ongoing.");
     }
 }
+```
 
 ## License
 Part of the Bonsai project workspace. Licensed under GPL-3.0-or-later.
