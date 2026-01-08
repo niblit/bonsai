@@ -37,6 +37,9 @@
             # Common system dependencies for Rust crates
             pkg-config
             clang
+
+            # For profiling
+            samply
           ];
 
           # Environment variables
