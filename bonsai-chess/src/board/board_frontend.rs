@@ -355,18 +355,13 @@ impl BoardFrontend {
 
         // --- Draw Detection: Threefold Repetition ---
         let snapshot = self.create_snapshot();
-        self.repetition_table.entry(snapshot).or_insert(0);
 
-        if let Some(repetitions) = self.repetition_table.get_mut(&snapshot) {
-            *repetitions += 1;
-        }
+        // Increment the repetition count for the current position
+        let repetitions = self.repetition_table.entry(snapshot).or_insert(0);
+        *repetitions += 1;
 
-        if self
-            .repetition_table
-            .values()
-            .any(|repetitions| *repetitions >= 3)
-            && self.outcome.is_none()
-        {
+        // Only the current position got incremented, so check for Threefold Repetition
+        if *repetitions >= 3 && self.outcome.is_none() {
             self.outcome = Some(Outcome::Draw {
                 reason: DrawReason::ThreefoldRepetition,
             });
@@ -440,8 +435,15 @@ impl BoardFrontend {
         self.outcome = None;
 
         // undo threefold repetition table
-        if let Some(repetitions) = self.repetition_table.get_mut(&self.create_snapshot()) {
-            *repetitions -= 1;
+        let snapshot = self.create_snapshot();
+        if let std::collections::hash_map::Entry::Occupied(mut entry) =
+            self.repetition_table.entry(snapshot)
+        {
+            let count = entry.get_mut();
+            *count -= 1;
+            if *count == 0 {
+                entry.remove();
+            }
         }
 
         // Low level move
