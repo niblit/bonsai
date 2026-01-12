@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     atoms::{CastlingRights, Coordinates, MoveCounter, Team},
     board::{Grid, board_backend::BoardBackend},
-    moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
+    moves::{Ply, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece, Piece},
     rules::{
         CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD, CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD, DrawReason,
@@ -387,16 +387,9 @@ impl BoardFrontend {
 
         // --- Draw Detection: 50-Move Rule ---
         // The rule resets if a Pawn is moved or a capture is made.
-        // TODO: refactor for better readability
-        if let Some(SpecialMove::Promotion(_)) = ply.special_move() {
-            self.move_counter.tick(true);
-        } else if let Some(SpecialMove::EnPassant(_)) = ply.special_move() {
-            self.move_counter.tick(true);
-        } else if ply.piece_moved().kind() == Kind::Pawn || ply.piece_captured().is_some() {
-            self.move_counter.tick(true);
-        } else {
-            self.move_counter.tick(false);
-        }
+        let is_pawn_move = ply.piece_moved().kind() == Kind::Pawn;
+        let is_capture = ply.piece_captured().is_some();
+        self.move_counter.tick(is_pawn_move || is_capture);
 
         if self.move_counter.fifty_move_rule_counter() >= FORCED_FIFTY_MOVE_RULE_THRESHOLD
             && self.outcome.is_none()
