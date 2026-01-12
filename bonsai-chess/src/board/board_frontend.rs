@@ -6,8 +6,9 @@ use crate::{
     moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece, Piece},
     rules::{
-        DrawReason, FORCED_FIFTY_MOVE_RULE_THRESHOLD, FORCED_THREEFOLD_REPETITION_THRESHOLD,
-        Outcome, WinReason,
+        CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD, CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD, DrawReason,
+        FORCED_FIFTY_MOVE_RULE_THRESHOLD, FORCED_THREEFOLD_REPETITION_THRESHOLD, Outcome,
+        WinReason,
     },
 };
 
@@ -553,5 +554,157 @@ impl BoardFrontend {
     #[must_use]
     pub const fn outcome(&self) -> Option<Outcome> {
         self.outcome
+    }
+
+    /// Resigns the game on behalf of the specified player.
+    ///
+    /// This immediately ends the game, awarding the win to the opposing team.
+    ///
+    /// # Arguments
+    ///
+    /// * `resigning_player` - The team that is resigning (e.g., `Team::White`).
+    pub const fn resign(&mut self, resigning_player: Team) {
+        self.outcome = Some(Outcome::Win {
+            winner: resigning_player.opposite(),
+            reason: WinReason::Resign,
+        });
+    }
+
+    /// Declares a win because the opponent ran out of time (flagged).
+    ///
+    /// This should be called when a player's clock hits zero and the opponent
+    /// has sufficient material to checkmate. If the opponent does *not* have
+    /// sufficient material, use [`draw_on_time`](Self::draw_on_time) instead.
+    ///
+    /// # Arguments
+    ///
+    /// * `flagged_player` - The team that ran out of time.
+    pub const fn win_on_time(&mut self, flagged_player: Team) {
+        self.outcome = Some(Outcome::Win {
+            winner: flagged_player.opposite(),
+            reason: WinReason::WinOnTime,
+        });
+    }
+
+    /// Ends the game due to a forfeit by a specific player.
+    ///
+    /// A forfeit is distinct from resignation and is usually imposed by an arbiter
+    /// for rule violations (e.g., cheating, arriving late, or refusing to comply with laws).
+    ///
+    /// # Arguments
+    ///
+    /// * `forfeited_player` - The team that lost the game.
+    pub const fn forfeit(&mut self, forfeited_player: Team) {
+        self.outcome = Some(Outcome::Win {
+            winner: forfeited_player.opposite(),
+            reason: WinReason::Forfeit,
+        });
+    }
+
+    /// Ends the game as a draw by forfeit.
+    ///
+    /// This rare outcome occurs if:
+    /// 1. Both players commit a forfeitable offense simultaneously.
+    /// 2. One player commits a forfeitable offense, but the opponent does not have
+    ///    sufficient material to mate.
+    pub const fn draw_by_forfeit(&mut self) {
+        self.outcome = Some(Outcome::Draw {
+            reason: DrawReason::Forfeit,
+        });
+    }
+
+    /// Ends the game as a draw by mutual agreement.
+    ///
+    /// This represents the players agreeing to a draw during the game.
+    pub const fn draw_by_agreement(&mut self) {
+        self.outcome = Some(Outcome::Draw {
+            reason: DrawReason::DrawByAgreement,
+        });
+    }
+
+    /// Ends the game as a draw because a player ran out of time.
+    ///
+    /// This outcome is used when a player flags (runs out of time), but their
+    /// opponent cannot theoretically checkmate them (insufficient material).
+    pub const fn draw_on_time(&mut self) {
+        self.outcome = Some(Outcome::Draw {
+            reason: DrawReason::DrawOnTime,
+        });
+    }
+
+    /// Attempts to claim a draw based on the Threefold Repetition rule.
+    ///
+    /// According to FIDE rules (Article 9.2), a player can claim a draw if the
+    /// same position has appeared for the third time (or is about to appear).
+    /// Unlike automatic draws, this must be claimed by the player.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the claim is valid, the game outcome is set to `Draw`.
+    /// * `Err(&str)` - If the conditions for the claim are not met.
+    ///
+    /// # Errors
+    ///
+    /// The function will return an error if the current position has not
+    /// appeared at least 3 times
+    pub fn claim_threefold_repetition(&mut self) -> Result<(), &'static str> {
+        if !self.can_claim_threefold_repetition() {
+            return Err("Cannot claim Threefold Repetition: Conditions not met.");
+        }
+
+        self.outcome = Some(Outcome::Draw {
+            reason: DrawReason::ThreefoldRepetition,
+        });
+        Ok(())
+    }
+
+    /// Attempts to claim a draw based on the Fifty-Move Rule.
+    ///
+    /// According to FIDE rules (Article 9.3), a player can claim a draw if
+    /// the last 50 moves have been completed by each player without the
+    /// movement of any pawn and without any capture.
+    /// Unlike automatic draws, this must be claimed by the player.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the claim is valid, the game outcome is set to `Draw`.
+    /// * `Err(&str)` - If the conditions for the claim are not met.
+    ///
+    /// # Errors
+    ///
+    /// The function will return an error if in last 100 plys there was an
+    /// pawn move or capture
+    pub fn claim_fifty_move_rule(&mut self) -> Result<(), &'static str> {
+        if !self.can_claim_fifty_move_rule() {
+            return Err("Cannot claim Fifty Move Rule: Conditions not met.");
+        }
+
+        self.outcome = Some(Outcome::Draw {
+            reason: DrawReason::FiftyMoveRule,
+        });
+        Ok(())
+    }
+
+    /// Checks if the current player is eligible to claim a draw by Threefold Repetition.
+    ///
+    /// # Note
+    ///
+    /// This checks if the *current* position on the board has occurred at least 3 times.
+    /// FIDE rules require the claim to be made before the player changes the position
+    /// (i.e., on their turn).
+    #[must_use]
+    pub fn can_claim_threefold_repetition(&self) -> bool {
+        // We only care if the *current* position has appeared 3+ times.
+        // FIDE rules: You lose the right to claim if you change the position.
+        let current_snapshot = self.create_snapshot();
+        self.repetition_table
+            .get(&current_snapshot)
+            .is_some_and(|&count| count >= CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD)
+    }
+
+    /// Checks if the current player is eligible to claim a draw by the Fifty-Move Rule.
+    #[must_use]
+    pub fn can_claim_fifty_move_rule(&self) -> bool {
+        self.move_counter.fifty_move_rule_counter() >= CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD
     }
 }
