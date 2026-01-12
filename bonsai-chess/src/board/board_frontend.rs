@@ -5,7 +5,10 @@ use crate::{
     board::{Grid, board_backend::BoardBackend},
     moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece, Piece},
-    rules::{DrawReason, Outcome, WinReason},
+    rules::{
+        DrawReason, FORCED_FIFTY_MOVE_RULE_THRESHOLD, FORCED_THREEFOLD_REPETITION_THRESHOLD,
+        Outcome, WinReason,
+    },
 };
 
 /// A hashable representation of the board state used to detect Threefold Repetition.
@@ -361,7 +364,7 @@ impl BoardFrontend {
         *repetitions += 1;
 
         // Only the current position got incremented, so check for Threefold Repetition
-        if *repetitions >= 3 && self.outcome.is_none() {
+        if *repetitions >= FORCED_THREEFOLD_REPETITION_THRESHOLD && self.outcome.is_none() {
             self.outcome = Some(Outcome::Draw {
                 reason: DrawReason::ThreefoldRepetition,
             });
@@ -394,7 +397,9 @@ impl BoardFrontend {
             self.move_counter.tick(false);
         }
 
-        if self.move_counter.fifty_move_rule_counter() >= 100 && self.outcome.is_none() {
+        if self.move_counter.fifty_move_rule_counter() >= FORCED_FIFTY_MOVE_RULE_THRESHOLD
+            && self.outcome.is_none()
+        {
             self.outcome = Some(Outcome::Draw {
                 reason: DrawReason::FiftyMoveRule,
             });
