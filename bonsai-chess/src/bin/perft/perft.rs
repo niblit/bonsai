@@ -90,7 +90,7 @@ pub fn perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
 
             if let Some(sp) = m.special_move() {
                 match sp {
-                    SpecialMove::Castle => results.castles += 1,
+                    SpecialMove::Castle(_) => results.castles += 1,
                     SpecialMove::EnPassant(_) => results.en_passant += 1,
                     SpecialMove::Promotion(_) => results.promotions += 1,
                 }

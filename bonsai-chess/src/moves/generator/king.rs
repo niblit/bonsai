@@ -2,7 +2,7 @@ use crate::{
     atoms::{CastlingRights, Coordinates, Team},
     board::BoardBackend,
     moves::{
-        Ply, SpecialMove,
+        CastlingSide, Ply, SpecialMove,
         generator::{
             directions::{
                 DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT, DIAGONALLY_UP_LEFT,
@@ -119,7 +119,7 @@ fn get_castling_moves(
                 g_square,
                 what_to_move.piece(),
                 None,
-                Some(SpecialMove::Castle),
+                Some(SpecialMove::Castle(CastlingSide::Short)),
             ));
         }
     }
@@ -159,7 +159,7 @@ fn get_castling_moves(
                 c_square,
                 what_to_move.piece(),
                 None,
-                Some(SpecialMove::Castle),
+                Some(SpecialMove::Castle(CastlingSide::Long)),
             ));
         }
     }

@@ -2,7 +2,7 @@ use crate::{
     BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE,
     atoms::{CastlingRights, Coordinates, Team},
     board::{Grid, Square, positions::STARTING_POSITION},
-    moves::{Ply, SpecialMove, generate_pseudo_legal_moves},
+    moves::{CastlingSide, Ply, SpecialMove, generate_pseudo_legal_moves},
     pieces::{Kind, LocatedPiece, Piece},
 };
 
@@ -49,16 +49,10 @@ impl BoardBackend {
                 SpecialMove::EnPassant(coordinates) => {
                     self.unset(coordinates);
                 }
-                SpecialMove::Castle => {
-                    // Determine direction to find the Rook's start and end coordinates.
-                    #[allow(clippy::cast_possible_wrap)]
-                    let king_movement_direction = ply.starting_square().column() as isize
-                        - ply.ending_square().column() as isize;
-
+                SpecialMove::Castle(side) => {
                     // TODO: refactor to avoid magic numbers
-                    let (rook_start, rook_end) = if king_movement_direction < 0 {
-                        // Kingside Castle
-                        (
+                    let (rook_start, rook_end) = match side {
+                        CastlingSide::Short => (
                             Coordinates::new(
                                 ply.ending_square().row(),
                                 ply.ending_square().column() + 1,
@@ -67,10 +61,8 @@ impl BoardBackend {
                                 ply.ending_square().row(),
                                 ply.ending_square().column() - 1,
                             ),
-                        )
-                    } else {
-                        // Queenside Castle
-                        (
+                        ),
+                        CastlingSide::Long => (
                             Coordinates::new(
                                 ply.ending_square().row(),
                                 ply.ending_square().column() - 2,
@@ -79,7 +71,7 @@ impl BoardBackend {
                                 ply.ending_square().row(),
                                 ply.ending_square().column() + 1,
                             ),
-                        )
+                        ),
                     };
 
                     if let (Some(rook_start), Some(rook_end)) = (rook_start, rook_end)
@@ -126,13 +118,9 @@ impl BoardBackend {
         // 3. Handle Special Move side effects (un-castle, restore captured EP pawn)
         if let Some(special_move) = ply.special_move() {
             match special_move {
-                SpecialMove::Castle => {
-                    #[allow(clippy::cast_possible_wrap)]
-                    let king_movement_direction = ply.starting_square().column() as isize
-                        - ply.ending_square().column() as isize;
-
-                    let (rook_start, rook_end) = if king_movement_direction < 0 {
-                        (
+                SpecialMove::Castle(side) => {
+                    let (rook_start, rook_end) = match side {
+                        CastlingSide::Short => (
                             Coordinates::new(
                                 ply.ending_square().row(),
                                 ply.ending_square().column() - 1,
@@ -141,9 +129,8 @@ impl BoardBackend {
                                 ply.ending_square().row(),
                                 ply.ending_square().column() + 1,
                             ),
-                        )
-                    } else {
-                        (
+                        ),
+                        CastlingSide::Long => (
                             Coordinates::new(
                                 ply.ending_square().row(),
                                 ply.ending_square().column() + 1,
@@ -152,7 +139,7 @@ impl BoardBackend {
                                 ply.ending_square().row(),
                                 ply.ending_square().column() - 2,
                             ),
-                        )
+                        ),
                     };
 
                     if let (Some(rook_start), Some(rook_end)) = (rook_start, rook_end)

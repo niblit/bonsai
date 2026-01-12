@@ -10,8 +10,7 @@ pub enum SpecialMove {
     ///
     /// The move is represented as the King's movement. The backend logic must
     /// identify the corresponding Rook and move it to the correct adjacent square.
-    // TODO: refactor to hold King Side or Queen Side castling
-    Castle,
+    Castle(CastlingSide),
 
     /// En Passant capture.
     ///
@@ -31,4 +30,11 @@ pub enum SpecialMove {
     /// * [`ValidPromotions`]: The specific piece type selected by the player
     ///   (Queen, Rook, Bishop, or Knight).
     Promotion(ValidPromotions),
+}
+
+/// Represents the side of the board where the king castled
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum CastlingSide {
+    Short,
+    Long,
 }
