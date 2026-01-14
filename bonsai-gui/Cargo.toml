@@ -12,6 +12,10 @@ keywords = ["chess", "game", "chess-engine"]
 categories = ["algorithms", "data-structures", "games", "simulation"]
 
 [dependencies]
+bonsai-chess ={ path = "../bonsai-chess"}
+
+leptos = { version = "0.8.15", features = ["csr"] }
+console_error_panic_hook = "0.1.7"
 
 [dev-dependencies]
 

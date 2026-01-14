@@ -25,6 +25,7 @@
         # usage of 'latest.default' ensures we get the newest stable release
         rustToolchain = pkgs.rust-bin.stable.latest.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
+          targets = [ "wasm32-unknown-unknown" ];
         };
 
       in
@@ -40,6 +41,14 @@
 
             # For profiling
             samply
+
+            # For webdev
+            trunk
+            leptosfmt
+            tailwindcss_4
+
+            # Audit dependencies
+            cargo-audit
           ];
 
           # Environment variables

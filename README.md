@@ -50,10 +50,10 @@ cargo run --release -p bonsai-chess --bin perft
 cargo run -p bonsai-cli
 ```
 
-3. **Graphical Interface** Run the GUI (currently a skeleton):
+3. **Graphical Interface** Run the GUI (currently in development):
 
 ```bash
-cargo run -p bonsai-gui
+trunk serve
 ```
 
 ## Status
