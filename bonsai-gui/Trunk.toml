@@ -1,2 +1,5 @@
 [tools]
 tailwindcss = "4.1.18"
+
+[build]
+minify = "on_release"
