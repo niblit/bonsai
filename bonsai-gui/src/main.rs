@@ -1,3 +1,4 @@
+#![allow(clippy::multiple_crate_versions)] // leptos has lots of dependencies to warn about, nothing to do in my end
 use leptos::prelude::*;
 
 fn main() {
