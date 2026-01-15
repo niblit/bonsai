@@ -241,6 +241,12 @@ impl BoardFrontend {
         board
     }
 
+    /// Returns the current turn
+    #[must_use]
+    pub const fn turn(&self) -> Team {
+        self.turn
+    }
+
     /// Returns a reference to the low-level board backend.
     #[must_use]
     pub const fn backend(&self) -> &BoardBackend {
