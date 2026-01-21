@@ -21,14 +21,22 @@ use crate::{
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct BoardBackend {
     grid: Grid,
+    white_king_location: Coordinates,
+    black_king_location: Coordinates,
 }
 
 impl BoardBackend {
     /// Creates a new board set up with the standard chess starting position.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic, the unwrap for Coordinates is safe
     #[must_use]
-    pub const fn from_starting_position() -> Self {
+    pub fn from_starting_position() -> Self {
         Self {
             grid: STARTING_POSITION,
+            white_king_location: Coordinates::new(7, 4).unwrap(),
+            black_king_location: Coordinates::new(0, 4).unwrap(),
         }
     }
 
@@ -50,26 +58,31 @@ impl BoardBackend {
                     self.unset(coordinates);
                 }
                 SpecialMove::Castle(side) => {
-                    // TODO: refactor to avoid magic numbers
+                    const LONG_CASTLE_ROOK_START_COLUMN: usize = 0; // (a column)
+                    const LONG_CASTLE_ROOK_END_COLUMN: usize = 3; // (d column)
+
+                    const SHORT_CASTLE_ROOK_START_COLUMN: usize = 7; // (h column)
+                    const SHORT_CASTLE_ROOK_END_COLUMN: usize = 5; // (f column)
+
                     let (rook_start, rook_end) = match side {
                         CastlingSide::Short => (
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() + 1,
+                                SHORT_CASTLE_ROOK_START_COLUMN,
                             ),
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() - 1,
+                                SHORT_CASTLE_ROOK_END_COLUMN,
                             ),
                         ),
                         CastlingSide::Long => (
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() - 2,
+                                LONG_CASTLE_ROOK_START_COLUMN,
                             ),
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() + 1,
+                                LONG_CASTLE_ROOK_END_COLUMN,
                             ),
                         ),
                     };
@@ -119,25 +132,32 @@ impl BoardBackend {
         if let Some(special_move) = ply.special_move() {
             match special_move {
                 SpecialMove::Castle(side) => {
+                    // Now the constants are flipped, we use the *_ROOK_END_COLUMN as the variable rook_start because we are undoing the move
+                    const LONG_CASTLE_ROOK_START_COLUMN: usize = 0; // (a column)
+                    const LONG_CASTLE_ROOK_END_COLUMN: usize = 3; // (d column)
+
+                    const SHORT_CASTLE_ROOK_START_COLUMN: usize = 7; // (h column)
+                    const SHORT_CASTLE_ROOK_END_COLUMN: usize = 5; // (f column)
+
                     let (rook_start, rook_end) = match side {
                         CastlingSide::Short => (
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() - 1,
+                                SHORT_CASTLE_ROOK_END_COLUMN,
                             ),
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() + 1,
+                                SHORT_CASTLE_ROOK_START_COLUMN,
                             ),
                         ),
                         CastlingSide::Long => (
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() + 1,
+                                LONG_CASTLE_ROOK_END_COLUMN,
                             ),
                             Coordinates::new(
                                 ply.ending_square().row(),
-                                ply.ending_square().column() - 2,
+                                LONG_CASTLE_ROOK_START_COLUMN,
                             ),
                         ),
                     };
@@ -167,8 +187,15 @@ impl BoardBackend {
     /// Places a piece on the board at the specified coordinates.
     ///
     /// Overwrites whatever was previously there.
-    pub const fn set(&mut self, piece: Piece, coordinates: Coordinates) {
+    pub fn set(&mut self, piece: Piece, coordinates: Coordinates) {
         self.grid[coordinates.row()][coordinates.column()] = Some(piece);
+
+        if piece.kind() == Kind::King {
+            match piece.team() {
+                Team::White => self.white_king_location = coordinates,
+                Team::Black => self.black_king_location = coordinates,
+            }
+        }
     }
 
     /// Removes a piece from the board, leaving the square empty.
@@ -180,6 +207,18 @@ impl BoardBackend {
     #[must_use]
     pub const fn get(&self, coordinates: Coordinates) -> Square {
         self.grid[coordinates.row()][coordinates.column()]
+    }
+
+    /// Returns the position of the white king
+    #[must_use]
+    pub const fn get_white_king(&self) -> Coordinates {
+        self.white_king_location
+    }
+
+    /// Returns the position of the black king
+    #[must_use]
+    pub const fn get_black_king(&self) -> Coordinates {
+        self.black_king_location
     }
 
     /// Returns a list of all pieces currently on the board.
@@ -202,8 +241,16 @@ impl BoardBackend {
 
     /// Creates a new backend from a raw grid.
     #[must_use]
-    pub const fn new(grid: Grid) -> Self {
-        Self { grid }
+    pub const fn new(
+        grid: Grid,
+        white_king_location: Coordinates,
+        black_king_location: Coordinates,
+    ) -> Self {
+        Self {
+            grid,
+            white_king_location,
+            black_king_location,
+        }
     }
 
     /// Returns a reference to the underlying grid.

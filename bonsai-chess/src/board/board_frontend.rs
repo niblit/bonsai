@@ -4,7 +4,7 @@ use crate::{
     atoms::{CastlingRights, Coordinates, MoveCounter, Team},
     board::{Grid, board_backend::BoardBackend},
     moves::{Ply, generate_pseudo_legal_moves},
-    pieces::{Kind, LocatedPiece, Piece},
+    pieces::{Kind, Piece},
     rules::{
         CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD, CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD, DrawReason,
         FORCED_FIFTY_MOVE_RULE_THRESHOLD, FORCED_THREEFOLD_REPETITION_THRESHOLD, Outcome,
@@ -125,6 +125,9 @@ impl BoardFrontend {
         let placement = parts.first().expect("Invalid FEN: Missing placement data");
         let mut grid: Grid = [[None; crate::BOARD_COLUMNS]; crate::BOARD_ROWS];
 
+        let mut white_king_position = None;
+        let mut black_king_position = None;
+
         for (row_index, row_str) in placement.split('/').enumerate() {
             if row_index >= crate::BOARD_ROWS {
                 break;
@@ -152,13 +155,33 @@ impl BoardFrontend {
 
                     if column_index < crate::BOARD_COLUMNS {
                         grid[row_index][column_index] = Some(Piece::new(team, kind));
+
+                        if kind == Kind::King {
+                            match team {
+                                Team::White => {
+                                    white_king_position = Coordinates::new(row_index, column_index);
+                                }
+                                Team::Black => {
+                                    black_king_position = Coordinates::new(row_index, column_index);
+                                }
+                            }
+                        }
+
                         column_index += 1;
                     }
                 }
             }
         }
 
-        let backend = BoardBackend::new(grid);
+        assert!(
+            white_king_position.is_some() && black_king_position.is_some(),
+            "No Kings on the board!"
+        );
+        let backend = BoardBackend::new(
+            grid,
+            white_king_position.unwrap(),
+            black_king_position.unwrap(),
+        );
 
         // 2. Active Color
         let active_color = parts.get(1).unwrap_or(&"w");
@@ -379,7 +402,13 @@ impl BoardFrontend {
 
         // --- Draw Detection: Dead Position (Insufficient Material) ---
         // Currently only checks for King vs King.
+
         // TODO: Expand to K vs K+N, K vs K+B, etc.
+        // According to the rules of a dead position, Article 5.2 b, when there is no possibility of checkmate for either side with any series of legal moves, the position is an immediate draw if
+
+        //    Both Sides have a bare King
+        //    One Side has a King and a Minor Piece against a bare King
+        //    Both Sides have a King and a Bishop, the Bishops being the same Color
         if self
             .backend
             .get_all_pieces()
@@ -530,23 +559,17 @@ impl BoardFrontend {
     /// # Panics
     ///
     /// This function will panic if there is no King of the current turn's color on the board.
+    #[must_use]
     pub fn is_in_check(&self) -> bool {
-        let pieces = match self.turn {
-            Team::White => self.backend.get_white_pieces(),
-            Team::Black => self.backend.get_black_pieces(),
-        };
-
-        // TODO: cache both kings' position
         // 1. Find the King
-        let king_pos = pieces
-            .iter()
-            .find(|lp| lp.piece().kind() == Kind::King)
-            .map(LocatedPiece::position)
-            .expect("Invalid Board: The King is missing!");
+        let king_position = match self.turn {
+            Team::White => self.backend.get_white_king(),
+            Team::Black => self.backend.get_black_king(),
+        };
 
         // 2. Check if that square is under attack
         self.backend
-            .is_square_under_attack(king_pos, self.turn.opposite())
+            .is_square_under_attack(king_position, self.turn.opposite())
     }
 
     /// Returns the game outcome (Win, Draw, or None if ongoing).
