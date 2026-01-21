@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     atoms::{CastlingRights, Coordinates, MoveCounter, Team},
-    board::{Grid, board_backend::BoardBackend},
+    board::{Grid, PositionSnapshot, board_backend::BoardBackend},
     moves::{Ply, generate_pseudo_legal_moves},
     pieces::{Kind, Piece},
     rules::{
@@ -11,19 +11,6 @@ use crate::{
         WinReason,
     },
 };
-
-/// A hashable representation of the board state used to detect Threefold Repetition.
-///
-/// This struct captures only the essential data required to uniquely identify a position
-/// according to FIDE rules (piece placement, active color, castling rights, and en passant).
-/// It excludes move counters or history logs.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct PositionSnapshot {
-    pieces_positions: Grid,
-    turn: Team,
-    remaining_castling_rights: CastlingRights,
-    en_passant: Option<Coordinates>,
-}
 
 /// The main game controller for a chess game.
 ///
@@ -68,16 +55,15 @@ impl BoardFrontend {
     /// Creates a hashable snapshot of the current position.
     #[must_use]
     pub fn create_snapshot(&self) -> PositionSnapshot {
-        PositionSnapshot {
-            pieces_positions: *self.backend.grid(),
-            turn: self.turn,
-            remaining_castling_rights: self
-                .castling_rights_log
+        PositionSnapshot::new(
+            *self.backend.grid(),
+            self.turn,
+            self.castling_rights_log
                 .last()
                 .copied()
                 .unwrap_or(CastlingRights::no_rights()),
-            en_passant: self.en_passant_target,
-        }
+            self.en_passant_target,
+        )
     }
 
     /// Initializes a new game with the standard chess starting position.
