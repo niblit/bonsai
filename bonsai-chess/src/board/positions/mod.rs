@@ -25,7 +25,7 @@ use crate::{
 ///
 /// # Usage
 /// This serves as the source of truth for [`crate::board::BoardBackend::from_starting_position`].
-pub const STARTING_POSITION: Grid = [
+pub const STARTING_POSITION: Grid = Grid::new([
     [
         Some(Piece::new(Team::Black, Kind::Rook)),
         Some(Piece::new(Team::Black, Kind::Knight)),
@@ -52,4 +52,4 @@ pub const STARTING_POSITION: Grid = [
         Some(Piece::new(Team::White, Kind::Knight)),
         Some(Piece::new(Team::White, Kind::Rook)),
     ],
-];
+]);

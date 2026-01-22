@@ -6,7 +6,7 @@ fn main() {
 
     loop {
         // 1. Display the board state
-        print_board(game.backend().grid());
+        println!("{}", game.backend().grid());
         println!("\n{:?} to move\n", game.turn());
 
         // 2. Check for game termination
@@ -57,10 +57,10 @@ fn main() {
                                 SpecialMove::EnPassant(_) => String::new(),
                                 SpecialMove::Promotion(valid_promotions) => format!(
                                     "={}",
-                                    get_piece_symbol(Piece::new(
+                                    Piece::new(
                                         Team::White,
                                         Kind::from_valid_promotions(valid_promotions)
-                                    ))
+                                    )
                                 ),
                             });
                     let move_str = format!("{coordinates_info} {extra_info}");
@@ -104,56 +104,5 @@ fn main() {
             }
         }
         println!();
-    }
-}
-
-/// Renders the chess board to the terminal in Stockfish ASCII style.
-fn print_board(grid: &Grid) {
-    let files = "    a   b   c   d   e   f   g   h";
-    let border = "  +---+---+---+---+---+---+---+---+";
-
-    println!("{files}");
-    for (row_idx, row) in grid.iter().enumerate() {
-        // Row 0 is Rank 8, Row 7 is Rank 1
-        let rank = 8 - row_idx;
-        // Print top border for this row
-        println!("{border}");
-
-        print!("{rank}");
-        // Print row content
-        for square in row {
-            let symbol = square
-                .as_ref()
-                .map_or(' ', |piece| get_piece_symbol(*piece));
-            print!(" | {symbol}");
-        }
-
-        // Print right-hand border and rank number
-        println!(" | {rank}");
-    }
-    // Print final bottom border
-    println!("{border}");
-
-    // Print file letters
-    println!("{files}");
-}
-
-/// Returns a single character representation for a piece.
-/// Uppercase = White, Lowercase = Black.
-const fn get_piece_symbol(piece: Piece) -> char {
-    match (piece.team(), piece.kind()) {
-        (Team::White, Kind::King) => 'K',
-        (Team::White, Kind::Queen) => 'Q',
-        (Team::White, Kind::Rook) => 'R',
-        (Team::White, Kind::Bishop) => 'B',
-        (Team::White, Kind::Knight) => 'N',
-        (Team::White, Kind::Pawn) => 'P',
-
-        (Team::Black, Kind::King) => 'k',
-        (Team::Black, Kind::Queen) => 'q',
-        (Team::Black, Kind::Rook) => 'r',
-        (Team::Black, Kind::Bishop) => 'b',
-        (Team::Black, Kind::Knight) => 'n',
-        (Team::Black, Kind::Pawn) => 'p',
     }
 }

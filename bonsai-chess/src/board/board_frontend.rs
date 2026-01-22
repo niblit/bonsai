@@ -109,7 +109,7 @@ impl BoardFrontend {
         // 1. Placement Data
         // Parses ranks 8 down to 1.
         let placement = parts.first().expect("Invalid FEN: Missing placement data");
-        let mut grid: Grid = [[None; crate::BOARD_COLUMNS]; crate::BOARD_ROWS];
+        let mut grid: Grid = Grid::new([[None; crate::BOARD_COLUMNS]; crate::BOARD_ROWS]);
 
         let mut white_king_position = None;
         let mut black_king_position = None;

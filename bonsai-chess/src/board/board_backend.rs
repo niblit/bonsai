@@ -199,13 +199,13 @@ impl BoardBackend {
     }
 
     /// Removes a piece from the board, leaving the square empty.
-    pub const fn unset(&mut self, coordinates: Coordinates) {
+    pub fn unset(&mut self, coordinates: Coordinates) {
         self.grid[coordinates.row()][coordinates.column()] = None;
     }
 
     /// Retrieves the content of a square.
     #[must_use]
-    pub const fn get(&self, coordinates: Coordinates) -> Square {
+    pub fn get(&self, coordinates: Coordinates) -> Square {
         self.grid[coordinates.row()][coordinates.column()]
     }
 
