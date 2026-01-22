@@ -13,7 +13,7 @@ fn App() -> impl IntoView {
             <img
                 src="/static/bonsai.svg"
                 alt="Bonsai Chess Logo"
-                class="w-1/4 h-1/4"
+                class="w-1/4 h-1/4 object-contain"
             />
         </div>
     }
