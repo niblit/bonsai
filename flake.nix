@@ -49,6 +49,9 @@
 
             # Audit dependencies
             cargo-audit
+
+            # Running rust as an interpreted language
+            evcxr
           ];
 
           # Environment variables
