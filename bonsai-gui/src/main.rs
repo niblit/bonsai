@@ -9,7 +9,7 @@ fn main() {
 #[component]
 fn App() -> impl IntoView {
     view! {
-        <div class="min-h-screen flex items-center justify-center bg-zinc-900">
+        <div class="h-dvh w-screen overflow-hidden flex items-center justify-center bg-zinc-900">
             <img
                 src="/static/bonsai.svg"
                 alt="Bonsai Chess Logo"
