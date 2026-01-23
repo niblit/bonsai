@@ -105,13 +105,13 @@ fn App() -> impl IntoView {
     };
 
     view! {
-        <div class="h-dvh w-screen bg-zinc-900 flex items-center justify-center text-zinc-100 font-sans">
-            <div class="flex flex-row gap-8 items-start">
+        <div class="min-h-dvh w-screen bg-zinc-900 flex items-center justify-center text-zinc-100 font-sans py-8 md:py-0">
+            <div class="flex flex-col md:flex-row gap-8 items-center justify-center">
 
                 // --- CHESS BOARD ---
                 <div class="select-none">
 
-                    <div class="grid grid-cols-8 border-4 border-zinc-700 bg-zinc-800 shadow-2xl aspect-square rounded-xl overflow-hidden">
+                    <div class="grid grid-cols-8 grid-rows-8 border-4 border-zinc-700 bg-zinc-800 shadow-2xl aspect-square rounded-xl overflow-hidden w-[80vmin] h-[80vmin]">
                         {
                             BOARD_ROWS_RANGE.map(|row_idx| {
                                 view! {
@@ -133,7 +133,7 @@ fn App() -> impl IntoView {
                                             view! {
                                                 <div
                                                     class=move || format!(
-                                                        "w-16 h-16 flex items-center justify-center relative cursor-pointer \
+                                                        "w-full h-full flex items-center justify-center relative cursor-pointer \
                                                          {} {}",
                                                         bg_color,
                                                         if is_selected() { "ring-inset ring-5 ring-[#33cd63]" } else { "" },
@@ -167,7 +167,7 @@ fn App() -> impl IntoView {
                                                             let src = format!("/static/pieces/california/{team_str}{kind_str}.svg");
 
                                                             view! {
-                                                                <img src=src class="w-14 h-14 z-10 pointer-events-none" />
+                                                                <img src=src class="w-[87.5%] h-[87.5%] z-10 pointer-events-none" />
                                                             }.into_any()
                                                         })
                                                     }}
@@ -179,9 +179,9 @@ fn App() -> impl IntoView {
 
                                                         if is_target {
                                                             let style = if has_piece {
-                                                                "w-16 h-16 border-4 border-[#ea4865] rounded-full"
+                                                                "w-full h-full border-4 border-[#ea4865] rounded-full"
                                                             } else {
-                                                                "w-8 h-8 bg-[#33cd63] rounded-full"
+                                                                "w-[50%] h-[50%] bg-[#33cd63] rounded-full"
                                                             };
                                                             view! { <div class=format!("absolute z-20 pointer-events-none {}", style)></div> }.into_any()
                                                         } else {
@@ -199,7 +199,7 @@ fn App() -> impl IntoView {
                 </div>
 
                 // --- SIDE PANEL ---
-                <div class="w-64 flex flex-col gap-4 h-[512px]">
+                <div class="w-[80vmin] md:w-64 flex flex-col gap-4 h-64 md:h-[80vmin]">
                     <div class="bg-zinc-800 p-4 rounded-lg shadow-lg border border-zinc-700">
                         <div class="flex items-center gap-2 mb-4">
                             <span class="text-zinc-400">To Move:</span>
