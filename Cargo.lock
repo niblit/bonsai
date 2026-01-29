@@ -127,6 +127,9 @@ dependencies = [
 [[package]]
 name = "bonsai-engine"
 version = "0.1.0"
+dependencies = [
+ "bonsai-chess",
+]
 
 [[package]]
 name = "bonsai-gui"
