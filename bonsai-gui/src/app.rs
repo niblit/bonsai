@@ -1,7 +1,7 @@
 use bonsai_chess::prelude::*;
 use leptos::prelude::*;
 
-use crate::components::{Board, Sidebar};
+use crate::components::{Board, PromotionModal, Sidebar};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -9,6 +9,7 @@ pub fn App() -> impl IntoView {
     let (game, set_game) = signal(BoardFrontend::from_starting_position());
     let (selected_square, set_selected_square) = signal::<Option<Coordinates>>(None);
     let (history_list, set_history_list) = signal::<Vec<String>>(Vec::new());
+    let (pending_promotion, set_pending_promotion) = signal::<Option<Ply>>(None);
 
     // --- LOGIC ---
     let valid_targets = Memo::new(move |_| {
@@ -49,14 +50,19 @@ pub fn App() -> impl IntoView {
                 .copied();
 
             if let Some(ply) = matching_move {
-                set_game.update(|game_state| game_state.make_move(&ply));
-                let move_str = format!(
-                    "{}{}",
-                    selected.to_algebraic_notation(),
-                    last_click.to_algebraic_notation()
-                );
-                set_history_list.update(|h| h.push(move_str));
-                set_selected_square.set(None);
+                if let Some(SpecialMove::Promotion(_)) = ply.special_move() {
+                    set_pending_promotion.set(Some(ply));
+                } else {
+                    // Standard move execution
+                    set_game.update(|game_state| game_state.make_move(&ply));
+                    let move_str = format!(
+                        "{}{}",
+                        selected.to_algebraic_notation(),
+                        last_click.to_algebraic_notation()
+                    );
+                    set_history_list.update(|h| h.push(move_str));
+                    set_selected_square.set(None);
+                }
             } else {
                 let clicked_piece = game.with(|g| g.backend().get(last_click));
                 if let Some(piece) = clicked_piece {
@@ -79,6 +85,32 @@ pub fn App() -> impl IntoView {
         }
     };
 
+    // Add a helper to finish the promotion:
+    let on_promote = move |choice: ValidPromotions| {
+        if let Some(base_ply) = pending_promotion.get() {
+            let mut current_game = game.get();
+            // Find the specific ply that matches the chosen promotion
+            let final_ply = current_game.get_legal_moves().into_iter().find(|m| {
+                m.starting_square() == base_ply.starting_square()
+                    && m.ending_square() == base_ply.ending_square()
+                    && matches!(m.special_move(), Some(SpecialMove::Promotion(c)) if c == choice)
+            });
+
+            if let Some(ply) = final_ply {
+                set_game.update(|g| g.make_move(&ply));
+                // ... update history list ...
+            }
+            set_pending_promotion.set(None);
+            set_selected_square.set(None);
+        }
+    };
+
+    // Add a cancel handler
+    let on_cancel_promotion = move |()| {
+        set_pending_promotion.set(None);
+        set_selected_square.set(None); // also deselect the square
+    };
+
     // --- VIEW ---
     view! {
         <div class="min-h-dvh w-screen bg-zinc-900 flex items-center justify-center text-zinc-100 font-sans py-8 md:py-0">
@@ -98,6 +130,16 @@ pub fn App() -> impl IntoView {
                     on_undo=Callback::new(move |()| on_undo())
                 />
             </div>
+
+            {move || pending_promotion.get().map(|_| {
+                view! {
+                    <PromotionModal
+                        team=game.with(bonsai_chess::prelude::BoardFrontend::turn)
+                        on_select=Callback::new(on_promote)
+                        on_cancel=Callback::new(on_cancel_promotion)
+                    />
+                }
+            })}
         </div>
     }
 }
