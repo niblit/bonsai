@@ -65,7 +65,7 @@ trunk serve
 
 - 🚧 **Engine**: Evaluation and Search are currently in development.
 
-- 🚧 **Interfaces**: CLI and GUI are initialized but not yet functional.
+- 🚧 **Interfaces**: CLI and GUI are functional but not yet finished.
 
 ## License
 This project is licensed under the GNU General Public License v3.0 (GPL-3.0-or-later). See the **[`LICENSE`](./LICENSE)** file for details.
