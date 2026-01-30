@@ -1,6 +1,8 @@
 use bonsai_chess::prelude::{Ply, PositionSnapshot};
 use std::collections::HashMap;
 
+use crate::config::TRANSPOSITION_TABLE_INITIAL_SIZE;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NodeType {
     Exact, // The score is exact
@@ -23,7 +25,7 @@ pub struct TranspositionTable {
 impl TranspositionTable {
     pub fn new() -> Self {
         Self {
-            table: HashMap::with_capacity(100_000),
+            table: HashMap::with_capacity(TRANSPOSITION_TABLE_INITIAL_SIZE),
         }
     }
 

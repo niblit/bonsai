@@ -1,5 +1,11 @@
-use crate::evaluation::{CHECKMATE_SCORE, DRAW_SCORE, evaluate_position, score_move};
-use crate::transposition_table::{Entry, NodeType, TranspositionTable};
+use crate::{
+    config::{CHECKMATE_SCORE, DRAW_SCORE},
+    evaluation::{evaluate_position, score_move},
+};
+use crate::{
+    search::quiescence,
+    transposition_table::{Entry, NodeType, TranspositionTable},
+};
 use bonsai_chess::prelude::*;
 
 pub fn alpha_beta(
@@ -11,18 +17,30 @@ pub fn alpha_beta(
     tt: &mut TranspositionTable, // Added parameter
 ) -> isize {
     let snapshot = state.create_snapshot();
+    let mut hash_move = None;
 
     // 1. Transposition Table Lookup
-    if let Some(entry) = tt.get(&snapshot)
-        && entry.depth >= depth
-    {
-        match entry.node_type {
-            NodeType::Exact => return entry.score,
-            NodeType::Lower => alpha = alpha.max(entry.score),
-            NodeType::Upper => beta = beta.min(entry.score),
-        }
-        if alpha >= beta {
-            return entry.score;
+    if let Some(entry) = tt.get(&snapshot) {
+        // Save the move to use for sorting later (The Hash Move)
+        hash_move = entry.best_move;
+
+        if entry.depth >= depth {
+            match entry.node_type {
+                NodeType::Exact => {
+                    if let Some(mv) = entry.best_move {
+                        *best_move_found = Some(mv);
+                    }
+                    return entry.score;
+                }
+                NodeType::Lower => alpha = alpha.max(entry.score),
+                NodeType::Upper => beta = beta.min(entry.score),
+            }
+            if alpha >= beta {
+                if let Some(mv) = entry.best_move {
+                    *best_move_found = Some(mv);
+                }
+                return entry.score;
+            }
         }
     }
 
@@ -42,7 +60,7 @@ pub fn alpha_beta(
     }
 
     if depth == 0 {
-        return evaluate_position(state);
+        return quiescence(state, alpha, beta);
     }
 
     let mut moves = state.get_legal_moves();
@@ -50,8 +68,15 @@ pub fn alpha_beta(
         return evaluate_position(state);
     }
 
-    // Move Ordering
-    moves.sort_by_cached_key(|m| -score_move(m));
+    // 2. Move Ordering
+    // We prioritize the Hash Move above all others.
+    moves.sort_by_cached_key(|m| {
+        if Some(*m) == hash_move {
+            isize::MAX // Give the Hash Move the highest possible priority
+        } else {
+            -score_move(m)
+        }
+    });
 
     let old_alpha = alpha;
     let mut best_move = None;
@@ -73,7 +98,7 @@ pub fn alpha_beta(
         }
     }
 
-    // 2. Transposition Table Store
+    // Transposition Table Store
     let node_type = if best_score <= old_alpha {
         NodeType::Upper
     } else if best_score >= beta {
