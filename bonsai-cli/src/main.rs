@@ -1,4 +1,6 @@
 use bonsai_chess::prelude::*;
+use bonsai_engine::best_move;
+
 use std::io::{self, Write};
 
 fn main() {
@@ -13,6 +15,20 @@ fn main() {
         if let Some(outcome) = game.outcome() {
             println!("\nGame Over: {outcome:?}");
             break;
+        }
+
+        if game.turn() == Team::Black {
+            println!("Engine is thinking...");
+
+            // We clone the game state because best_move takes ownership of the board
+            // Time set to 1500ms (1.5 seconds)
+            if let Some(engine_move) = best_move(game.clone(), 1500) {
+                println!("Engine plays: {engine_move}");
+                game.make_move(&engine_move);
+                println!();
+                continue;
+            }
+            println!("Engine has no moves (Stalemate or Checkmate expected next check).");
         }
 
         // 3. Generate legal moves for the current turn
@@ -41,12 +57,7 @@ fn main() {
 
                 if index < total_moves {
                     let ply = &legal_moves[index];
-                    let coordinates_info = format!(
-                        "{}: {} -> {}",
-                        index,
-                        ply.starting_square().to_algebraic_notation(),
-                        ply.ending_square().to_algebraic_notation()
-                    );
+                    let coordinates_info = format!("{index}: {ply}");
                     let extra_info =
                         ply.special_move()
                             .map_or_else(String::new, |special| match special {

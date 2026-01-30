@@ -122,6 +122,7 @@ name = "bonsai-cli"
 version = "0.1.0"
 dependencies = [
  "bonsai-chess",
+ "bonsai-engine",
 ]
 
 [[package]]

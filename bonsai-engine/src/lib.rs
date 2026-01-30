@@ -30,7 +30,6 @@ pub fn best_move(mut state: BoardFrontend, time_ms: u128) -> Option<Ply> {
 
     // Continue deepening as long as we have time
     loop {
-        println!("Current depth: {current_depth}");
         let mut depth_best_ply = None;
         alpha_beta(
             &mut state,
