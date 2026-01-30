@@ -35,17 +35,21 @@ pub fn Square(
 
     view! {
         <div
-            class=move || format!(
-                "w-full h-full flex items-center justify-center relative cursor-pointer {} {}",
-                bg_color,
-                if is_selected() { "ring-inset ring-5 ring-[#33cd63]" } else { "" },
-            )
-            on:click=move |_| on_click.run((row, col)) // Use .run() for Callbacks
+            class=move || {
+                format!(
+                    "w-full h-full flex items-center justify-center relative cursor-pointer {} {}",
+                    bg_color,
+                    if is_selected() { "ring-inset ring-5 ring-[#33cd63]" } else { "" },
+                )
+            }
+            // Use .run() for Callbacks
+            on:click=move |_| on_click.run((row, col))
         >
             // Red Check Highlight
             {move || {
                 if is_in_check() {
-                    view! { <div class="absolute inset-0 bg-[#ea4865] rounded-full blur-md"></div> }.into_any()
+                    view! { <div class="absolute inset-0 bg-[#ea4865] rounded-full blur-md"></div> }
+                        .into_any()
                 } else {
                     view! { <div></div> }.into_any()
                 }
@@ -54,24 +58,28 @@ pub fn Square(
             // Render Piece
             {move || {
                 let piece = game.with(|game_state| game_state.backend().get(coords));
-                piece.map_or_else(
-                    || view! { <div></div> }.into_any(),
-                    |p| view! { <PieceView piece=p /> }.into_any()
-                )
+                piece
+                    .map_or_else(
+                        || view! { <div></div> }.into_any(),
+                        |p| view! { <PieceView piece=p /> }.into_any(),
+                    )
             }}
 
             // Valid Move Target Dot/Ring
             {move || {
                 let is_target = is_valid_target();
                 let has_piece = game.with(|g| g.backend().get(coords).is_some());
-
                 if is_target {
                     let style = if has_piece {
                         "w-full h-full border-4 border-[#ea4865] rounded-full"
                     } else {
                         "w-[50%] h-[50%] bg-[#33cd63] rounded-full"
                     };
-                    view! { <div class=format!("absolute z-20 pointer-events-none {}", style)></div> }.into_any()
+
+                    view! {
+                        <div class=format!("absolute z-20 pointer-events-none {}", style)></div>
+                    }
+                        .into_any()
                 } else {
                     view! { <div></div> }.into_any()
                 }

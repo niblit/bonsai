@@ -17,7 +17,5 @@ pub fn PieceView(piece: Piece) -> impl IntoView {
     };
     let src = format!("/static/pieces/california/{team_str}{kind_str}.svg");
 
-    view! {
-        <img src=src class="w-[80%] h-[80%] z-10 pointer-events-none" />
-    }
+    view! { <img src=src class="w-[80%] h-[80%] z-10 pointer-events-none" /> }
 }

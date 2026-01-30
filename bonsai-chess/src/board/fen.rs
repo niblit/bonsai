@@ -169,6 +169,8 @@ pub fn to_fen(position: PositionSnapshot, clocks: &MoveCounter) -> String {
     let halfmove = &clocks.fifty_move_rule_counter().to_string();
     fen.push_str(halfmove);
 
+    fen.push(' ');
+
     let fullmove = &clocks.fullmove().to_string();
     fen.push_str(fullmove);
 

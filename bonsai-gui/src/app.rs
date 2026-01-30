@@ -15,6 +15,8 @@ pub fn App() -> impl IntoView {
     let (history_list, set_history_list) = signal::<Vec<String>>(Vec::new());
     let (pending_promotion, set_pending_promotion) = signal::<Option<Ply>>(None);
 
+    let current_fen = Memo::new(move |_| game.get().to_fen());
+
     // --- LOGIC ---
 
     // NEW: Engine Hook
@@ -177,20 +179,24 @@ pub fn App() -> impl IntoView {
                 <Sidebar
                     game=game
                     history_list=history_list
-                    // Use Callback::new() here
+                    fen=current_fen
                     on_undo=Callback::new(move |()| on_undo())
                 />
             </div>
 
-            {move || pending_promotion.get().map(|_| {
-                view! {
-                    <PromotionModal
-                        team=game.with(bonsai_chess::prelude::BoardFrontend::turn)
-                        on_select=Callback::new(on_promote)
-                        on_cancel=Callback::new(on_cancel_promotion)
-                    />
-                }
-            })}
+            {move || {
+                pending_promotion
+                    .get()
+                    .map(|_| {
+                        view! {
+                            <PromotionModal
+                                team=game.with(bonsai_chess::prelude::BoardFrontend::turn)
+                                on_select=Callback::new(on_promote)
+                                on_cancel=Callback::new(on_cancel_promotion)
+                            />
+                        }
+                    })
+            }}
         </div>
     }
 }

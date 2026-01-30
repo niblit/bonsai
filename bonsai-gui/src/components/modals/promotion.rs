@@ -20,17 +20,20 @@ pub fn PromotionModal(
             <div class="bg-zinc-800 p-6 rounded-2xl border-2 border-zinc-600 shadow-2xl flex flex-col items-center gap-4">
                 <h2 class="text-xl font-bold text-white">Choose Promotion</h2>
                 <div class="flex gap-4">
-                    {options.into_iter().map(|promo| {
-                        let piece = Piece::new(team, Kind::from_valid_promotions(promo));
-                        view! {
-                            <button
-                                class="w-20 h-20 bg-zinc-700 hover:bg-zinc-600 rounded-xl flex items-center justify-center transition-colors"
-                                on:click=move |_| on_select.run(promo)
-                            >
-                                <PieceView piece=piece />
-                            </button>
-                        }
-                    }).collect_view()}
+                    {options
+                        .into_iter()
+                        .map(|promo| {
+                            let piece = Piece::new(team, Kind::from_valid_promotions(promo));
+                            view! {
+                                <button
+                                    class="w-20 h-20 bg-zinc-700 hover:bg-zinc-600 rounded-xl flex items-center justify-center transition-colors"
+                                    on:click=move |_| on_select.run(promo)
+                                >
+                                    <PieceView piece=piece />
+                                </button>
+                            }
+                        })
+                        .collect_view()}
                 </div>
 
                 // Cancel Button

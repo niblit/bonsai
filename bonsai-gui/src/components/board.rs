@@ -12,11 +12,11 @@ pub fn Board(
     view! {
         <div class="select-none">
             <div class="grid grid-cols-8 grid-rows-8 border-4 border-zinc-700 bg-zinc-800 shadow-2xl aspect-square rounded-xl overflow-hidden w-[80vmin] h-[80vmin]">
-                {
-                    BOARD_ROWS_RANGE.map(|row_idx| {
+                {BOARD_ROWS_RANGE
+                    .map(|row_idx| {
                         view! {
-                            {
-                                BOARD_COLUMNS_RANGE.map(|col_idx| {
+                            {BOARD_COLUMNS_RANGE
+                                .map(|col_idx| {
                                     // Callback is Copy, so we can pass it directly
                                     view! {
                                         <Square
@@ -28,11 +28,11 @@ pub fn Board(
                                             on_click=on_square_click
                                         />
                                     }
-                                }).collect_view()
-                            }
+                                })
+                                .collect_view()}
                         }
-                    }).collect_view()
-                }
+                    })
+                    .collect_view()}
             </div>
         </div>
     }
