@@ -7,5 +7,5 @@ mod sidebar;
 mod square;
 
 pub use board::Board;
-pub use modals::PromotionModal;
+pub use modals::*;
 pub use sidebar::Sidebar;

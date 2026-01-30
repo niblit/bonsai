@@ -5,7 +5,7 @@ use std::time::Duration;
 // Import the engine
 use bonsai_engine::best_move;
 
-use crate::components::{Board, PromotionModal, Sidebar};
+use crate::components::{Board, GameOverModal, PromotionModal, Sidebar};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -164,6 +164,13 @@ pub fn App() -> impl IntoView {
         set_selected_square.set(None); // also deselect the square
     };
 
+    let on_restart = move || {
+        set_game.set(BoardFrontend::from_starting_position());
+        set_history_list.set(Vec::new());
+        set_selected_square.set(None);
+        set_pending_promotion.set(None);
+    };
+
     // --- VIEW ---
     view! {
         <div class="min-h-dvh w-screen bg-zinc-900 flex items-center justify-center text-zinc-100 font-sans py-8 md:py-0">
@@ -193,6 +200,19 @@ pub fn App() -> impl IntoView {
                                 team=game.with(bonsai_chess::prelude::BoardFrontend::turn)
                                 on_select=Callback::new(on_promote)
                                 on_cancel=Callback::new(on_cancel_promotion)
+                            />
+                        }
+                    })
+            }}
+
+            {move || {
+                game.get()
+                    .outcome()
+                    .map(|outcome| {
+                        view! {
+                            <GameOverModal
+                                outcome=outcome
+                                on_restart=Callback::new(move |()| on_restart())
                             />
                         }
                     })
