@@ -36,20 +36,11 @@ impl Piece {
 /// Uppercase = White, Lowercase = Black.
 impl std::fmt::Display for Piece {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let fen_piece = match (self.team(), self.kind()) {
-            (Team::White, Kind::King) => 'K',
-            (Team::White, Kind::Queen) => 'Q',
-            (Team::White, Kind::Rook) => 'R',
-            (Team::White, Kind::Bishop) => 'B',
-            (Team::White, Kind::Knight) => 'N',
-            (Team::White, Kind::Pawn) => 'P',
+        let kind = self.kind().to_string();
 
-            (Team::Black, Kind::King) => 'k',
-            (Team::Black, Kind::Queen) => 'q',
-            (Team::Black, Kind::Rook) => 'r',
-            (Team::Black, Kind::Bishop) => 'b',
-            (Team::Black, Kind::Knight) => 'n',
-            (Team::Black, Kind::Pawn) => 'p',
+        let fen_piece = match self.team() {
+            Team::White => kind.to_ascii_uppercase(),
+            Team::Black => kind.to_ascii_lowercase(),
         };
 
         write!(f, "{fen_piece}")
