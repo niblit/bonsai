@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use bonsai_chess::prelude::*;
 
 use crate::{
@@ -16,7 +14,7 @@ mod search;
 mod transposition_table;
 
 #[must_use]
-pub fn best_move(mut state: BoardFrontend, time_ms: u128) -> Option<Ply> {
+pub fn best_move(mut state: BoardFrontend, total_depth: usize) -> Option<Ply> {
     // 1. Check Opening Book first (Placeholder logic)
     if let Some(book_move) = search_opening_book(&state) {
         return Some(book_move);
@@ -26,7 +24,6 @@ pub fn best_move(mut state: BoardFrontend, time_ms: u128) -> Option<Ply> {
     let mut best_ply = None;
     let mut current_depth = STARTING_DEPTH;
     let mut tt = TranspositionTable::new();
-    let start_time = Instant::now();
 
     // Continue deepening as long as we have time
     loop {
@@ -47,7 +44,7 @@ pub fn best_move(mut state: BoardFrontend, time_ms: u128) -> Option<Ply> {
         current_depth += 1;
 
         // Check if we've exceeded the allocated time
-        if start_time.elapsed().as_millis() >= time_ms || current_depth > MAX_DEPTH {
+        if current_depth > total_depth {
             break;
         }
     }
@@ -74,7 +71,7 @@ mod tests {
         let state = get_board(fen);
 
         // Give the engine 1000ms (1 second) to find the move
-        let best = best_move(state, 1000);
+        let best = best_move(state, 6);
 
         assert!(
             best.is_some(),
@@ -97,7 +94,7 @@ mod tests {
         let fen = "7k/8/8/8/8/5n2/7r/7K b - - 0 1";
         let state = get_board(fen);
 
-        let best = best_move(state, 1000);
+        let best = best_move(state, 6);
 
         assert!(
             best.is_some(),
@@ -114,7 +111,7 @@ mod tests {
         let fen = "rnbqkbnr/pp1ppppp/8/2p5/3Q4/8/PPP1PPPP/RNB1KBNR w KQkq - 0 2";
         let state = get_board(fen);
 
-        let best = best_move(state, 1000);
+        let best = best_move(state, 6);
         assert!(best.is_some());
 
         // We just want to ensure it runs without crashing.

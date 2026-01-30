@@ -1,5 +1,9 @@
 use bonsai_chess::prelude::*;
 use leptos::prelude::*;
+use std::time::Duration;
+
+// Import the engine
+use bonsai_engine::best_move;
 
 use crate::components::{Board, PromotionModal, Sidebar};
 
@@ -12,6 +16,37 @@ pub fn App() -> impl IntoView {
     let (pending_promotion, set_pending_promotion) = signal::<Option<Ply>>(None);
 
     // --- LOGIC ---
+
+    // NEW: Engine Hook
+    Effect::new(move |_| {
+        let current_game = game.get();
+        let turn = current_game.turn();
+        let outcome = current_game.outcome();
+
+        // If it is Black's turn and the game is not over, trigger the engine.
+        if turn == Team::Black && outcome.is_none() {
+            // We use set_timeout to let the browser repaint (update the board with the user's move)
+            // before the engine blocks the main thread with its calculation.
+            set_timeout(
+                move || {
+                    // Time limit: 500ms (shorter than CLI to keep UI responsive-ish)
+                    if let Some(engine_ply) = best_move(current_game.clone(), 4) {
+                        set_game.update(|g| g.make_move(&engine_ply));
+
+                        // Add to history
+                        let move_str = format!(
+                            "{}{}",
+                            engine_ply.starting_square().to_algebraic_notation(),
+                            engine_ply.ending_square().to_algebraic_notation()
+                        );
+                        set_history_list.update(|h| h.push(move_str));
+                    }
+                },
+                Duration::from_millis(100),
+            );
+        }
+    });
+
     let valid_targets = Memo::new(move |_| {
         selected_square.get().map_or_else(Vec::new, |sel| {
             let mut game_state = game.get();
@@ -29,12 +64,21 @@ pub fn App() -> impl IntoView {
         set_history_list.update(|h| {
             h.pop();
         });
+        set_game.update(BoardFrontend::undo_last_move);
+        set_history_list.update(|h| {
+            h.pop();
+        });
         set_selected_square.set(None);
     };
 
     let handle_square_click = move |(row, col): (usize, usize)| {
         let last_click = Coordinates::new(row, col).unwrap();
         let turn = game.with(BoardFrontend::turn);
+
+        // Disable interaction if it's the Engine's turn (Black)
+        if turn == Team::Black {
+            return;
+        }
 
         if let Some(selected) = selected_square.get() {
             if selected == last_click {
@@ -98,7 +142,14 @@ pub fn App() -> impl IntoView {
 
             if let Some(ply) = final_ply {
                 set_game.update(|g| g.make_move(&ply));
-                // ... update history list ...
+
+                // Add to history (include promotion char for clarity if desired, keeping simple for now)
+                let move_str = format!(
+                    "{}{}",
+                    ply.starting_square().to_algebraic_notation(),
+                    ply.ending_square().to_algebraic_notation()
+                );
+                set_history_list.update(|h| h.push(move_str));
             }
             set_pending_promotion.set(None);
             set_selected_square.set(None);

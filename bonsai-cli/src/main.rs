@@ -22,7 +22,7 @@ fn main() {
 
             // We clone the game state because best_move takes ownership of the board
             // Time set to 1500ms (1.5 seconds)
-            if let Some(engine_move) = best_move(game.clone(), 1500) {
+            if let Some(engine_move) = best_move(game.clone(), 6) {
                 println!("Engine plays: {engine_move}");
                 game.make_move(&engine_move);
                 println!();
