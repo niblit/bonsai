@@ -45,7 +45,7 @@ fn main() {
     // 3. Make a move (e.g., picking the first available one)
     if let Some(first_move) = legal_moves.first() {
         game.make_move(first_move);
-        println!("Moved piece from {:?} to {:?}", first_move.starting_square(), first_move.ending_square());
+        println!("Move: {first_move}");
     }
 
     // 4. Check game status

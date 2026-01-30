@@ -26,6 +26,21 @@ impl Kind {
     }
 }
 
+impl std::fmt::Display for Kind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let symbol = match self {
+            Self::King => "K",
+            Self::Queen => "Q",
+            Self::Rook => "R",
+            Self::Bishop => "B",
+            Self::Knight => "N",
+            Self::Pawn => "P",
+        };
+
+        write!(f, "{symbol}")
+    }
+}
+
 /// Represents the subset of piece types that a Pawn is allowed to promote into.
 ///
 /// According to FIDE Laws of Chess, a pawn cannot promote into a King or another Pawn.
@@ -37,4 +52,12 @@ pub enum ValidPromotions {
     Rook,
     Bishop,
     Knight,
+}
+
+impl std::fmt::Display for ValidPromotions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let kind = Kind::from_valid_promotions(*self);
+
+        write!(f, "{kind}")
+    }
 }
