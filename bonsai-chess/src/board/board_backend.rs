@@ -55,14 +55,14 @@ impl BoardBackend {
                         match p.team() {
                             Team::White => {
                                 if white_king_location.is_none() {
-                                    white_king_location = location
+                                    white_king_location = location;
                                 } else {
                                     panic!("You can only have one white king on the board")
                                 }
                             }
                             Team::Black => {
                                 if black_king_location.is_none() {
-                                    black_king_location = location
+                                    black_king_location = location;
                                 } else {
                                     panic!("You can only have one black king on the board")
                                 }
@@ -73,9 +73,10 @@ impl BoardBackend {
             }
         }
 
-        if white_king_location.is_none() || black_king_location.is_none() {
-            panic!("There needs to be one king on either side")
-        }
+        assert!(
+            white_king_location.is_some() && black_king_location.is_some(),
+            "There needs to be one king on either side"
+        );
 
         let white_king_location = white_king_location.unwrap();
         let black_king_location = black_king_location.unwrap();

@@ -98,7 +98,7 @@ impl std::error::Error for FenParsingError {}
 /// Since `PositionSnapshot` does not store move counters, this function
 /// defaults the Halfmove clock and Fullmove counter to "0 1".
 #[must_use]
-pub fn to_fen(position: PositionSnapshot, clocks: MoveCounter) -> String {
+pub fn to_fen(position: PositionSnapshot, clocks: &MoveCounter) -> String {
     let mut fen = String::new();
 
     // 1. Piece Placement
@@ -359,7 +359,7 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
     // Calculate total halfmoves played
     // Formula: (Fullmove - 1) * 2 + (1 if Black to move else 0)
     let total_halfmoves =
-        (fullmove_number.saturating_sub(1) * 2) + if turn == Team::Black { 1 } else { 0 };
+        (fullmove_number.saturating_sub(1) * 2) + usize::from(turn == Team::Black);
 
     let move_counter = MoveCounter::from(halfmove_clock, total_halfmoves, fullmove_number);
     let position = PositionSnapshot::new(Grid::new(grid), turn, castling, en_passant);
@@ -383,7 +383,7 @@ impl<'a> Lexer<'a> {
 
     fn next_token(&mut self) -> Option<FenToken> {
         // Peek to see if we have a space (field separator)
-        if let Some(' ') = self.input.peek() {
+        if matches!(self.input.peek(), Some(' ')) {
             self.input.next(); // Consume space
             self.current_field += 1;
             return Some(FenToken::WhiteSpace);

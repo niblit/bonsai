@@ -125,7 +125,7 @@ impl BoardFrontend {
 
     #[must_use]
     pub fn to_fen(&self) -> String {
-        to_fen(self.create_snapshot(), self.move_counter.clone())
+        to_fen(self.create_snapshot(), &self.move_counter)
     }
 
     /// Returns the current turn
