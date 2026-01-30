@@ -40,6 +40,53 @@ impl BoardBackend {
         }
     }
 
+    /// Creates a new backend from a raw grid.
+    #[must_use]
+    pub fn new(grid: Grid) -> Self {
+        let mut white_king_location = None;
+        let mut black_king_location = None;
+
+        for (row_index, row) in grid.0.iter().enumerate() {
+            for (column_index, sq) in row.iter().enumerate() {
+                if let Some(p) = sq {
+                    let location = Coordinates::new(row_index, column_index);
+
+                    if p.kind() == Kind::King {
+                        match p.team() {
+                            Team::White => {
+                                if white_king_location.is_none() {
+                                    white_king_location = location
+                                } else {
+                                    panic!("You can only have one white king on the board")
+                                }
+                            }
+                            Team::Black => {
+                                if black_king_location.is_none() {
+                                    black_king_location = location
+                                } else {
+                                    panic!("You can only have one black king on the board")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if white_king_location.is_none() || black_king_location.is_none() {
+            panic!("There needs to be one king on either side")
+        }
+
+        let white_king_location = white_king_location.unwrap();
+        let black_king_location = black_king_location.unwrap();
+
+        Self {
+            grid,
+            white_king_location,
+            black_king_location,
+        }
+    }
+
     /// Updates the grid to reflect the execution of a move (`Ply`).
     ///
     /// This handles the movement of the primary piece as well as any side effects
@@ -237,20 +284,6 @@ impl BoardBackend {
     #[must_use]
     pub fn get_black_pieces(&self) -> Vec<LocatedPiece> {
         self.filter_pieces(|p: Piece| p.team() == Team::Black)
-    }
-
-    /// Creates a new backend from a raw grid.
-    #[must_use]
-    pub const fn new(
-        grid: Grid,
-        white_king_location: Coordinates,
-        black_king_location: Coordinates,
-    ) -> Self {
-        Self {
-            grid,
-            white_king_location,
-            black_king_location,
-        }
     }
 
     /// Returns a reference to the underlying grid.

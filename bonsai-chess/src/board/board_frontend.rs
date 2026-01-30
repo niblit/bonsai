@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 use crate::{
     atoms::{CastlingRights, Coordinates, MoveCounter, Team},
-    board::{Grid, PositionSnapshot, board_backend::BoardBackend},
+    board::{PositionSnapshot, board_backend::BoardBackend, from_fen, to_fen},
     moves::{Ply, generate_pseudo_legal_moves},
-    pieces::{Kind, Piece},
+    pieces::Kind,
     rules::{
         CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD, CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD, DrawReason,
         FORCED_FIFTY_MOVE_RULE_THRESHOLD, FORCED_THREEFOLD_REPETITION_THRESHOLD, Outcome,
@@ -89,11 +89,6 @@ impl BoardFrontend {
 
     /// Creates a game state from a Forsyth–Edwards Notation (FEN) string.
     ///
-    /// # Panics
-    ///
-    /// This function will panic if the provided FEN string is malformed or contains
-    /// invalid characters for pieces, ranks, or files.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -104,150 +99,33 @@ impl BoardFrontend {
     /// ```
     #[must_use]
     pub fn from_fen(fen: &str) -> Self {
-        let parts: Vec<&str> = fen.split_whitespace().collect();
-
-        // 1. Placement Data
-        // Parses ranks 8 down to 1.
-        let placement = parts.first().expect("Invalid FEN: Missing placement data");
-        let mut grid: Grid = Grid::new([[None; crate::BOARD_COLUMNS]; crate::BOARD_ROWS]);
-
-        let mut white_king_position = None;
-        let mut black_king_position = None;
-
-        for (row_index, row_str) in placement.split('/').enumerate() {
-            if row_index >= crate::BOARD_ROWS {
-                break;
+        if let Ok((position_snapshot, clock)) = from_fen(fen) {
+            let backend = BoardBackend::new(position_snapshot.get_grid());
+            Self {
+                backend,
+                turn: position_snapshot.get_turn(),
+                castling_rights_log: vec![position_snapshot.get_castling_rights()],
+                en_passant_target: position_snapshot.get_en_passant(),
+                move_counter: clock,
+                move_log: Vec::new(),
+                repetition_table: HashMap::new(),
+                outcome: None,
+                in_check: backend.is_square_under_attack(
+                    match position_snapshot.get_turn() {
+                        Team::White => backend.get_white_king(),
+                        Team::Black => backend.get_black_king(),
+                    },
+                    position_snapshot.get_turn().opposite(),
+                ),
             }
-
-            let mut column_index = 0;
-            for c in row_str.chars() {
-                if let Some(skip) = c.to_digit(10) {
-                    column_index += skip as usize;
-                } else {
-                    let team = if c.is_uppercase() {
-                        Team::White
-                    } else {
-                        Team::Black
-                    };
-                    let kind = match c.to_ascii_lowercase() {
-                        'p' => Kind::Pawn,
-                        'n' => Kind::Knight,
-                        'b' => Kind::Bishop,
-                        'r' => Kind::Rook,
-                        'q' => Kind::Queen,
-                        'k' => Kind::King,
-                        _ => panic!("Invalid FEN piece: {c}"),
-                    };
-
-                    if column_index < crate::BOARD_COLUMNS {
-                        grid[row_index][column_index] = Some(Piece::new(team, kind));
-
-                        if kind == Kind::King {
-                            match team {
-                                Team::White => {
-                                    white_king_position = Coordinates::new(row_index, column_index);
-                                }
-                                Team::Black => {
-                                    black_king_position = Coordinates::new(row_index, column_index);
-                                }
-                            }
-                        }
-
-                        column_index += 1;
-                    }
-                }
-            }
-        }
-
-        assert!(
-            white_king_position.is_some() && black_king_position.is_some(),
-            "No Kings on the board!"
-        );
-        let backend = BoardBackend::new(
-            grid,
-            white_king_position.unwrap(),
-            black_king_position.unwrap(),
-        );
-
-        // 2. Active Color
-        let active_color = parts.get(1).unwrap_or(&"w");
-        let turn = if *active_color == "w" {
-            Team::White
         } else {
-            Team::Black
-        };
-
-        // 3. Castling Rights
-        let castling = parts.get(2).unwrap_or(&"-");
-        let mut castling_rights = CastlingRights::no_rights();
-        if *castling != "-" {
-            if castling.contains('K') {
-                castling_rights.enable_white_king_side();
-            }
-            if castling.contains('Q') {
-                castling_rights.enable_white_queen_side();
-            }
-            if castling.contains('k') {
-                castling_rights.enable_black_king_side();
-            }
-            if castling.contains('q') {
-                castling_rights.enable_black_queen_side();
-            }
+            Self::from_starting_position()
         }
+    }
 
-        let castling_rights_log = vec![castling_rights];
-
-        // 4. En Passant Target
-        let en_passant_str = parts.get(3).unwrap_or(&"-");
-        let en_passant_target = if *en_passant_str == "-" {
-            None
-        } else {
-            let chars: Vec<char> = en_passant_str.chars().collect();
-
-            if chars.len() == 2 {
-                let file = chars[0];
-                let rank = chars[1];
-
-                // 'a' -> 0, 'b' -> 1...
-                let col = (file as usize).wrapping_sub('a' as usize);
-
-                // FEN Rank 8 is Row 0, Rank 1 is Row 7.
-                // Row = 8 - Rank.
-                let row = rank
-                    .to_digit(10)
-                    .map_or(99, |r| crate::BOARD_ROWS.wrapping_sub(r as usize));
-
-                Coordinates::new(row, col)
-            } else {
-                None
-            }
-        };
-
-        // 5. Clocks
-        let halfmove_clock = parts.get(4).unwrap_or(&"0").parse().unwrap_or(0);
-        let fullmove_clock = parts.get(5).unwrap_or(&"1").parse().unwrap_or(1);
-
-        let move_counter = MoveCounter::from(halfmove_clock, 0, fullmove_clock);
-
-        let mut board = Self {
-            backend,
-            turn,
-            castling_rights_log,
-            en_passant_target,
-            move_counter,
-            move_log: Vec::new(),
-            repetition_table: HashMap::new(),
-            outcome: None,
-            in_check: false,
-        };
-
-        // Initialize derived state
-        board.in_check = board.is_in_check();
-
-        let snapshot = board.create_snapshot();
-        board.repetition_table.insert(snapshot, 1);
-
-        board
+    #[must_use]
+    pub fn to_fen(&self) -> String {
+        to_fen(self.create_snapshot(), self.move_counter.clone())
     }
 
     /// Returns the current turn

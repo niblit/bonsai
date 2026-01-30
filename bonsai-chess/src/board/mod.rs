@@ -12,6 +12,7 @@
 
 mod board_backend;
 mod board_frontend;
+mod fen;
 mod grid;
 mod positions;
 mod snapshot;
@@ -19,6 +20,7 @@ mod square;
 
 pub use board_backend::BoardBackend;
 pub use board_frontend::BoardFrontend;
+pub use fen::{FenParsingError, from_fen, to_fen};
 pub use grid::Grid;
 pub use snapshot::PositionSnapshot;
 pub use square::Square;
