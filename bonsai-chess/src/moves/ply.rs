@@ -82,15 +82,12 @@ impl Ply {
 impl std::fmt::Display for Ply {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let piece = match self.piece_moved.kind() {
-            Kind::King => "K",
-            Kind::Queen => "Q",
-            Kind::Rook => "R",
-            Kind::Bishop => "B",
-            Kind::Knight => "N",
-            Kind::Pawn => "",
+            Kind::Pawn => String::new(),
+            _ => self.piece_moved.kind().to_string(),
         };
 
         let origin = self.starting_square.to_algebraic_notation();
+
         let capture_or_not = if self.piece_captured.is_some()
             || matches!(self.special_move, Some(SpecialMove::EnPassant(_)))
         {
@@ -98,15 +95,18 @@ impl std::fmt::Display for Ply {
         } else {
             "-"
         };
+
         let destination = self.ending_square.to_algebraic_notation();
+
         let promotion = if let Some(SpecialMove::Promotion(promoted_piece)) = self.special_move {
-            format!("{promoted_piece:?}")
+            format!("={promoted_piece}")
         } else {
             String::new()
         };
 
         let long_algebraic_notation =
             format!("{piece}{origin}{capture_or_not}{destination}{promotion}");
+
         write!(f, "{long_algebraic_notation}")
     }
 }
