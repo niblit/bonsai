@@ -1,3 +1,4 @@
 .direnv
 /target
 /bonsai-gui/dist
+profile.json.gz
