@@ -29,7 +29,7 @@ pub fn GameOverModal(outcome: Outcome, on_restart: Callback<()>) -> impl IntoVie
     };
 
     view! {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
             <div class="bg-zinc-800 p-8 rounded-2xl border-2 border-zinc-600 shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full text-center">
                 <div class="space-y-2">
                     <h2 class="text-3xl font-bold text-white tracking-tight">{title}</h2>

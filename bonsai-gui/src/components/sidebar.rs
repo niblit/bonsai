@@ -14,6 +14,8 @@ pub fn Sidebar(
         <div class="w-[80vmin] md:w-64 flex flex-col gap-4 h-64 md:h-[80vmin]">
             <Controls game=game on_undo=on_undo />
 
+            <HistoryLog history_list=history_list />
+
             <div class="flex flex-col gap-1">
                 <label class="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                     "FEN"
@@ -22,8 +24,6 @@ pub fn Sidebar(
                     {fen}
                 </div>
             </div>
-
-            <HistoryLog history_list=history_list />
         </div>
     }
 }
