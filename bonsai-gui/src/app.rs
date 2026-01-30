@@ -11,11 +11,14 @@ use crate::components::{Board, GameOverModal, PromotionModal, Sidebar};
 pub fn App() -> impl IntoView {
     // --- STATE ---
     let (game, set_game) = signal(BoardFrontend::from_starting_position());
+
     let (selected_square, set_selected_square) = signal::<Option<Coordinates>>(None);
-    let (history_list, set_history_list) = signal::<Vec<String>>(Vec::new());
+
     let (pending_promotion, set_pending_promotion) = signal::<Option<Ply>>(None);
 
     let current_fen = Memo::new(move |_| game.get().to_fen());
+
+    let move_log = Memo::new(move |_| game.get().get_move_log());
 
     // --- LOGIC ---
 
@@ -34,14 +37,6 @@ pub fn App() -> impl IntoView {
                     // Time limit: 500ms (shorter than CLI to keep UI responsive-ish)
                     if let Some(engine_ply) = best_move(current_game.clone(), 4) {
                         set_game.update(|g| g.make_move(&engine_ply));
-
-                        // Add to history
-                        let move_str = format!(
-                            "{}{}",
-                            engine_ply.starting_square().to_algebraic_notation(),
-                            engine_ply.ending_square().to_algebraic_notation()
-                        );
-                        set_history_list.update(|h| h.push(move_str));
                     }
                 },
                 Duration::from_millis(100),
@@ -63,13 +58,7 @@ pub fn App() -> impl IntoView {
 
     let on_undo = move || {
         set_game.update(BoardFrontend::undo_last_move);
-        set_history_list.update(|h| {
-            h.pop();
-        });
         set_game.update(BoardFrontend::undo_last_move);
-        set_history_list.update(|h| {
-            h.pop();
-        });
         set_selected_square.set(None);
     };
 
@@ -101,12 +90,7 @@ pub fn App() -> impl IntoView {
                 } else {
                     // Standard move execution
                     set_game.update(|game_state| game_state.make_move(&ply));
-                    let move_str = format!(
-                        "{}{}",
-                        selected.to_algebraic_notation(),
-                        last_click.to_algebraic_notation()
-                    );
-                    set_history_list.update(|h| h.push(move_str));
+
                     set_selected_square.set(None);
                 }
             } else {
@@ -144,14 +128,6 @@ pub fn App() -> impl IntoView {
 
             if let Some(ply) = final_ply {
                 set_game.update(|g| g.make_move(&ply));
-
-                // Add to history (include promotion char for clarity if desired, keeping simple for now)
-                let move_str = format!(
-                    "{}{}",
-                    ply.starting_square().to_algebraic_notation(),
-                    ply.ending_square().to_algebraic_notation()
-                );
-                set_history_list.update(|h| h.push(move_str));
             }
             set_pending_promotion.set(None);
             set_selected_square.set(None);
@@ -166,7 +142,6 @@ pub fn App() -> impl IntoView {
 
     let on_restart = move || {
         set_game.set(BoardFrontend::from_starting_position());
-        set_history_list.set(Vec::new());
         set_selected_square.set(None);
         set_pending_promotion.set(None);
     };
@@ -185,7 +160,7 @@ pub fn App() -> impl IntoView {
 
                 <Sidebar
                     game=game
-                    history_list=history_list
+                    history_list=move_log
                     fen=current_fen
                     on_undo=Callback::new(move |()| on_undo())
                 />

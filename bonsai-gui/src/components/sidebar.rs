@@ -1,12 +1,12 @@
 use crate::components::controls::Controls;
 use crate::components::history::HistoryLog;
-use bonsai_chess::prelude::BoardFrontend;
+use bonsai_chess::prelude::{BoardFrontend, Ply};
 use leptos::prelude::*;
 
 #[component]
 pub fn Sidebar(
     game: ReadSignal<BoardFrontend>,
-    history_list: ReadSignal<Vec<String>>,
+    history_list: Memo<Vec<Ply>>,
     fen: Memo<String>,
     on_undo: Callback<()>,
 ) -> impl IntoView {

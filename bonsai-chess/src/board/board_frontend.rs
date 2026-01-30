@@ -593,4 +593,10 @@ impl BoardFrontend {
     pub fn can_claim_fifty_move_rule(&self) -> bool {
         self.move_counter.fifty_move_rule_counter() >= CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD
     }
+
+    /// Gives the complete move history
+    #[must_use]
+    pub fn get_move_log(&self) -> Vec<Ply> {
+        self.move_log.clone()
+    }
 }
