@@ -22,7 +22,7 @@ pub fn Controls(
             </div>
 
             <button
-                class="w-full py-2 px-4 bg-red-500 hover:bg-red-800 text-white rounded transition"
+                class="w-full py-2 px-4 bg-[#DA8B8B] hover:bg-[#C43B3B] text-[#0A1329] rounded transition"
                 on:click=move |_| on_undo.run(())
             >
                 "Undo Move"

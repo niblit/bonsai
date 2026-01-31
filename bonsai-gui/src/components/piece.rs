@@ -7,15 +7,11 @@ pub fn PieceView(piece: Piece) -> impl IntoView {
         Team::White => "w",
         Team::Black => "b",
     };
-    let kind_str = match piece.kind() {
-        Kind::Pawn => "P",
-        Kind::Knight => "N",
-        Kind::Bishop => "B",
-        Kind::Rook => "R",
-        Kind::Queen => "Q",
-        Kind::King => "K",
-    };
-    let src = format!("/static/pieces/california/{team_str}{kind_str}.svg");
 
-    view! { <img src=src class="w-[80%] h-[80%] z-10 pointer-events-none" /> }
+    let kind_str = piece.kind().to_string();
+
+    let src = format!("/static/pieces/california/{team_str}{kind_str}.svg");
+    let alt_txt = format!("{:?} {:?}", piece.team(), piece.kind());
+
+    view! { <img alt=alt_txt src=src class="w-[80%] h-[80%] z-10 pointer-events-none" /> }
 }

@@ -38,7 +38,7 @@ pub fn PromotionModal(
 
                 // Cancel Button
                 <button
-                    class="px-6 py-2 bg-red-900/40 hover:bg-red-900/60 text-red-200 rounded-lg text-sm font-medium transition-colors border border-red-500/30"
+                    class="px-6 py-2 bg-[#DA8B8B]/40 hover:bg-[#C43B3B]/60 text-[#0A1329] rounded-lg text-sm font-medium transition-colors border border-red-500/30"
                     on:click=move |_| on_cancel.run(())
                 >
                     "Cancel Move"
