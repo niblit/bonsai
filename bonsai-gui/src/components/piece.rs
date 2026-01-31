@@ -1,4 +1,4 @@
-use bonsai_chess::prelude::{Kind, Piece, Team};
+use bonsai_chess::prelude::{Piece, Team};
 use leptos::prelude::*;
 
 #[component]
