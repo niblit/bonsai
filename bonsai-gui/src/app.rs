@@ -148,50 +148,52 @@ pub fn App() -> impl IntoView {
 
     // --- VIEW ---
     view! {
-        <div class="min-h-dvh w-screen bg-zinc-900 flex items-center justify-center text-zinc-100 font-sans py-8 md:py-0">
-            <div class="flex flex-col md:flex-row gap-8 items-center justify-center">
-                <Board
-                    game=game
-                    selected_square=selected_square
-                    valid_targets=valid_targets
-                    // Use Callback::new() here
-                    on_square_click=Callback::new(handle_square_click)
-                />
+        <main role="main">
+            <div class="min-h-dvh w-screen bg-zinc-900 flex items-center justify-center text-zinc-100 font-sans py-8 md:py-0">
+                <div class="flex flex-col md:flex-row gap-8 items-center justify-center">
+                    <Board
+                        game=game
+                        selected_square=selected_square
+                        valid_targets=valid_targets
+                        // Use Callback::new() here
+                        on_square_click=Callback::new(handle_square_click)
+                    />
 
-                <Sidebar
-                    game=game
-                    history_list=move_log
-                    fen=current_fen
-                    on_undo=Callback::new(move |()| on_undo())
-                />
+                    <Sidebar
+                        game=game
+                        history_list=move_log
+                        fen=current_fen
+                        on_undo=Callback::new(move |()| on_undo())
+                    />
+                </div>
+
+                {move || {
+                    pending_promotion
+                        .get()
+                        .map(|_| {
+                            view! {
+                                <PromotionModal
+                                    team=game.with(bonsai_chess::prelude::BoardFrontend::turn)
+                                    on_select=Callback::new(on_promote)
+                                    on_cancel=Callback::new(on_cancel_promotion)
+                                />
+                            }
+                        })
+                }}
+
+                {move || {
+                    game.get()
+                        .outcome()
+                        .map(|outcome| {
+                            view! {
+                                <GameOverModal
+                                    outcome=outcome
+                                    on_restart=Callback::new(move |()| on_restart())
+                                />
+                            }
+                        })
+                }}
             </div>
-
-            {move || {
-                pending_promotion
-                    .get()
-                    .map(|_| {
-                        view! {
-                            <PromotionModal
-                                team=game.with(bonsai_chess::prelude::BoardFrontend::turn)
-                                on_select=Callback::new(on_promote)
-                                on_cancel=Callback::new(on_cancel_promotion)
-                            />
-                        }
-                    })
-            }}
-
-            {move || {
-                game.get()
-                    .outcome()
-                    .map(|outcome| {
-                        view! {
-                            <GameOverModal
-                                outcome=outcome
-                                on_restart=Callback::new(move |()| on_restart())
-                            />
-                        }
-                    })
-            }}
-        </div>
+        </main>
     }
 }
