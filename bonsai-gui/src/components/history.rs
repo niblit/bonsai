@@ -37,7 +37,7 @@ pub fn HistoryLog(history_list: Memo<Vec<Ply>>) -> impl IntoView {
                                 let black_ply = chunk.get(1).copied();
                                 let white_move = white_ply.map_or(String::new(), |p| p.to_string());
                                 let black_move = black_ply.map_or(String::new(), |p| p.to_string());
-                                let highlight_class = "bg-purple-900/90 text-white font-bold rounded px-2 py-1";
+                                let highlight_class = "bg-green-400/90 text-black font-bold rounded px-2";
                                 let default_class = "text-zinc-200 px-1";
                                 let white_class = if is_last_chunk && black_ply.is_none() {
                                     highlight_class

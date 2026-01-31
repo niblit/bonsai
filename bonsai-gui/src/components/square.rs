@@ -33,6 +33,20 @@ pub fn Square(
         })
     };
 
+    // get last move played
+    let highlight_last_move = move || {
+        game.with(|g| {
+            g.get_move_log().last().map_or("", |last_ply| {
+                if coords == last_ply.starting_square() || coords == last_ply.ending_square() {
+                    // Added mix-blend-mode or lower opacity so you can still see the square color
+                    "absolute inset-0 bg-blue-500/50"
+                } else {
+                    ""
+                }
+            })
+        })
+    };
+
     view! {
         <div
             class=move || {
@@ -54,6 +68,8 @@ pub fn Square(
                     view! { <div></div> }.into_any()
                 }
             }}
+
+            <div class=highlight_last_move></div>
 
             // Render Piece
             {move || {

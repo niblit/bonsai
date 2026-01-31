@@ -2,5 +2,6 @@
 
 mod app;
 mod components;
+mod feedback;
 
 pub use app::App;

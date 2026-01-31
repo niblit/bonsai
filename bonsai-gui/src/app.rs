@@ -5,7 +5,10 @@ use std::time::Duration;
 // Import the engine
 use bonsai_engine::best_move;
 
-use crate::components::{Board, GameOverModal, PromotionModal, Sidebar};
+use crate::{
+    components::{Board, GameOverModal, PromotionModal, Sidebar},
+    feedback::provide_feedback,
+};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -37,6 +40,7 @@ pub fn App() -> impl IntoView {
                     // Time limit: 500ms (shorter than CLI to keep UI responsive-ish)
                     if let Some(engine_ply) = best_move(current_game.clone(), 4) {
                         set_game.update(|g| g.make_move(&engine_ply));
+                        provide_feedback(&engine_ply);
                     }
                 },
                 Duration::from_millis(100),
@@ -90,8 +94,8 @@ pub fn App() -> impl IntoView {
                 } else {
                     // Standard move execution
                     set_game.update(|game_state| game_state.make_move(&ply));
-
                     set_selected_square.set(None);
+                    provide_feedback(&ply);
                 }
             } else {
                 let clicked_piece = game.with(|g| g.backend().get(last_click));
@@ -128,6 +132,7 @@ pub fn App() -> impl IntoView {
 
             if let Some(ply) = final_ply {
                 set_game.update(|g| g.make_move(&ply));
+                provide_feedback(&ply);
             }
             set_pending_promotion.set(None);
             set_selected_square.set(None);

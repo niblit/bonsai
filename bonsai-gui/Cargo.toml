@@ -17,6 +17,8 @@ bonsai-engine = { path = "../bonsai-engine" }
 
 leptos = { version = "0.8.15", features = ["csr"] }
 console_error_panic_hook = "0.1.7"
+wasm-bindgen = "0.2.108"
+web-sys = { version = "0.3.85", features = ["HtmlAudioElement", "Window", "Navigator"] }
 
 [dev-dependencies]
 
