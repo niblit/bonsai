@@ -1,35 +1,35 @@
 //! Full fledged lexer and parser for the Forsyth-Edwards Notation
 //! Source: [Forsyth-Edwards Notation](https://www.chessprogramming.org/Forsyth-Edwards_Notation)
-//
-// <FEN> ::=  <Piece Placement>
-//     ' ' <Side to move>
-//     ' ' <Castling ability>
-//     ' ' <En passant target square>
-//     ' ' <Halfmove clock>
-//     ' ' <Fullmove counter>
-//
-// <Piece Placement> ::= <rank8>'/'<rank7>'/'<rank6>'/'<rank5>'/'<rank4>'/'<rank3>'/'<rank2>'/'<rank1>
-// <ranki>       ::= [<digit17>]<piece> {[<digit17>]<piece>} [<digit17>] | '8'
-// <piece>       ::= <white Piece> | <black Piece>
-// <digit17>     ::= '1' | '2' | '3' | '4' | '5' | '6' | '7'
-// <white Piece> ::= 'P' | 'N' | 'B' | 'R' | 'Q' | 'K'
-// <black Piece> ::= 'p' | 'n' | 'b' | 'r' | 'q' | 'k'
-//
-// <Side to move> ::= {'w' | 'b'}
-//
-// <Castling ability> ::= '-' | ['K'] ['Q'] ['k'] ['q'] (1..4)
-//
-// <En passant target square> ::= '-' | <epsquare>
-// <epsquare>   ::= <fileLetter> <eprank>
-// <fileLetter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'
-// <eprank>     ::= '3' | '6'
-//
-// <Halfmove Clock> ::= <digit> {<digit>}
-// <digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-//
-// <Fullmove counter> ::= <digit19> {<digit>}
-// <digit19> ::= '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-// <digit>   ::= '0' | <digit19>
+//!
+//! <FEN> ::=  <Piece Placement>
+//!     ' ' <Side to move>
+//!     ' ' <Castling ability>
+//!     ' ' <En passant target square>
+//!     ' ' <Halfmove clock>
+//!     ' ' <Fullmove counter>
+//!
+//! <Piece Placement> ::= <rank8>'/'<rank7>'/'<rank6>'/'<rank5>'/'<rank4>'/'<rank3>'/'<rank2>'/'<rank1>
+//! <ranki>       ::= [<digit17>]<piece> {[<digit17>]<piece>} [<digit17>] | '8'
+//! <piece>       ::= <white Piece> | <black Piece>
+//! <digit17>     ::= '1' | '2' | '3' | '4' | '5' | '6' | '7'
+//! <white Piece> ::= 'P' | 'N' | 'B' | 'R' | 'Q' | 'K'
+//! <black Piece> ::= 'p' | 'n' | 'b' | 'r' | 'q' | 'k'
+//!
+//! <Side to move> ::= {'w' | 'b'}
+//!
+//! <Castling ability> ::= '-' | ['K'] ['Q'] ['k'] ['q'] (1..4)
+//!
+//! <En passant target square> ::= '-' | <epsquare>
+//! <epsquare>   ::= <fileLetter> <eprank>
+//! <fileLetter> ::= 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'
+//! <eprank>     ::= '3' | '6'
+//!
+//! <Halfmove Clock> ::= <digit> {<digit>}
+//! <digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+//!
+//! <Fullmove counter> ::= <digit19> {<digit>}
+//! <digit19> ::= '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+//! <digit>   ::= '0' | <digit19>
 
 use crate::{
     atoms::{CastlingRights, Coordinates, MoveCounter, Team},
@@ -178,18 +178,15 @@ pub fn to_fen(position: PositionSnapshot, clocks: &MoveCounter) -> String {
 }
 
 /// Parses a FEN string into a `PositionSnapshot` and the associated `MoveCounter`.
-#[must_use]
+///
+/// # Errors
+///
+/// Will return an error if the input string is not a valid fen string
 pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsingError> {
     let mut lexer = Lexer::new(fen);
 
-    let mut grid = [[None; 8]; 8];
-    let mut turn = Team::White;
-    let mut castling = CastlingRights::no_rights();
-    let mut en_passant = None;
-    let mut halfmove_clock = 0;
-    let mut fullmove_number = 1;
-
     // 1. Piece Placement
+    let mut grid = [[None; 8]; 8];
     let mut row = 0;
     let mut col = 0;
     loop {
@@ -238,16 +235,16 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
     }
 
     // 2. Side to Move
-    match lexer.next_token() {
-        Some(FenToken::SideToMove(Team::White)) => turn = Team::White,
-        Some(FenToken::SideToMove(Team::Black)) => turn = Team::Black,
+    let turn = match lexer.next_token() {
+        Some(FenToken::SideToMove(Team::White)) => Team::White,
+        Some(FenToken::SideToMove(Team::Black)) => Team::Black,
         Some(t) => {
             return Err(FenParsingError::UnexpectedToken(format!(
                 "{t:?} in Side to Move"
             )));
         }
         None => return Err(FenParsingError::UnexpectedEndOfInput),
-    }
+    };
 
     // Expect Space
     match lexer.next_token() {
@@ -261,6 +258,7 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
     }
 
     // 3. Castling Rights
+    let mut castling = CastlingRights::no_rights();
     loop {
         match lexer.next_token() {
             Some(FenToken::NoCastling) => {
@@ -283,6 +281,7 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
     }
 
     // 4. En Passant
+    let en_passant;
     match lexer.next_token() {
         Some(FenToken::NoEnPassant) => en_passant = None,
         Some(FenToken::EnPassantFile(file)) => {
@@ -303,7 +302,10 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
                     }
                 };
 
-                let rank_val = rank_char.to_digit(10).unwrap() as usize;
+                let rank_val = rank_char.to_digit(10).map_or_else(
+                    || Err(FenParsingError::UnexpectedToken(rank_char.to_string())),
+                    Ok,
+                )?;
                 // FEN rank '3' -> index 5 (8-3)
                 // FEN rank '6' -> index 2 (8-6)
                 let row_idx = 8 - rank_val;
@@ -324,6 +326,7 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
     }
 
     // 5. Halfmove Clock
+    let mut halfmove_clock = 0;
     if let Some(token) = lexer.next_token() {
         if token == FenToken::WhiteSpace {
             if let Some(FenToken::Halfmove(val)) = lexer.next_token() {
@@ -342,6 +345,7 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
     }
 
     // 6. Fullmove Counter
+    let mut fullmove_number = 1;
     if let Some(token) = lexer.next_token() {
         if token == FenToken::WhiteSpace {
             if let Some(FenToken::Fullmove(val)) = lexer.next_token() {

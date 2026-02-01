@@ -48,7 +48,7 @@ pub fn alpha_beta(
     if let Some(outcome) = state.outcome() {
         return match outcome {
             Outcome::Win { winner, .. } => {
-                let score = CHECKMATE_SCORE + depth as isize;
+                let score = CHECKMATE_SCORE + depth.cast_signed();
                 if winner == state.turn() {
                     score
                 } else {

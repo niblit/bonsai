@@ -44,7 +44,7 @@ pub fn best_move(mut state: BoardFrontend, total_depth: usize) -> Option<Ply> {
         current_depth += 1;
 
         // Check if we've exceeded the allocated time
-        if current_depth > total_depth {
+        if current_depth > total_depth || current_depth > MAX_DEPTH {
             break;
         }
     }
