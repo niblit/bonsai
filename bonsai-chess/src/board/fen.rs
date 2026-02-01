@@ -1,3 +1,4 @@
+#![allow(clippy::doc_link_with_quotes)]
 //! Full fledged lexer and parser for the Forsyth-Edwards Notation
 //! Source: [Forsyth-Edwards Notation](https://www.chessprogramming.org/Forsyth-Edwards_Notation)
 //!
@@ -185,6 +186,46 @@ pub fn to_fen(position: PositionSnapshot, clocks: &MoveCounter) -> String {
 pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsingError> {
     let mut lexer = Lexer::new(fen);
 
+    let grid = parse_piece_placement(&mut lexer)?;
+
+    // 2. Side to Move
+    let turn = parse_side_to_move(&mut lexer)?;
+
+    // Expect Space
+    match lexer.next_token() {
+        Some(FenToken::WhiteSpace) => {}
+        Some(t) => {
+            return Err(FenParsingError::UnexpectedToken(format!(
+                "{t:?} expected whitespace after side"
+            )));
+        }
+        None => return Err(FenParsingError::UnexpectedEndOfInput),
+    }
+
+    // 3. Castling Rights
+    let castling = parse_castling_ability(&mut lexer)?;
+
+    // 4. En Passant
+    let en_passant = parse_en_passant_target_square(&mut lexer)?;
+
+    // 5. Halfmove Clock
+    let halfmove_clock = parse_halfmove_clock(&mut lexer)?;
+
+    // 6. Fullmove Counter
+    let fullmove_clock = parse_fullmove_clock(&mut lexer)?;
+
+    // Calculate total halfmoves played
+    // Formula: (Fullmove - 1) * 2 + (1 if Black to move else 0)
+    let total_halfmoves = (fullmove_clock.saturating_sub(1) * 2) + usize::from(turn == Team::Black);
+
+    let move_counter = MoveCounter::from(halfmove_clock, total_halfmoves, fullmove_clock);
+
+    let position = PositionSnapshot::new(grid, turn, castling, en_passant);
+
+    Ok((position, move_counter))
+}
+
+fn parse_piece_placement(lexer: &mut Lexer) -> Result<Grid, FenParsingError> {
     // 1. Piece Placement
     let mut grid = [[None; 8]; 8];
     let mut row = 0;
@@ -234,30 +275,21 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
         }
     }
 
-    // 2. Side to Move
-    let turn = match lexer.next_token() {
-        Some(FenToken::SideToMove(Team::White)) => Team::White,
-        Some(FenToken::SideToMove(Team::Black)) => Team::Black,
-        Some(t) => {
-            return Err(FenParsingError::UnexpectedToken(format!(
-                "{t:?} in Side to Move"
-            )));
-        }
-        None => return Err(FenParsingError::UnexpectedEndOfInput),
-    };
+    Ok(Grid::new(grid))
+}
 
-    // Expect Space
+fn parse_side_to_move(lexer: &mut Lexer) -> Result<Team, FenParsingError> {
     match lexer.next_token() {
-        Some(FenToken::WhiteSpace) => {}
-        Some(t) => {
-            return Err(FenParsingError::UnexpectedToken(format!(
-                "{t:?} expected whitespace after side"
-            )));
-        }
-        None => return Err(FenParsingError::UnexpectedEndOfInput),
+        Some(FenToken::SideToMove(Team::White)) => Ok(Team::White),
+        Some(FenToken::SideToMove(Team::Black)) => Ok(Team::Black),
+        Some(t) => Err(FenParsingError::UnexpectedToken(format!(
+            "{t:?} in Side to Move"
+        ))),
+        None => Err(FenParsingError::UnexpectedEndOfInput),
     }
+}
 
-    // 3. Castling Rights
+fn parse_castling_ability(lexer: &mut Lexer) -> Result<CastlingRights, FenParsingError> {
     let mut castling = CastlingRights::no_rights();
     loop {
         match lexer.next_token() {
@@ -279,8 +311,12 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
             None => return Err(FenParsingError::UnexpectedEndOfInput),
         }
     }
+    Ok(castling)
+}
 
-    // 4. En Passant
+fn parse_en_passant_target_square(
+    lexer: &mut Lexer,
+) -> Result<Option<Coordinates>, FenParsingError> {
     let en_passant;
     match lexer.next_token() {
         Some(FenToken::NoEnPassant) => en_passant = None,
@@ -324,8 +360,10 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
         }
         None => return Err(FenParsingError::UnexpectedEndOfInput),
     }
+    Ok(en_passant)
+}
 
-    // 5. Halfmove Clock
+fn parse_halfmove_clock(lexer: &mut Lexer) -> Result<usize, FenParsingError> {
     let mut halfmove_clock = 0;
     if let Some(token) = lexer.next_token() {
         if token == FenToken::WhiteSpace {
@@ -343,13 +381,15 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
             )));
         }
     }
+    Ok(halfmove_clock)
+}
 
-    // 6. Fullmove Counter
-    let mut fullmove_number = 1;
+fn parse_fullmove_clock(lexer: &mut Lexer) -> Result<usize, FenParsingError> {
+    let mut fullmove_clock = 1;
     if let Some(token) = lexer.next_token() {
         if token == FenToken::WhiteSpace {
             if let Some(FenToken::Fullmove(val)) = lexer.next_token() {
-                fullmove_number = val;
+                fullmove_clock = val;
             } else {
                 return Err(FenParsingError::InvalidClock(
                     "Expected fullmove counter".into(),
@@ -361,16 +401,7 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
             )));
         }
     }
-
-    // Calculate total halfmoves played
-    // Formula: (Fullmove - 1) * 2 + (1 if Black to move else 0)
-    let total_halfmoves =
-        (fullmove_number.saturating_sub(1) * 2) + usize::from(turn == Team::Black);
-
-    let move_counter = MoveCounter::from(halfmove_clock, total_halfmoves, fullmove_number);
-    let position = PositionSnapshot::new(Grid::new(grid), turn, castling, en_passant);
-
-    Ok((position, move_counter))
+    Ok(fullmove_clock)
 }
 
 pub struct Lexer<'a> {
