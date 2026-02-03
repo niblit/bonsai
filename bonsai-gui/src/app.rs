@@ -1,8 +1,8 @@
-use bonsai_chess::prelude::*;
-use leptos::prelude::*;
 use std::time::Duration;
 
-// Import the engine
+use leptos::prelude::*;
+
+use bonsai_chess::prelude::*;
 use bonsai_engine::best_move;
 
 use crate::{
@@ -12,20 +12,24 @@ use crate::{
 
 #[component]
 pub fn App() -> impl IntoView {
-    // --- STATE ---
-    let (game, set_game) = signal(BoardFrontend::from_starting_position());
+    // Main game state
+    let (game, set_game) = signal(BoardFrontend::from_fen(
+        "8/1p4PP/8/k4K2/8/8/p7/8 w - - 0 61",
+    ));
 
+    // User click on board
     let (selected_square, set_selected_square) = signal::<Option<Coordinates>>(None);
 
+    // Wether to ask for user input to choose the promotion piece
     let (pending_promotion, set_pending_promotion) = signal::<Option<Ply>>(None);
 
+    // The current board position
     let current_fen = Memo::new(move |_| game.get().to_fen());
 
+    // The move history
     let move_log = Memo::new(move |_| game.get().get_move_log());
 
-    // --- LOGIC ---
-
-    // NEW: Engine Hook
+    // Use the engine for black moves
     Effect::new(move |_| {
         let current_game = game.get();
         let turn = current_game.turn();
@@ -37,7 +41,6 @@ pub fn App() -> impl IntoView {
             // before the engine blocks the main thread with its calculation.
             set_timeout(
                 move || {
-                    // Time limit: 500ms (shorter than CLI to keep UI responsive-ish)
                     if let Some(engine_ply) = best_move(current_game.clone(), 4) {
                         set_game.update(|g| g.make_move(&engine_ply));
                         provide_feedback(&engine_ply);
@@ -48,6 +51,7 @@ pub fn App() -> impl IntoView {
         }
     });
 
+    // Compute the valid ending squares for the user selected piece
     let valid_targets = Memo::new(move |_| {
         selected_square.get().map_or_else(Vec::new, |sel| {
             let mut game_state = game.get();
@@ -60,12 +64,14 @@ pub fn App() -> impl IntoView {
         })
     });
 
+    // Undo the last two moves (the engine move and then white's move)
     let on_undo = move || {
         set_game.update(BoardFrontend::undo_last_move);
         set_game.update(BoardFrontend::undo_last_move);
         set_selected_square.set(None);
     };
 
+    // When a user clicks on the board, handle the new click
     let handle_square_click = move |(row, col): (usize, usize)| {
         let last_click = Coordinates::new(row, col).unwrap();
         let turn = game.with(BoardFrontend::turn);
@@ -91,6 +97,7 @@ pub fn App() -> impl IntoView {
             if let Some(ply) = matching_move {
                 if let Some(SpecialMove::Promotion(_)) = ply.special_move() {
                     set_pending_promotion.set(Some(ply));
+                    set_selected_square.set(None);
                 } else {
                     // Standard move execution
                     set_game.update(|game_state| game_state.make_move(&ply));
