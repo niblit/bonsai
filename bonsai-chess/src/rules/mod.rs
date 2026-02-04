@@ -6,6 +6,7 @@
 //! Stalemate vs. Threefold Repetition).
 
 mod outcome;
+pub use outcome::{DrawReason, Outcome, WinReason};
 
 /// The number of halfmoves (ply) without a pawn move or capture required for a player to claim a draw.
 ///
@@ -30,5 +31,3 @@ pub const CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD: usize = 3;
 /// This corresponds to "Fivefold Repetition". According to FIDE Article 9.6.1, the game is drawn
 /// automatically if the same position has appeared for at least five times.
 pub const FORCED_THREEFOLD_REPETITION_THRESHOLD: usize = 5;
-
-pub use outcome::{DrawReason, Outcome, WinReason};

@@ -2,7 +2,7 @@ use crate::{atoms::Coordinates, board::BoardBackend, moves::Ply, pieces::Located
 
 /// Generates moves for pieces that move in straight lines (sliding pieces).
 ///
-/// This helper function is shared by the Rook, Bishop, and Queen (and potentially the King
+/// This helper function is shared by the Rook, Bishop, and Queen (and the King and Knight
 /// with a limited distance of 1). It iterates outward from the starting square in the
 /// specified directions until it hits the board edge or another piece.
 ///

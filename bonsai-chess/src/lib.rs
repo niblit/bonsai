@@ -35,6 +35,19 @@ mod pieces;
 /// Defines game outcomes (Checkmate, Draw, Win).
 mod rules;
 
+/// A collection of the most common types.
+///
+/// Importing this module allows you to use `BoardFrontend`, `Piece`, `Ply`, and other
+/// core items without managing individual sub-module imports.
+pub mod prelude {
+    pub use crate::atoms::*;
+    pub use crate::board::*;
+    pub use crate::moves::*;
+    pub use crate::pieces::*;
+    pub use crate::rules::*;
+    pub use crate::{BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE};
+}
+
 /// The number of rows (ranks) on a standard chess board.
 pub const BOARD_ROWS: usize = 8;
 
@@ -50,16 +63,3 @@ pub const BOARD_ROWS_RANGE: std::ops::Range<usize> = 0..BOARD_ROWS;
 ///
 /// Useful for iterating over the board horizontally.
 pub const BOARD_COLUMNS_RANGE: std::ops::Range<usize> = 0..BOARD_COLUMNS;
-
-/// A collection of the most common types.
-///
-/// Importing this module allows you to use `BoardFrontend`, `Piece`, `Ply`, and other
-/// core items without managing individual sub-module imports.
-pub mod prelude {
-    pub use crate::atoms::*;
-    pub use crate::board::*;
-    pub use crate::moves::*;
-    pub use crate::pieces::*;
-    pub use crate::rules::*;
-    pub use crate::{BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE};
-}
