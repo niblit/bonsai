@@ -40,9 +40,8 @@ pub fn pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     en_passant_target: Option<Coordinates>,
-) -> Vec<Ply> {
-    let mut pawn_moves = Vec::new();
-
+    buffer: &mut Vec<Ply>
+) {
     // Determine move direction and critical rows based on the piece's team.
     // White moves -1 (Up), Black moves +1 (Down).
     let (direction, starting_row, promotion_row) = match what_to_move.piece().team() {
@@ -62,7 +61,7 @@ pub fn pseudo_legal_moves(
             // A. Check for Promotion (reaching the last rank)
             if one_forward_coords.row() == promotion_row {
                 for promotion in get_promotions() {
-                    pawn_moves.push(Ply::new(
+                    buffer.push(Ply::new(
                         current_position,
                         one_forward_coords,
                         what_to_move.piece(),
@@ -72,7 +71,7 @@ pub fn pseudo_legal_moves(
                 }
             } else {
                 // B. Standard Single Push
-                pawn_moves.push(Ply::new(
+                buffer.push(Ply::new(
                     current_position,
                     one_forward_coords,
                     what_to_move.piece(),
@@ -93,7 +92,7 @@ pub fn pseudo_legal_moves(
                         Coordinates::new(two_forward_row, current_position.column())
                         && backend.get(two_forward_coords).is_none()
                     {
-                        pawn_moves.push(Ply::new(
+                        buffer.push(Ply::new(
                             current_position,
                             two_forward_coords,
                             what_to_move.piece(),
@@ -120,7 +119,7 @@ pub fn pseudo_legal_moves(
             {
                 let captured_pawn_position =
                     Coordinates::new(current_position.row(), capture_coords.column()).unwrap();
-                pawn_moves.push(Ply::new(
+                buffer.push(Ply::new(
                     current_position,
                     capture_coords,
                     what_to_move.piece(),
@@ -141,7 +140,7 @@ pub fn pseudo_legal_moves(
                 // Capture Promotion
                 if capture_coords.row() == promotion_row {
                     for promotion in get_promotions() {
-                        pawn_moves.push(Ply::new(
+                        buffer.push(Ply::new(
                             current_position,
                             capture_coords,
                             what_to_move.piece(),
@@ -151,7 +150,7 @@ pub fn pseudo_legal_moves(
                     }
                 } else {
                     // Normal Capture
-                    pawn_moves.push(Ply::new(
+                    buffer.push(Ply::new(
                         current_position,
                         capture_coords,
                         what_to_move.piece(),
@@ -162,8 +161,6 @@ pub fn pseudo_legal_moves(
             }
         }
     }
-
-    pawn_moves
 }
 
 /// Helper function to retrieve all valid promotion options.

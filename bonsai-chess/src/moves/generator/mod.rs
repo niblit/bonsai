@@ -29,19 +29,19 @@ use crate::{
 /// * `backend`: The current state of the board grid.
 /// * `en_passant_target`: The coordinate of a pawn that can be captured en passant (if any).
 /// * `castling_rights`: The current castling permissions.
-#[must_use]
 pub fn generate_pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     en_passant_target: Option<Coordinates>,
     castling_rights: CastlingRights,
-) -> Vec<Ply> {
+    buffer: &mut Vec<Ply>
+) {
     match what_to_move.piece().kind() {
-        Kind::King => king::pseudo_legal_moves(what_to_move, backend, castling_rights),
-        Kind::Queen => queen::pseudo_legal_moves(what_to_move, backend),
-        Kind::Rook => rook::pseudo_legal_moves(what_to_move, backend),
-        Kind::Bishop => bishop::pseudo_legal_moves(what_to_move, backend),
-        Kind::Knight => knight::pseudo_legal_moves(what_to_move, backend),
-        Kind::Pawn => pawn::pseudo_legal_moves(what_to_move, backend, en_passant_target),
+        Kind::King => king::pseudo_legal_moves(what_to_move, backend, castling_rights, buffer),
+        Kind::Queen => queen::pseudo_legal_moves(what_to_move, backend, buffer),
+        Kind::Rook => rook::pseudo_legal_moves(what_to_move, backend, buffer),
+        Kind::Bishop => bishop::pseudo_legal_moves(what_to_move, backend, buffer),
+        Kind::Knight => knight::pseudo_legal_moves(what_to_move, backend, buffer),
+        Kind::Pawn => pawn::pseudo_legal_moves(what_to_move, backend, en_passant_target, buffer),
     }
 }

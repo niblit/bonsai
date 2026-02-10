@@ -23,9 +23,8 @@ pub fn slide(
     distance: usize,
     directions: &[(isize, isize)],
     backend: &BoardBackend,
-) -> Vec<Ply> {
-    let mut moves = Vec::new();
-
+    buffer: &mut Vec<Ply>
+) {
     #[allow(unused_labels)]
     'direction_loop: for &(row_direction, column_direction) in directions {
         'distance_loop: for step in 1..=distance {
@@ -47,10 +46,10 @@ pub fn slide(
                     None,
                 );
                 match target_square {
-                    None => moves.push(potential_move),
+                    None => buffer.push(potential_move),
                     Some(captured_piece) => {
                         if captured_piece.team() != what_to_slide.piece().team() {
-                            moves.push(potential_move);
+                            buffer.push(potential_move);
                         }
                         // A piece blocks further movement
                         break 'distance_loop;
@@ -62,6 +61,4 @@ pub fn slide(
             }
         }
     }
-
-    moves
 }

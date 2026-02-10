@@ -321,11 +321,14 @@ impl BoardBackend {
             // We want to see if *Attacker* can reach *Location*.
             // If we place a Defender-Team piece at Location and move it, we find enemy pieces.
             let probe = Piece::new(attacker_team.opposite(), probe_kind);
-            let moves = generate_pseudo_legal_moves(
+            let mut moves = Vec::with_capacity(256);
+            generate_pseudo_legal_moves(
                 LocatedPiece::new(probe, location),
                 self,
                 None,
                 CastlingRights::no_rights(),
+                &mut moves
+
             );
 
             moves.into_iter().any(|m| {

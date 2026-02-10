@@ -49,6 +49,8 @@ pub struct BoardFrontend {
 
     /// Cached status indicating if the current player's King is in check.
     in_check: bool,
+
+    legal_moves_buffer: Vec<Ply>
 }
 
 impl BoardFrontend {
@@ -84,6 +86,8 @@ impl BoardFrontend {
             outcome: None,
 
             in_check: false,
+
+            legal_moves_buffer: Vec::with_capacity(256)
         }
     }
 
@@ -117,6 +121,7 @@ impl BoardFrontend {
                     },
                     position_snapshot.get_turn().opposite(),
                 ),
+                legal_moves_buffer: Vec::with_capacity(256)
             }
         } else {
             Self::from_starting_position()
@@ -147,40 +152,39 @@ impl BoardFrontend {
     /// 2. Filtering out moves that would leave the King in check.
     #[must_use]
     pub fn get_legal_moves(&mut self) -> Vec<Ply> {
-        let mut legal_moves = Vec::new();
-        let pseudo_legal_moves = self.get_pseudo_legal_moves();
+        self.legal_moves_buffer.clear();
+        self.get_pseudo_legal_moves();
 
-        for pseudo_legal_move in pseudo_legal_moves {
+        for index in (0..self.legal_moves_buffer.len()).rev() {
+            let pseudo_legal_move = self.legal_moves_buffer[index];
+
             // Tentatively make the move on the backend
             self.backend.make_move(&pseudo_legal_move);
 
-            // If the King is safe, the move is legal
-            if !self.is_in_check() {
-                legal_moves.push(pseudo_legal_move);
+            // If the King is in check, the move is ilegal and should be removed
+            if self.is_in_check() {
+                self.legal_moves_buffer.remove(index);
             }
 
             // Undo the move to restore state
             self.backend.undo_move(&pseudo_legal_move);
         }
 
-        legal_moves
+        self.legal_moves_buffer.clone()
     }
 
     /// Generates all pseudo-legal moves for the current turn.
     ///
     /// Pseudo-legal moves satisfy piece movement rules (e.g., Bishop moves diagonally)
     /// but do not account for the safety of the King.
-    #[must_use]
-    pub fn get_pseudo_legal_moves(&self) -> Vec<Ply> {
-        let mut pseudo_legal_moves = Vec::new();
-
+    pub fn get_pseudo_legal_moves(&mut self) {
         let pieces = match self.turn {
             Team::White => self.backend.get_white_pieces(),
             Team::Black => self.backend.get_black_pieces(),
         };
 
         for current_piece in pieces {
-            let mut current_piece_legal_moves = generate_pseudo_legal_moves(
+            generate_pseudo_legal_moves(
                 current_piece,
                 &self.backend,
                 self.en_passant_target,
@@ -188,10 +192,9 @@ impl BoardFrontend {
                     .last()
                     .copied()
                     .unwrap_or(CastlingRights::no_rights()),
+                &mut self.legal_moves_buffer
             );
-            pseudo_legal_moves.append(&mut current_piece_legal_moves);
         }
-        pseudo_legal_moves
     }
 
     /// Helper to identify if a move is a pawn double-push that enables En Passant.

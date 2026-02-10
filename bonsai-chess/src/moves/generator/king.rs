@@ -25,7 +25,8 @@ pub fn pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     castling_rights: CastlingRights,
-) -> Vec<Ply> {
+    buffer: &mut Vec<Ply>
+) {
     let directions = [
         UP,
         DOWN,
@@ -36,17 +37,16 @@ pub fn pseudo_legal_moves(
         DIAGONALLY_DOWN_LEFT,
         DIAGONALLY_DOWN_RIGHT,
     ];
-    let mut king_moves = slide(what_to_move, 1, &directions, backend);
+    slide(what_to_move, 1, &directions, backend, buffer);
 
     if castling_rights != CastlingRights::no_rights() {
-        king_moves.append(&mut get_castling_moves(
+        get_castling_moves(
             what_to_move,
             backend,
             castling_rights,
-        ));
+            buffer
+        );
     }
-
-    king_moves
 }
 
 /// Helper to generate Castling moves if valid.
@@ -60,7 +60,8 @@ fn get_castling_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     castling_rights: CastlingRights,
-) -> Vec<Ply> {
+    buffer: &mut Vec<Ply>
+) {
     // File Indices (0-7 for A-H)
     const FILE_B: usize = 1; // Occupancy check on long castle
     const FILE_C: usize = 2; // Long Castle Destination
@@ -71,13 +72,12 @@ fn get_castling_moves(
     const FILE_A: usize = 0; // where long side rook is
     const FILE_H: usize = 7; // where short side rook is
 
-    let mut castling_moves = Vec::new();
     let ally = what_to_move.piece().team();
     let enemy = ally.opposite();
 
     // 1. Cannot castle if currently in check
     if backend.is_square_under_attack(what_to_move.position(), enemy) {
-        return castling_moves;
+        return;
     }
 
     let castling_row = match ally {
@@ -114,7 +114,7 @@ fn get_castling_moves(
             });
 
         if is_path_clear && is_path_safe && is_rook_in_place {
-            castling_moves.push(Ply::new(
+            buffer.push(Ply::new(
                 what_to_move.position(),
                 g_square,
                 what_to_move.piece(),
@@ -154,7 +154,7 @@ fn get_castling_moves(
             });
 
         if is_path_clear && is_path_safe && is_rook_in_place {
-            castling_moves.push(Ply::new(
+            buffer.push(Ply::new(
                 what_to_move.position(),
                 c_square,
                 what_to_move.piece(),
@@ -163,6 +163,4 @@ fn get_castling_moves(
             ));
         }
     }
-
-    castling_moves
 }
