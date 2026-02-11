@@ -13,7 +13,7 @@ use crate::{
 #[component]
 pub fn App() -> impl IntoView {
     // Main game state
-    let (game, set_game) = signal(BoardFrontend::from_fen("1k6/7P/1K6/8/8/8/8/8 w - - 0 1"));
+    let (game, set_game) = signal(BoardFrontend::from_starting_position());
 
     // User click on board
     let (selected_square, set_selected_square) = signal::<Option<Coordinates>>(None);
