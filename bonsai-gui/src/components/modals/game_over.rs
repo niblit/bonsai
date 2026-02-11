@@ -2,7 +2,11 @@ use bonsai_chess::prelude::*;
 use leptos::prelude::*;
 
 #[component]
-pub fn GameOverModal(outcome: Outcome, on_restart: Callback<()>) -> impl IntoView {
+pub fn GameOverModal(
+    outcome: Outcome,
+    on_restart: Callback<()>,
+    on_undo: Callback<()>,
+) -> impl IntoView {
     // Determine the main title (e.g., "White Wins!" or "Draw")
     let title = match outcome {
         Outcome::Win { winner, .. } => format!("{winner:?} Wins!"),
@@ -41,6 +45,13 @@ pub fn GameOverModal(outcome: Outcome, on_restart: Callback<()>) -> impl IntoVie
                     on:click=move |_| on_restart.run(())
                 >
                     "New Game"
+                </button>
+
+                <button
+                    class="w-full py-2 px-4 bg-[#DA8B8B] hover:bg-[#C43B3B] text-[#0A1329] rounded transition"
+                    on:click=move |_| on_undo.run(())
+                >
+                    "Undo Move"
                 </button>
             </div>
         </div>

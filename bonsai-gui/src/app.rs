@@ -13,7 +13,7 @@ use crate::{
 #[component]
 pub fn App() -> impl IntoView {
     // Main game state
-    let (game, set_game) = signal(BoardFrontend::from_starting_position());
+    let (game, set_game) = signal(BoardFrontend::from_fen("1k6/7P/1K6/8/8/8/8/8 w - - 0 1"));
 
     // User click on board
     let (selected_square, set_selected_square) = signal::<Option<Coordinates>>(None);
@@ -135,12 +135,13 @@ pub fn App() -> impl IntoView {
                     && matches!(m.special_move(), Some(SpecialMove::Promotion(c)) if c == choice)
             });
 
+            set_pending_promotion.set(None);
+            set_selected_square.set(None);
+
             if let Some(ply) = final_ply {
                 set_game.update(|g| g.make_move(&ply));
                 provide_feedback(&ply);
             }
-            set_pending_promotion.set(None);
-            set_selected_square.set(None);
         }
     };
 
@@ -165,7 +166,6 @@ pub fn App() -> impl IntoView {
                         game=game
                         selected_square=selected_square
                         valid_targets=valid_targets
-                        // Use Callback::new() here
                         on_square_click=Callback::new(handle_square_click)
                     />
 
@@ -199,6 +199,7 @@ pub fn App() -> impl IntoView {
                                 <GameOverModal
                                     outcome=outcome
                                     on_restart=Callback::new(move |()| on_restart())
+                                    on_undo=Callback::new(move |()| on_undo())
                                 />
                             }
                         })

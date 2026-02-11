@@ -2,10 +2,7 @@ use bonsai_chess::prelude::{BoardFrontend, Team};
 use leptos::prelude::*;
 
 #[component]
-pub fn Controls(
-    game: ReadSignal<BoardFrontend>,
-    on_undo: Callback<()>, // Changed to Callback
-) -> impl IntoView {
+pub fn Controls(game: ReadSignal<BoardFrontend>, on_undo: Callback<()>) -> impl IntoView {
     view! {
         <div class="bg-zinc-800 p-4 rounded-lg shadow-lg border border-zinc-700">
             <div class="flex items-center gap-2 mb-4">
