@@ -20,7 +20,7 @@ pub fn HistoryLog(history_list: Memo<Vec<Ply>>) -> impl IntoView {
     });
 
     view! {
-        <div class="flex flex-col gap-1 h-full min-h-0">
+        <div class="flex flex-col gap-1 h-full min-h-24">
             <label class="text-xs text-zinc-400 font-bold tracking-wider">"Move history"</label>
             <div class="flex-1 bg-zinc-800 p-4 rounded-lg shadow-lg border border-zinc-700 overflow-y-auto min-h-0">
                 <div class="flex flex-col gap-1 font-mono text-sm">
