@@ -25,7 +25,7 @@ pub fn pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     castling_rights: CastlingRights,
-    buffer: &mut Vec<Ply>
+    buffer: &mut Vec<Ply>,
 ) {
     let directions = [
         UP,
@@ -40,12 +40,7 @@ pub fn pseudo_legal_moves(
     slide(what_to_move, 1, &directions, backend, buffer);
 
     if castling_rights != CastlingRights::no_rights() {
-        get_castling_moves(
-            what_to_move,
-            backend,
-            castling_rights,
-            buffer
-        );
+        get_castling_moves(what_to_move, backend, castling_rights, buffer);
     }
 }
 
@@ -60,7 +55,7 @@ fn get_castling_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     castling_rights: CastlingRights,
-    buffer: &mut Vec<Ply>
+    buffer: &mut Vec<Ply>,
 ) {
     // File Indices (0-7 for A-H)
     const FILE_B: usize = 1; // Occupancy check on long castle

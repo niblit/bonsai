@@ -40,7 +40,7 @@ pub fn pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     en_passant_target: Option<Coordinates>,
-    buffer: &mut Vec<Ply>
+    buffer: &mut Vec<Ply>,
 ) {
     // Determine move direction and critical rows based on the piece's team.
     // White moves -1 (Up), Black moves +1 (Down).

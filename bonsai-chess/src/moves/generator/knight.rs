@@ -24,7 +24,11 @@ use crate::{
 /// # Movement Logic
 /// * **Directions**: 8 possible L-shapes.
 /// * **Distance**: 1 (It "teleports" to the target square).
-pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend, buffer: &mut Vec<Ply>) {
+pub fn pseudo_legal_moves(
+    what_to_move: LocatedPiece,
+    backend: &BoardBackend,
+    buffer: &mut Vec<Ply>,
+) {
     let directions = [
         L_UP_LEFT,
         L_UP_RIGHT,

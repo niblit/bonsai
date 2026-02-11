@@ -23,7 +23,7 @@ pub fn slide(
     distance: usize,
     directions: &[(isize, isize)],
     backend: &BoardBackend,
-    buffer: &mut Vec<Ply>
+    buffer: &mut Vec<Ply>,
 ) {
     #[allow(unused_labels)]
     'direction_loop: for &(row_direction, column_direction) in directions {

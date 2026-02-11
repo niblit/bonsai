@@ -327,8 +327,7 @@ impl BoardBackend {
                 self,
                 None,
                 CastlingRights::no_rights(),
-                &mut moves
-
+                &mut moves,
             );
 
             moves.into_iter().any(|m| {

@@ -50,7 +50,7 @@ pub struct BoardFrontend {
     /// Cached status indicating if the current player's King is in check.
     in_check: bool,
 
-    legal_moves_buffer: Vec<Ply>
+    legal_moves_buffer: Vec<Ply>,
 }
 
 impl BoardFrontend {
@@ -87,7 +87,7 @@ impl BoardFrontend {
 
             in_check: false,
 
-            legal_moves_buffer: Vec::with_capacity(256)
+            legal_moves_buffer: Vec::with_capacity(256),
         }
     }
 
@@ -121,7 +121,7 @@ impl BoardFrontend {
                     },
                     position_snapshot.get_turn().opposite(),
                 ),
-                legal_moves_buffer: Vec::with_capacity(256)
+                legal_moves_buffer: Vec::with_capacity(256),
             }
         } else {
             Self::from_starting_position()
@@ -163,7 +163,7 @@ impl BoardFrontend {
 
             // If the King is in check, the move is ilegal and should be removed
             if self.is_in_check() {
-                self.legal_moves_buffer.remove(index);
+                self.legal_moves_buffer.swap_remove(index);
             }
 
             // Undo the move to restore state
@@ -192,7 +192,7 @@ impl BoardFrontend {
                     .last()
                     .copied()
                     .unwrap_or(CastlingRights::no_rights()),
-                &mut self.legal_moves_buffer
+                &mut self.legal_moves_buffer,
             );
         }
     }

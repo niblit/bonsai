@@ -17,7 +17,11 @@ use crate::{
 /// # Movement Logic
 /// * **Directions**: Up, Down, Left, Right.
 /// * **Distance**: Unlimited (up to 7 squares).
-pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend, buffer: &mut Vec<Ply>) {
+pub fn pseudo_legal_moves(
+    what_to_move: LocatedPiece,
+    backend: &BoardBackend,
+    buffer: &mut Vec<Ply>,
+) {
     let directions = [UP, DOWN, LEFT, RIGHT];
     slide(what_to_move, 7, &directions, backend, buffer);
 }

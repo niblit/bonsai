@@ -34,7 +34,7 @@ pub fn generate_pseudo_legal_moves(
     backend: &BoardBackend,
     en_passant_target: Option<Coordinates>,
     castling_rights: CastlingRights,
-    buffer: &mut Vec<Ply>
+    buffer: &mut Vec<Ply>,
 ) {
     match what_to_move.piece().kind() {
         Kind::King => king::pseudo_legal_moves(what_to_move, backend, castling_rights, buffer),

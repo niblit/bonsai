@@ -14,7 +14,11 @@ use crate::{
 /// This function aggregates the results from:
 /// * [`rook::pseudo_legal_moves`]
 /// * [`bishop::pseudo_legal_moves`]
-pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend, buffer: &mut Vec<Ply>) {
+pub fn pseudo_legal_moves(
+    what_to_move: LocatedPiece,
+    backend: &BoardBackend,
+    buffer: &mut Vec<Ply>,
+) {
     rook::pseudo_legal_moves(what_to_move, backend, buffer);
     bishop::pseudo_legal_moves(what_to_move, backend, buffer);
 }

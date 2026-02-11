@@ -21,7 +21,11 @@ use crate::{
 /// # Movement Logic
 /// * **Directions**: Four diagonals (Up-Left, Up-Right, Down-Left, Down-Right).
 /// * **Distance**: Unlimited (up to 7 squares).
-pub fn pseudo_legal_moves(what_to_move: LocatedPiece, backend: &BoardBackend, buffer: &mut Vec<Ply>) {
+pub fn pseudo_legal_moves(
+    what_to_move: LocatedPiece,
+    backend: &BoardBackend,
+    buffer: &mut Vec<Ply>,
+) {
     let directions = [
         DIAGONALLY_UP_LEFT,
         DIAGONALLY_UP_RIGHT,
