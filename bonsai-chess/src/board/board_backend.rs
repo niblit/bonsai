@@ -342,7 +342,7 @@ impl BoardBackend {
         ];
 
         // Diagonal (Bishop, Queen)
-        const DIAGONAL_DIRS: [(isize, isize); 4] = [
+        const DIAGONAL_DIRECTIONS: [(isize, isize); 4] = [
             DIAGONALLY_UP_LEFT,
             DIAGONALLY_UP_RIGHT,
             DIAGONALLY_DOWN_LEFT,
@@ -350,7 +350,7 @@ impl BoardBackend {
         ];
 
         // Orthogonal (Rook, Queen)
-        const ORTHOGONAL_DIRS: [(isize, isize); 4] = [UP, DOWN, LEFT, RIGHT];
+        const ORTHOGONAL_DIRECTIONS: [(isize, isize); 4] = [UP, DOWN, LEFT, RIGHT];
 
         let start_row = location.row().cast_signed();
         let start_column = location.column().cast_signed();
@@ -397,7 +397,7 @@ impl BoardBackend {
             }
         }
 
-        for (row_delta, column_delta) in ORTHOGONAL_DIRS {
+        for (row_delta, column_delta) in ORTHOGONAL_DIRECTIONS {
             let mut step = 1;
             while let Some(target) = Coordinates::new(
                 start_row + row_delta * step,
@@ -415,7 +415,7 @@ impl BoardBackend {
             }
         }
 
-        for (row_delta, column_delta) in DIAGONAL_DIRS {
+        for (row_delta, column_delta) in DIAGONAL_DIRECTIONS {
             let mut step = 1;
             while let Some(target) = Coordinates::new(
                 start_row + row_delta * step,
