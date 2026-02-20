@@ -42,7 +42,7 @@ impl BoardBackend {
 
     /// Creates a new backend from a raw grid.
     /// # Panics
-    /// 
+    ///
     /// The backend will panic if:
     /// - One or both kings are missing
     /// - There are more than one white king and one black king

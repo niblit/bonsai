@@ -60,7 +60,7 @@ fn get_castling_moves(
     // File Indices (0-7 for A-H)
     const FILE_B: usize = 1; // Occupancy check on long castle
     const FILE_C: usize = 2; // Long Castle Destination
-    const FILE_D: usize = 3; // Long Castle Cross / Rook Dest
+    const FILE_D: usize = 3; // Long Castle Cross / Rook Destination
     const FILE_F: usize = 5; // Short Castle Cross
     const FILE_G: usize = 6; // Short Castle Destination
 

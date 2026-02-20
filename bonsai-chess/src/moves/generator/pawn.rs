@@ -32,10 +32,6 @@ const BLACK_PAWN_PROMOTION_ROW: usize = 7;
 /// * `what_to_move` - The pawn piece and its current coordinates on the board.
 /// * `backend` - The current state of the chess board, used to check for occupancy.
 /// * `en_passant_target` - The coordinate of the En Passant target square, if available.
-///
-/// # Returns
-///
-/// A vector of `Ply` representing all pseudo-legal moves available to this pawn.
 pub fn pseudo_legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
@@ -60,13 +56,13 @@ pub fn pseudo_legal_moves(
         if backend.get(one_forward_coords).is_none() {
             // A. Check for Promotion (reaching the last rank)
             if one_forward_coords.row() == promotion_row {
-                for promotion in get_promotions() {
+                for promotion in PROMOTIONS {
                     buffer.push(Ply::new(
                         current_position,
                         one_forward_coords,
                         what_to_move.piece(),
                         None,
-                        Some(promotion),
+                        Some(*promotion),
                     ));
                 }
             } else {
@@ -139,13 +135,13 @@ pub fn pseudo_legal_moves(
             {
                 // Capture Promotion
                 if capture_coords.row() == promotion_row {
-                    for promotion in get_promotions() {
+                    for promotion in PROMOTIONS {
                         buffer.push(Ply::new(
                             current_position,
                             capture_coords,
                             what_to_move.piece(),
                             Some(target_piece),
-                            Some(promotion),
+                            Some(*promotion),
                         ));
                     }
                 } else {
@@ -163,20 +159,9 @@ pub fn pseudo_legal_moves(
     }
 }
 
-/// Helper function to retrieve all valid promotion options.
-///
-/// Returns a vector containing `SpecialMove::Promotion` variants for:
-/// * Queen
-/// * Rook
-/// * Bishop
-/// * Knight
-#[must_use]
-#[inline]
-fn get_promotions() -> Vec<SpecialMove> {
-    vec![
-        SpecialMove::Promotion(ValidPromotions::Queen),
-        SpecialMove::Promotion(ValidPromotions::Rook),
-        SpecialMove::Promotion(ValidPromotions::Bishop),
-        SpecialMove::Promotion(ValidPromotions::Knight),
-    ]
-}
+const PROMOTIONS: &[SpecialMove] = &[
+    SpecialMove::Promotion(ValidPromotions::Queen),
+    SpecialMove::Promotion(ValidPromotions::Rook),
+    SpecialMove::Promotion(ValidPromotions::Bishop),
+    SpecialMove::Promotion(ValidPromotions::Knight),
+];
