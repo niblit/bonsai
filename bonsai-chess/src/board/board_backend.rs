@@ -1,8 +1,15 @@
 use crate::{
     BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE,
-    atoms::{CastlingRights, Coordinates, Team},
+    atoms::{Coordinates, Team},
     board::{Grid, Square, positions::STARTING_POSITION},
-    moves::{CastlingSide, Ply, SpecialMove, generate_pseudo_legal_moves},
+    moves::{
+        CastlingSide, Ply, SpecialMove,
+        directions::{
+            DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT, DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT,
+            DOWN, L_DOWN_LEFT, L_DOWN_RIGHT, L_LEFT_DOWN, L_LEFT_UP, L_RIGHT_DOWN, L_RIGHT_UP,
+            L_UP_LEFT, L_UP_RIGHT, LEFT, RIGHT, UP,
+        },
+    },
     pieces::{Kind, LocatedPiece, Piece},
 };
 
@@ -300,10 +307,9 @@ impl BoardBackend {
 
     /// Determines if a specific square is under attack by the opposing team.
     ///
-    /// This uses a "Reverse Probe" strategy:
-    /// To check if a square is attacked by a Knight, we pretend a Knight is on that square
-    /// and see if it can "attack" (reach) any enemy Knights. The same logic applies to
-    /// sliding pieces (Rooks, Bishops, Queens) and Pawns.
+    /// This uses direct grid lookups (ray casting and offsets) from the target square
+    /// outwards to find attackers. This completely avoids memory allocations and
+    /// redundant move generation.
     ///
     /// # Arguments
     ///
@@ -311,41 +317,123 @@ impl BoardBackend {
     /// * `attacker_team`: The team that might be attacking this square.
     #[must_use]
     pub fn is_square_under_attack(&self, location: Coordinates, attacker_team: Team) -> bool {
-        // Define the probe piece type and the enemy pieces that threaten via that movement path
-        let checks = [
-            (Kind::Pawn, &[Kind::Pawn] as &[Kind]),
-            (Kind::Knight, &[Kind::Knight]),
-            (Kind::Bishop, &[Kind::Bishop, Kind::Queen]),
-            (Kind::Rook, &[Kind::Rook, Kind::Queen]),
-            (Kind::King, &[Kind::King]),
+        // Knight Attacks
+        const KNIGHT_DIRECTIONS: [(isize, isize); 8] = [
+            L_UP_LEFT,
+            L_UP_RIGHT,
+            L_DOWN_LEFT,
+            L_DOWN_RIGHT,
+            L_LEFT_UP,
+            L_LEFT_DOWN,
+            L_RIGHT_UP,
+            L_RIGHT_DOWN,
         ];
 
-        let check_threat = |probe_kind: Kind, threats: &[Kind]| -> bool {
-            // Place a hypothetical piece of the *defender's* color (opposite of attacker)
-            // on the square to generate moves from their perspective.
-            // We want to see if *Attacker* can reach *Location*.
-            // If we place a Defender-Team piece at Location and move it, we find enemy pieces.
-            let probe = Piece::new(attacker_team.opposite(), probe_kind);
-            let mut moves = Vec::with_capacity(256);
-            generate_pseudo_legal_moves(
-                LocatedPiece::new(probe, location),
-                self,
-                None,
-                CastlingRights::no_rights(),
-                &mut moves,
-            );
+        // King Attacks (for when kings are adjacent)
+        const KING_DIRECTIONS: [(isize, isize); 8] = [
+            UP,
+            DOWN,
+            LEFT,
+            RIGHT,
+            DIAGONALLY_UP_LEFT,
+            DIAGONALLY_UP_RIGHT,
+            DIAGONALLY_DOWN_LEFT,
+            DIAGONALLY_DOWN_RIGHT,
+        ];
 
-            moves.into_iter().any(|m| {
-                m.piece_captured().is_some_and(|captured| {
-                    captured.team() == attacker_team && threats.contains(&captured.kind())
-                })
-            })
+        // Diagonal (Bishop, Queen)
+        const DIAGONAL_DIRS: [(isize, isize); 4] = [
+            DIAGONALLY_UP_LEFT,
+            DIAGONALLY_UP_RIGHT,
+            DIAGONALLY_DOWN_LEFT,
+            DIAGONALLY_DOWN_RIGHT,
+        ];
+
+        // Orthogonal (Rook, Queen)
+        const ORTHOGONAL_DIRS: [(isize, isize); 4] = [UP, DOWN, LEFT, RIGHT];
+
+        let start_row = location.row().cast_signed();
+        let start_column = location.column().cast_signed();
+
+        for (row_delta, column_delta) in KNIGHT_DIRECTIONS {
+            if let Some(target) =
+                Coordinates::new(start_row + row_delta, start_column + column_delta)
+                && let Some(piece) = self.get(target)
+                && piece.team() == attacker_team
+                && piece.kind() == Kind::Knight
+            {
+                return true;
+            }
+        }
+
+        for (row_delta, column_delta) in KING_DIRECTIONS {
+            if let Some(target) =
+                Coordinates::new(start_row + row_delta, start_column + column_delta)
+                && let Some(piece) = self.get(target)
+                && piece.team() == attacker_team
+                && piece.kind() == Kind::King
+            {
+                return true;
+            }
+        }
+
+        // Pawn Attacks
+        // Pawns attack diagonally forward. To see if we are attacked, we look diagonally backward.
+        // - White pawns attack UP (-1 row), so we look DOWN (+1 row) to find them.
+        // - Black pawns attack DOWN (+1 row), so we look UP (-1 row) to find them.
+        let pawn_dirs = match attacker_team {
+            Team::White => [DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT],
+            Team::Black => [DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT],
         };
 
-        // Iterate through checks; returns true immediately if any check passes
-        checks
-            .iter()
-            .any(|(probe, threats)| check_threat(*probe, threats))
+        for (row_delta, column_delta) in pawn_dirs {
+            if let Some(target) =
+                Coordinates::new(start_row + row_delta, start_column + column_delta)
+                && let Some(piece) = self.get(target)
+                && piece.team() == attacker_team
+                && piece.kind() == Kind::Pawn
+            {
+                return true;
+            }
+        }
+
+        for (row_delta, column_delta) in ORTHOGONAL_DIRS {
+            let mut step = 1;
+            while let Some(target) = Coordinates::new(
+                start_row + row_delta * step,
+                start_column + column_delta * step,
+            ) {
+                if let Some(piece) = self.get(target) {
+                    if piece.team() == attacker_team
+                        && (piece.kind() == Kind::Rook || piece.kind() == Kind::Queen)
+                    {
+                        return true;
+                    }
+                    break; // Blocked by a piece (friendly, or an enemy that isn't a Rook/Queen)
+                }
+                step += 1;
+            }
+        }
+
+        for (row_delta, column_delta) in DIAGONAL_DIRS {
+            let mut step = 1;
+            while let Some(target) = Coordinates::new(
+                start_row + row_delta * step,
+                start_column + column_delta * step,
+            ) {
+                if let Some(piece) = self.get(target) {
+                    if piece.team() == attacker_team
+                        && (piece.kind() == Kind::Bishop || piece.kind() == Kind::Queen)
+                    {
+                        return true;
+                    }
+                    break; // Blocked by a piece
+                }
+                step += 1;
+            }
+        }
+
+        false // If we made it here, no attacks were found
     }
 
     /// Helper to collect pieces matching a filter predicate.
