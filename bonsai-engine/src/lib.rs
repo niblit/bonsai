@@ -111,8 +111,9 @@ mod tests {
         let fen = "rnbqkbnr/pp1ppppp/8/2p5/3Q4/8/PPP1PPPP/RNB1KBNR w KQkq - 0 2";
         let state = get_board(fen);
 
-        let best = best_move(state, 6);
+        let best = best_move(state, 4);
         assert!(best.is_some());
+        assert!(best.unwrap().piece_moved().kind() == Kind::Queen);
 
         // We just want to ensure it runs without crashing.
         // A smarter test would check if the score dropped significantly or check the move.
