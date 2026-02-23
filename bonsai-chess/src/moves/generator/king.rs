@@ -2,7 +2,7 @@ use crate::{
     atoms::{CastlingRights, Coordinates, Team},
     board::BoardBackend,
     moves::{
-        CastlingSide, Ply, SpecialMove,
+        CastlingSide, LegalityContext, Ply, SpecialMove,
         generator::{
             directions::{
                 DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT, DIAGONALLY_UP_LEFT,
@@ -21,10 +21,11 @@ use crate::{
 ///
 /// # Arguments
 /// * `castling_rights`: Needed to determine if castling is even a candidate move.
-pub fn pseudo_legal_moves(
+pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     castling_rights: CastlingRights,
+    context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     let directions = [
@@ -37,10 +38,10 @@ pub fn pseudo_legal_moves(
         DIAGONALLY_DOWN_LEFT,
         DIAGONALLY_DOWN_RIGHT,
     ];
-    slide(what_to_move, 1, &directions, backend, buffer);
+    slide(what_to_move, 1, &directions, backend, context, buffer);
 
     if castling_rights != CastlingRights::no_rights() {
-        get_castling_moves(what_to_move, backend, castling_rights, buffer);
+        get_castling_moves(what_to_move, backend, castling_rights, context, buffer);
     }
 }
 
@@ -55,6 +56,7 @@ fn get_castling_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     castling_rights: CastlingRights,
+    context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     // File Indices (0-7 for A-H)
@@ -71,7 +73,7 @@ fn get_castling_moves(
     let enemy = ally.opposite();
 
     // 1. Cannot castle if currently in check
-    if backend.is_square_under_attack(what_to_move.position(), enemy) {
+    if !context.checkers().is_empty() {
         return;
     }
 

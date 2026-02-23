@@ -64,6 +64,14 @@ impl Coordinates {
         }
     }
 
+    #[must_use]
+    pub fn with_offset(&self, direction: (isize, isize), distance: isize) -> Option<Self> {
+        Self::new(
+            self.row.cast_signed() + direction.0 * distance,
+            self.column.cast_signed() + direction.1 * distance,
+        )
+    }
+
     /// Creates a `Coordinates` instance from a string in standard algebraic notation.
     ///
     /// This function expects a two-character string where the first character represents

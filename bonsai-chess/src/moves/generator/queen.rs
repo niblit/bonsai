@@ -1,7 +1,9 @@
 use crate::{
     board::BoardBackend,
-    moves::Ply,
-    moves::generator::{bishop, rook},
+    moves::{
+        LegalityContext, Ply,
+        generator::{bishop, rook},
+    },
     pieces::LocatedPiece,
 };
 
@@ -14,11 +16,12 @@ use crate::{
 /// This function aggregates the results from:
 /// * [`rook::pseudo_legal_moves`]
 /// * [`bishop::pseudo_legal_moves`]
-pub fn pseudo_legal_moves(
+pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
+    context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
-    rook::pseudo_legal_moves(what_to_move, backend, buffer);
-    bishop::pseudo_legal_moves(what_to_move, backend, buffer);
+    rook::legal_moves(what_to_move, backend, context, buffer);
+    bishop::legal_moves(what_to_move, backend, context, buffer);
 }

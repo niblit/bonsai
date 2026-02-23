@@ -3,11 +3,12 @@ use crate::{
     atoms::{Coordinates, Team},
     board::{Grid, Square, positions::STARTING_POSITION},
     moves::{
-        CastlingSide, Ply, SpecialMove,
+        CastlingSide, LegalityContext, Ply, SpecialMove,
         directions::{
-            DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT, DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT,
-            DOWN, L_DOWN_LEFT, L_DOWN_RIGHT, L_LEFT_DOWN, L_LEFT_UP, L_RIGHT_DOWN, L_RIGHT_UP,
-            L_UP_LEFT, L_UP_RIGHT, LEFT, RIGHT, UP,
+            DIAGONAL_DIRECTIONS, DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT, DIAGONALLY_UP_LEFT,
+            DIAGONALLY_UP_RIGHT, DOWN, KING_DIRECTIONS, KNIGHT_DIRECTIONS, L_DOWN_LEFT,
+            L_DOWN_RIGHT, L_LEFT_DOWN, L_LEFT_UP, L_RIGHT_DOWN, L_RIGHT_UP, L_UP_LEFT, L_UP_RIGHT,
+            LEFT, ORTHOGONAL_DIRECTIONS, RIGHT, UP,
         },
     },
     pieces::{Kind, LocatedPiece, Piece},
@@ -434,6 +435,121 @@ impl BoardBackend {
         }
 
         false // If we made it here, no attacks were found
+    }
+
+    #[must_use]
+    pub fn calculate_legalty_context(&self, turn: Team) -> LegalityContext {
+        let king_position = match turn {
+            Team::White => self.white_king_location,
+            Team::Black => self.black_king_location,
+        };
+
+        let mut checkers = Vec::with_capacity(2);
+        let mut pinned_pieces = Vec::with_capacity(8);
+        let mut danger_squares = Vec::with_capacity(8);
+
+        // The King itself blocks rays in `is_square_under_attack`.
+        // We must temporarily remove the King to see squares attacked "through" the King.
+        let mut board_without_king = *self;
+        board_without_king.unset(king_position);
+
+        // 1. Calculate danger squares around king_position
+        for direction in KING_DIRECTIONS {
+            if let Some(possible_danger_square) = king_position.with_offset(direction, 1)
+                && board_without_king
+                    .is_square_under_attack(possible_danger_square, turn.opposite())
+            {
+                danger_squares.push(possible_danger_square);
+            }
+        }
+
+        // 2. Shoot rays to find pins and sliding checkers
+        for direction in ORTHOGONAL_DIRECTIONS {
+            let mut distance = 1;
+            let mut current_pin = None;
+            while let Some(target) = king_position.with_offset(direction, distance) {
+                if let Some(some_piece) = self.get(target) {
+                    if some_piece.team() == turn {
+                        match current_pin {
+                            Some(_) => {
+                                break;
+                            }
+                            None => current_pin = Some(target),
+                        }
+                    } else if some_piece.kind() == Kind::Queen || some_piece.kind() == Kind::Rook {
+                        if let Some(pinned) = current_pin {
+                            pinned_pieces.push((pinned, direction));
+                            break;
+                        }
+                        checkers.push(target);
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+                distance += 1;
+            }
+        }
+
+        for direction in DIAGONAL_DIRECTIONS {
+            let mut distance = 1;
+            let mut current_pin = None;
+            while let Some(target) = king_position.with_offset(direction, distance) {
+                if let Some(some_piece) = self.get(target) {
+                    if some_piece.team() == turn {
+                        match current_pin {
+                            Some(_) => {
+                                break;
+                            }
+                            None => current_pin = Some(target),
+                        }
+                    } else if some_piece.kind() == Kind::Queen || some_piece.kind() == Kind::Bishop
+                    {
+                        if let Some(pinned) = current_pin {
+                            pinned_pieces.push((pinned, direction));
+                            break;
+                        }
+                        checkers.push(target);
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+                distance += 1;
+            }
+        }
+
+        // 3. Check knight/pawn offsets to find stepping checkers
+        for direction in KNIGHT_DIRECTIONS {
+            if let Some(target) = king_position.with_offset(direction, 1)
+                && let Some(piece) = self.get(target)
+                && piece.team() == turn.opposite()
+                && piece.kind() == Kind::Knight
+            {
+                checkers.push(target);
+            }
+        }
+
+        // Pawn Attacks
+        // Pawns attack diagonally forward. To see if we are attacked, we look diagonally backward.
+        // - White pawns attack UP (-1 row), so we look DOWN (+1 row) to find them.
+        // - Black pawns attack DOWN (+1 row), so we look UP (-1 row) to find them.
+        let pawn_dirs = match turn.opposite() {
+            Team::White => [DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT],
+            Team::Black => [DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT],
+        };
+
+        for direction in pawn_dirs {
+            if let Some(target) = king_position.with_offset(direction, 1)
+                && let Some(piece) = self.get(target)
+                && piece.team() == turn.opposite()
+                && piece.kind() == Kind::Pawn
+            {
+                checkers.push(target);
+            }
+        }
+
+        LegalityContext::from(checkers, pinned_pieces, danger_squares)
     }
 
     /// Helper to collect pieces matching a filter predicate.

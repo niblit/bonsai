@@ -66,3 +66,34 @@ pub const L_LEFT_DOWN: (isize, isize) = (1, -2);
 pub const L_RIGHT_UP: (isize, isize) = (-1, 2);
 /// Jump: Down 1, Right 2
 pub const L_RIGHT_DOWN: (isize, isize) = (1, 2);
+
+pub const KING_DIRECTIONS: [(isize, isize); 8] = [
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    DIAGONALLY_UP_LEFT,
+    DIAGONALLY_UP_RIGHT,
+    DIAGONALLY_DOWN_LEFT,
+    DIAGONALLY_DOWN_RIGHT,
+];
+
+pub const KNIGHT_DIRECTIONS: [(isize, isize); 8] = [
+    L_UP_LEFT,
+    L_UP_RIGHT,
+    L_DOWN_LEFT,
+    L_DOWN_RIGHT,
+    L_LEFT_UP,
+    L_LEFT_DOWN,
+    L_RIGHT_UP,
+    L_RIGHT_DOWN,
+];
+
+pub const ORTHOGONAL_DIRECTIONS: [(isize, isize); 4] = [UP, DOWN, LEFT, RIGHT];
+
+pub const DIAGONAL_DIRECTIONS: [(isize, isize); 4] = [
+    DIAGONALLY_UP_LEFT,
+    DIAGONALLY_UP_RIGHT,
+    DIAGONALLY_DOWN_LEFT,
+    DIAGONALLY_DOWN_RIGHT,
+];

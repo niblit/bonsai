@@ -3,7 +3,7 @@ use std::{collections::HashMap, vec};
 use crate::{
     atoms::{CastlingRights, Coordinates, MoveCounter, Team},
     board::{PositionSnapshot, board_backend::BoardBackend, from_fen, to_fen},
-    moves::{Ply, generate_pseudo_legal_moves},
+    moves::{Ply, generate_legal_moves},
     pieces::Kind,
     rules::{
         CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD, CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD, DrawReason,
@@ -153,48 +153,31 @@ impl BoardFrontend {
     #[must_use]
     pub fn get_legal_moves(&mut self) -> Vec<Ply> {
         self.legal_moves_buffer.clear();
-        self.get_pseudo_legal_moves();
+        let legality_context = self.backend.calculate_legalty_context(self.turn);
 
-        for index in (0..self.legal_moves_buffer.len()).rev() {
-            let pseudo_legal_move = self.legal_moves_buffer[index];
-
-            // Tentatively make the move on the backend
-            self.backend.make_move(&pseudo_legal_move);
-
-            // If the King is in check, the move is ilegal and should be removed
-            if self.is_in_check() {
-                self.legal_moves_buffer.swap_remove(index);
-            }
-
-            // Undo the move to restore state
-            self.backend.undo_move(&pseudo_legal_move);
-        }
-
-        self.legal_moves_buffer.clone()
-    }
-
-    /// Generates all pseudo-legal moves for the current turn.
-    ///
-    /// Pseudo-legal moves satisfy piece movement rules (e.g., Bishop moves diagonally)
-    /// but do not account for the safety of the King.
-    pub fn get_pseudo_legal_moves(&mut self) {
+        // 2. Generate strictly legal moves
         let pieces = match self.turn {
             Team::White => self.backend.get_white_pieces(),
             Team::Black => self.backend.get_black_pieces(),
         };
 
+        let castling = self
+            .castling_rights_log
+            .last()
+            .copied()
+            .unwrap_or(CastlingRights::no_rights());
+
         for current_piece in pieces {
-            generate_pseudo_legal_moves(
+            generate_legal_moves(
                 current_piece,
                 &self.backend,
                 self.en_passant_target,
-                self.castling_rights_log
-                    .last()
-                    .copied()
-                    .unwrap_or(CastlingRights::no_rights()),
+                castling,
+                &legality_context,
                 &mut self.legal_moves_buffer,
             );
         }
+        self.legal_moves_buffer.clone()
     }
 
     /// Helper to identify if a move is a pawn double-push that enables En Passant.

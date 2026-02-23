@@ -1,12 +1,14 @@
 use crate::{
     board::BoardBackend,
-    moves::Ply,
-    moves::generator::{
-        directions::{
-            L_DOWN_LEFT, L_DOWN_RIGHT, L_LEFT_DOWN, L_LEFT_UP, L_RIGHT_DOWN, L_RIGHT_UP, L_UP_LEFT,
-            L_UP_RIGHT,
+    moves::{
+        LegalityContext, Ply,
+        generator::{
+            directions::{
+                L_DOWN_LEFT, L_DOWN_RIGHT, L_LEFT_DOWN, L_LEFT_UP, L_RIGHT_DOWN, L_RIGHT_UP,
+                L_UP_LEFT, L_UP_RIGHT,
+            },
+            sliding::slide,
         },
-        sliding::slide,
     },
     pieces::LocatedPiece,
 };
@@ -24,9 +26,10 @@ use crate::{
 /// # Movement Logic
 /// * **Directions**: 8 possible L-shapes.
 /// * **Distance**: 1 (It "teleports" to the target square).
-pub fn pseudo_legal_moves(
+pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
+    context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     let directions = [
@@ -39,5 +42,5 @@ pub fn pseudo_legal_moves(
         L_RIGHT_UP,
         L_RIGHT_DOWN,
     ];
-    slide(what_to_move, 1, &directions, backend, buffer);
+    slide(what_to_move, 1, &directions, backend, context, buffer);
 }

@@ -10,7 +10,10 @@ mod generator;
 mod ply;
 mod special_move;
 
-pub use generator::directions;
-pub use generator::generate_pseudo_legal_moves;
+pub use generator::{
+    LegalityContext,
+    directions,
+    generate_legal_moves
+};
 pub use ply::Ply;
 pub use special_move::{CastlingSide, SpecialMove};

@@ -1,7 +1,7 @@
 use crate::{
     board::BoardBackend,
     moves::{
-        Ply,
+        LegalityContext, Ply,
         generator::{
             directions::{
                 DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT, DIAGONALLY_UP_LEFT,
@@ -21,9 +21,10 @@ use crate::{
 /// # Movement Logic
 /// * **Directions**: Four diagonals (Up-Left, Up-Right, Down-Left, Down-Right).
 /// * **Distance**: Unlimited (up to 7 squares).
-pub fn pseudo_legal_moves(
+pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
+    context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     let directions = [
@@ -32,5 +33,5 @@ pub fn pseudo_legal_moves(
         DIAGONALLY_DOWN_LEFT,
         DIAGONALLY_DOWN_RIGHT,
     ];
-    slide(what_to_move, 7, &directions, backend, buffer);
+    slide(what_to_move, 7, &directions, backend, context, buffer);
 }

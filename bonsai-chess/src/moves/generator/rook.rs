@@ -1,9 +1,11 @@
 use crate::{
     board::BoardBackend,
-    moves::Ply,
-    moves::generator::{
-        directions::{DOWN, LEFT, RIGHT, UP},
-        sliding::slide,
+    moves::{
+        LegalityContext, Ply,
+        generator::{
+            directions::{DOWN, LEFT, RIGHT, UP},
+            sliding::slide,
+        },
     },
     pieces::LocatedPiece,
 };
@@ -17,11 +19,12 @@ use crate::{
 /// # Movement Logic
 /// * **Directions**: Up, Down, Left, Right.
 /// * **Distance**: Unlimited (up to 7 squares).
-pub fn pseudo_legal_moves(
+pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
+    context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     let directions = [UP, DOWN, LEFT, RIGHT];
-    slide(what_to_move, 7, &directions, backend, buffer);
+    slide(what_to_move, 7, &directions, backend, context, buffer);
 }
