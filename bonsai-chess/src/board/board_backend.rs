@@ -1,3 +1,13 @@
+//! # Board Backend
+//!
+//! This module provides the [`BoardBackend`] struct, the low-level mechanical
+//! engine of the chess board. It is responsible for the raw physical placement,
+//! movement, and removal of pieces on the 8x8 grid.
+//!
+//! It also houses the critical, high-performance ray-casting logic used to
+//! determine if squares are under attack and to calculate the [`LegalityContext`]
+//! (pins, checks, and danger zones) for move generation.
+
 use crate::{
     BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE,
     atoms::{Coordinates, Team},
@@ -38,7 +48,15 @@ impl BoardBackend {
     ///
     /// # Panics
     ///
-    /// This function will not panic, the unwrap for Coordinates is safe
+    /// This function will not panic, the unwrap for `Coordinates` is safe.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bonsai_chess::prelude::BoardBackend;
+    ///
+    /// let backend = BoardBackend::from_starting_position();
+    /// ```
     #[must_use]
     pub fn from_starting_position() -> Self {
         Self {
@@ -49,11 +67,15 @@ impl BoardBackend {
     }
 
     /// Creates a new backend from a raw grid.
+    ///
+    /// This function scans the grid to locate the Kings and caches their coordinates
+    /// for high-performance lookups later.
+    ///
     /// # Panics
     ///
     /// The backend will panic if:
-    /// - One or both kings are missing
-    /// - There are more than one white king and one black king
+    /// - One or both kings are missing.
+    /// - There is more than one White King or Black King.
     #[must_use]
     pub fn new(grid: Grid) -> Self {
         let mut white_king_location = None;
@@ -171,7 +193,7 @@ impl BoardBackend {
     /// Reverts the grid to the state before the provided move was made.
     ///
     /// This is critical for search algorithms (like Minimax) that explore the game tree
-    /// by making and unmaking moves.
+    /// by making and unmaking moves sequentially rather than cloning the board state.
     pub fn undo_move(&mut self, ply: &Ply) {
         // 1. Move the piece back to start
         self.set(ply.piece_moved(), ply.starting_square());
@@ -247,7 +269,8 @@ impl BoardBackend {
 
     /// Places a piece on the board at the specified coordinates.
     ///
-    /// Overwrites whatever was previously there.
+    /// Overwrites whatever was previously there. If the piece is a King, it also
+    /// updates the cached King location.
     pub fn set(&mut self, piece: Piece, coordinates: Coordinates) {
         self.grid[coordinates.row()][coordinates.column()] = Some(piece);
 
@@ -270,13 +293,13 @@ impl BoardBackend {
         self.grid[coordinates.row()][coordinates.column()]
     }
 
-    /// Returns the position of the white king
+    /// Returns the cached position of the White King.
     #[must_use]
     pub const fn get_white_king(&self) -> Coordinates {
         self.white_king_location
     }
 
-    /// Returns the position of the black king
+    /// Returns the cached position of the Black King.
     #[must_use]
     pub const fn get_black_king(&self) -> Coordinates {
         self.black_king_location
@@ -300,7 +323,7 @@ impl BoardBackend {
         self.filter_pieces(|p: Piece| p.team() == Team::Black)
     }
 
-    /// Returns a reference to the underlying grid.
+    /// Returns a reference to the underlying [`Grid`].
     #[must_use]
     pub const fn grid(&self) -> &Grid {
         &self.grid
@@ -310,7 +333,7 @@ impl BoardBackend {
     ///
     /// This uses direct grid lookups (ray casting and offsets) from the target square
     /// outwards to find attackers. This completely avoids memory allocations and
-    /// redundant move generation.
+    /// redundant move generation, making it highly efficient.
     ///
     /// # Arguments
     ///
@@ -318,41 +341,6 @@ impl BoardBackend {
     /// * `attacker_team`: The team that might be attacking this square.
     #[must_use]
     pub fn is_square_under_attack(&self, location: Coordinates, attacker_team: Team) -> bool {
-        // Knight Attacks
-        const KNIGHT_DIRECTIONS: [(isize, isize); 8] = [
-            L_UP_LEFT,
-            L_UP_RIGHT,
-            L_DOWN_LEFT,
-            L_DOWN_RIGHT,
-            L_LEFT_UP,
-            L_LEFT_DOWN,
-            L_RIGHT_UP,
-            L_RIGHT_DOWN,
-        ];
-
-        // King Attacks (for when kings are adjacent)
-        const KING_DIRECTIONS: [(isize, isize); 8] = [
-            UP,
-            DOWN,
-            LEFT,
-            RIGHT,
-            DIAGONALLY_UP_LEFT,
-            DIAGONALLY_UP_RIGHT,
-            DIAGONALLY_DOWN_LEFT,
-            DIAGONALLY_DOWN_RIGHT,
-        ];
-
-        // Diagonal (Bishop, Queen)
-        const DIAGONAL_DIRECTIONS: [(isize, isize); 4] = [
-            DIAGONALLY_UP_LEFT,
-            DIAGONALLY_UP_RIGHT,
-            DIAGONALLY_DOWN_LEFT,
-            DIAGONALLY_DOWN_RIGHT,
-        ];
-
-        // Orthogonal (Rook, Queen)
-        const ORTHOGONAL_DIRECTIONS: [(isize, isize); 4] = [UP, DOWN, LEFT, RIGHT];
-
         let start_row = location.row().cast_signed();
         let start_column = location.column().cast_signed();
 
@@ -437,6 +425,23 @@ impl BoardBackend {
         false // If we made it here, no attacks were found
     }
 
+    /// Pre-calculates the legality constraints (pins, checks, and danger squares) for the active player.
+    ///
+    /// This function performs complex ray-casting from the active King's position to map out
+    /// the board's tactical state. By calculating this context *once* per position, the move
+    /// generators can operate strictly and efficiently without doing redundant check validations.
+    ///
+    /// # Logic
+    /// 1. **Danger Squares**: Calculates which adjacent squares the King cannot step to. It temporarily
+    ///    removes the King from the board to detect x-ray attacks (where a slider attacks a square "through" the King).
+    /// 2. **Pins & Sliding Checks**: Shoots rays outward from the King. The first friendly piece encountered
+    ///    becomes a potential pin. If the next piece on that ray is an enemy slider (Queen/Rook/Bishop),
+    ///    that friendly piece is permanently pinned. If the *first* piece encountered is an enemy slider, it's a check.
+    /// 3. **Stepping Checks**: Checks Knight L-shapes and reverse Pawn attack vectors for immediate checks.
+    ///
+    /// # Arguments
+    ///
+    /// * `turn`: The team whose King is being evaluated.
     #[must_use]
     pub fn calculate_legalty_context(&self, turn: Team) -> LegalityContext {
         let king_position = match turn {

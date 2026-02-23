@@ -1,3 +1,5 @@
+//! # Rules
+//!
 //! The `rules` module defines the final states of a chess game.
 //!
 //! It provides the types necessary to describe *how* a game ended, distinguishing
@@ -5,6 +7,8 @@
 //! regulations that led to that conclusion (e.g., Checkmate vs. Resignation, or
 //! Stalemate vs. Threefold Repetition).
 
+/// Defines the possible outcomes of a chess game, such as wins, draws, and
+/// the specific FIDE reasons for those results.
 mod outcome;
 pub use outcome::{DrawReason, Outcome, WinReason};
 

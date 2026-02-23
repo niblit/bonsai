@@ -1,3 +1,11 @@
+//! # Pawn Move Generator
+//!
+//! This module contains the highly specialized move generation logic for Pawns.
+//! Unlike other pieces, pawns move differently depending on whether they are
+//! pushing forward or capturing. This generator handles single pushes, double
+//! pushes from the starting rank, diagonal captures, en passant, and pawn
+//! promotions.
+
 use crate::{
     atoms::{Coordinates, Team},
     board::BoardBackend,
@@ -19,19 +27,31 @@ const WHITE_PAWN_PROMOTION_ROW: usize = 0;
 /// The destination row index for Black pawns to promote.
 const BLACK_PAWN_PROMOTION_ROW: usize = 7;
 
-/// Generates all pseudo-legal moves for a specific pawn.
+/// A pre-allocated array of all possible pawn promotions to iterate over.
+const PROMOTIONS: &[SpecialMove] = &[
+    SpecialMove::Promotion(ValidPromotions::Queen),
+    SpecialMove::Promotion(ValidPromotions::Rook),
+    SpecialMove::Promotion(ValidPromotions::Bishop),
+    SpecialMove::Promotion(ValidPromotions::Knight),
+];
+
+/// Generates all strictly legal moves for a specific pawn.
 ///
 /// This function handles the unique movement logic of pawns, including:
 /// * **Pushes**: Moving one square forward (or two if on the starting rank).
 /// * **Captures**: Moving diagonally to capture an enemy piece.
-/// * **En Passant**: capturing a pawn that has just moved two squares.
+/// * **En Passant**: Capturing a pawn that has just moved two squares.
 /// * **Promotions**: Converting to a special piece upon reaching the opposite side.
+///
+/// It actively filters out moves that would violate pins or fail to resolve an ongoing check.
 ///
 /// # Arguments
 ///
 /// * `what_to_move` - The pawn piece and its current coordinates on the board.
 /// * `backend` - The current state of the chess board, used to check for occupancy.
 /// * `en_passant_target` - The coordinate of the En Passant target square, if available.
+/// * `context` - The pre-calculated legality constraints (pins, checks, and danger squares).
+/// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
@@ -173,10 +193,3 @@ pub fn legal_moves(
         }
     }
 }
-
-const PROMOTIONS: &[SpecialMove] = &[
-    SpecialMove::Promotion(ValidPromotions::Queen),
-    SpecialMove::Promotion(ValidPromotions::Rook),
-    SpecialMove::Promotion(ValidPromotions::Bishop),
-    SpecialMove::Promotion(ValidPromotions::Knight),
-];

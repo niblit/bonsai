@@ -1,3 +1,16 @@
+//! # Board Frontend
+//!
+//! This module provides the [`BoardFrontend`] struct, which serves as the primary
+//! game controller and state manager for the chess engine.
+//!
+//!
+//!
+//! While the `BoardBackend` handles the raw spatial movement of pieces, the `BoardFrontend`
+//! acts as the arbiter. It sits on top of the backend to enforce the FIDE Laws of Chess,
+//! managing the turn cycle, maintaining move history (for undos and the 50-move rule),
+//! tracking position snapshots (for threefold repetition), and determining game outcomes
+//! like Checkmate or Stalemate.
+
 use std::{collections::HashMap, vec};
 
 use crate::{
@@ -55,6 +68,9 @@ pub struct BoardFrontend {
 
 impl BoardFrontend {
     /// Creates a hashable snapshot of the current position.
+    ///
+    /// This is primarily used to populate the repetition table for detecting
+    /// Threefold Repetition draws.
     #[must_use]
     pub fn create_snapshot(&self) -> PositionSnapshot {
         PositionSnapshot::new(
@@ -69,6 +85,15 @@ impl BoardFrontend {
     }
 
     /// Initializes a new game with the standard chess starting position.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bonsai_chess::prelude::BoardFrontend;
+    ///
+    /// let mut game = BoardFrontend::from_starting_position();
+    /// assert_eq!(game.outcome(), None);
+    /// ```
     #[must_use]
     pub fn from_starting_position() -> Self {
         Self {
@@ -128,12 +153,13 @@ impl BoardFrontend {
         }
     }
 
+    /// Serializes the current game state into a standard FEN string.
     #[must_use]
     pub fn to_fen(&self) -> String {
         to_fen(self.create_snapshot(), &self.move_counter)
     }
 
-    /// Returns the current turn
+    /// Returns the team whose turn it is to move.
     #[must_use]
     pub const fn turn(&self) -> Team {
         self.turn
@@ -147,9 +173,8 @@ impl BoardFrontend {
 
     /// Generates all fully legal moves for the current position.
     ///
-    /// This process involves:
-    /// 1. Generating all "pseudo-legal" moves (geometry + capture rules).
-    /// 2. Filtering out moves that would leave the King in check.
+    /// This process involves calculating the tactical context (pins, checks, and danger squares)
+    /// and then generating strictly legal moves for all pieces of the active color.
     #[must_use]
     pub fn get_legal_moves(&mut self) -> Vec<Ply> {
         self.legal_moves_buffer.clear();
@@ -205,13 +230,15 @@ impl BoardFrontend {
 
     /// Executes a move and updates the game state.
     ///
-    /// This function handles:
-    /// * Making the move on the backend.
-    /// * Logging the move.
-    /// * Updating Castling Rights and En Passant targets.
-    /// * Switching turns.
-    /// * Detecting Check, Threefold Repetition, the 50-Move Rule, and Dead Positions.
-    /// * Determining the Game Outcome (Checkmate/Stalemate/Draw).
+    /// This function handles the full lifecycle of a move:
+    /// * Delegating the physical piece displacement to the backend.
+    /// * Logging the move and updating state constraints (castling, en passant).
+    /// * Switching the turn.
+    /// * Detecting Checkmate, Stalemate, and automatic Draw conditions.
+    ///
+    /// # Arguments
+    ///
+    /// * `ply` - The fully formed legal move to execute.
     pub fn make_move(&mut self, ply: &Ply) {
         // Cannot perform action if game is over
         if self.outcome.is_some() {
@@ -358,6 +385,10 @@ impl BoardFrontend {
     /// Updates castling rights based on the move played.
     ///
     /// Disables rights if the King moves, or if a Rook moves or is captured.
+    ///
+    /// # Arguments
+    ///
+    /// * `ply` - The move that was just executed.
     pub fn update_castling_rights(&mut self, ply: &Ply) {
         let mut castling_rights = self
             .castling_rights_log
@@ -518,7 +549,7 @@ impl BoardFrontend {
     /// # Errors
     ///
     /// The function will return an error if the current position has not
-    /// appeared at least 3 times
+    /// appeared at least 3 times.
     pub fn claim_threefold_repetition(&mut self) -> Result<(), &'static str> {
         if !self.can_claim_threefold_repetition() {
             return Err("Cannot claim Threefold Repetition: Conditions not met.");
@@ -544,8 +575,8 @@ impl BoardFrontend {
     ///
     /// # Errors
     ///
-    /// The function will return an error if in last 100 plys there was an
-    /// pawn move or capture
+    /// The function will return an error if in the last 100 plies there was a
+    /// pawn move or capture.
     pub fn claim_fifty_move_rule(&mut self) -> Result<(), &'static str> {
         if !self.can_claim_fifty_move_rule() {
             return Err("Cannot claim Fifty Move Rule: Conditions not met.");
@@ -580,7 +611,7 @@ impl BoardFrontend {
         self.move_counter.fifty_move_rule_counter() >= CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD
     }
 
-    /// Gives the complete move history
+    /// Returns the complete history of moves executed in this game.
     #[must_use]
     pub fn get_move_log(&self) -> Vec<Ply> {
         self.move_log.clone()

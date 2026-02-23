@@ -6,8 +6,15 @@
 //! * **[`Piece`]:** A combination of a [`Kind`] and a [`crate::atoms::Team`].
 //! * **[`LocatedPiece`]:** A [`Piece`] attached to a specific coordinate on the board.
 
+/// Defines the specific type of a chess piece (e.g., Pawn, Knight, King)
+/// and valid pawn promotion options.
 mod kind;
+
+/// Defines a piece along with its specific coordinate on the chess board.
 mod located_piece;
+
+/// Combines a piece kind with a team (color) to represent a concrete piece
+/// (e.g., White Pawn, Black Queen).
 mod piece;
 
 pub use {

@@ -67,6 +67,10 @@ pub const L_RIGHT_UP: (isize, isize) = (-1, 2);
 /// Jump: Down 1, Right 2
 pub const L_RIGHT_DOWN: (isize, isize) = (1, 2);
 
+/// An array of all 8 adjacent directions (orthogonal + diagonal).
+///
+/// This is primarily iterated over during King move generation and for mapping
+/// out the King's attack/danger zones.
 pub const KING_DIRECTIONS: [(isize, isize); 8] = [
     UP,
     DOWN,
@@ -78,6 +82,10 @@ pub const KING_DIRECTIONS: [(isize, isize); 8] = [
     DIAGONALLY_DOWN_RIGHT,
 ];
 
+/// An array of all 8 possible L-shaped jumps for a Knight.
+///
+/// This is iterated over during Knight move generation and for mapping
+/// out squares attacked by Knights.
 pub const KNIGHT_DIRECTIONS: [(isize, isize); 8] = [
     L_UP_LEFT,
     L_UP_RIGHT,
@@ -89,8 +97,16 @@ pub const KNIGHT_DIRECTIONS: [(isize, isize); 8] = [
     L_RIGHT_DOWN,
 ];
 
+/// An array of the 4 straight-line directions (Up, Down, Left, Right).
+///
+/// This is iterated over during move generation for Rooks, and combined
+/// with `DIAGONAL_DIRECTIONS` for Queens.
 pub const ORTHOGONAL_DIRECTIONS: [(isize, isize); 4] = [UP, DOWN, LEFT, RIGHT];
 
+/// An array of the 4 diagonal directions.
+///
+/// This is iterated over during move generation for Bishops, and combined
+/// with `ORTHOGONAL_DIRECTIONS` for Queens.
 pub const DIAGONAL_DIRECTIONS: [(isize, isize); 4] = [
     DIAGONALLY_UP_LEFT,
     DIAGONALLY_UP_RIGHT,

@@ -1,19 +1,16 @@
+//! # Knight Move Generator
+//!
+//! This module contains the move generation logic for Knights.
+//! Knights are unique pieces in chess that move in an "L" shape and are the
+//! only pieces capable of jumping over other pieces to reach their destination.
+
 use crate::{
     board::BoardBackend,
-    moves::{
-        LegalityContext, Ply,
-        generator::{
-            directions::{
-                L_DOWN_LEFT, L_DOWN_RIGHT, L_LEFT_DOWN, L_LEFT_UP, L_RIGHT_DOWN, L_RIGHT_UP,
-                L_UP_LEFT, L_UP_RIGHT,
-            },
-            sliding::slide,
-        },
-    },
+    moves::{LegalityContext, Ply, directions, generator::sliding::slide},
     pieces::LocatedPiece,
 };
 
-/// Generates pseudo-legal moves for a Knight.
+/// Generates strictly legal moves for a Knight.    
 ///
 /// The Knight moves in an "L" shape: two squares in a cardinal direction, then one
 /// square perpendicular to that.
@@ -26,21 +23,25 @@ use crate::{
 /// # Movement Logic
 /// * **Directions**: 8 possible L-shapes.
 /// * **Distance**: 1 (It "teleports" to the target square).
+///
+/// # Arguments
+///
+/// * `what_to_move` - The Knight being moved and its starting location.
+/// * `backend` - The board state used to check for occupancy and captures at the destination.
+/// * `context` - The pre-calculated legality constraints (pins, checks, and danger squares).
+/// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
-    let directions = [
-        L_UP_LEFT,
-        L_UP_RIGHT,
-        L_DOWN_LEFT,
-        L_DOWN_RIGHT,
-        L_LEFT_UP,
-        L_LEFT_DOWN,
-        L_RIGHT_UP,
-        L_RIGHT_DOWN,
-    ];
-    slide(what_to_move, 1, &directions, backend, context, buffer);
+    slide(
+        what_to_move,
+        1,
+        &directions::KNIGHT_DIRECTIONS,
+        backend,
+        context,
+        buffer,
+    );
 }

@@ -1,3 +1,10 @@
+//! # Coordinates
+//!
+//! This module provides the `Coordinates` type, which safely represents a square
+//! on a standard 8x8 chess board. It ensures that any instantiated coordinate
+//! is within the valid bounds of the board, eliminating the need for bounds
+//! checking on every board access.
+
 use crate::{BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE};
 
 /// Represents a validated coordinate on the chess board.
@@ -64,6 +71,34 @@ impl Coordinates {
         }
     }
 
+    /// Calculates a new coordinate by applying a directional offset and a scalar distance.
+    ///
+    /// This is particularly useful for move generation, such as calculating ray attacks
+    /// for sliding pieces or jump targets for knights.
+    ///
+    /// # Arguments
+    ///
+    /// * `direction` - A tuple `(isize, isize)` representing the `(row_delta, column_delta)`.
+    /// * `distance` - An `isize` scalar multiplier for the direction vector.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Some(Coordinates)` if the newly calculated position falls within the 8x8 board.
+    /// Returns `None` if the calculation results in an out-of-bounds position.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bonsai_chess::prelude::Coordinates;
+    ///
+    /// let start = Coordinates::new(4, 4).unwrap(); // (row 4, col 4) -> e4
+    ///
+    /// // Move 2 steps "up" (-1 row direction) and "right" (+1 col direction)
+    /// let next_sq = start.with_offset((-1, 1), 2).unwrap();
+    ///
+    /// assert_eq!(next_sq.row(), 2);
+    /// assert_eq!(next_sq.column(), 6);
+    /// ```
     #[must_use]
     pub fn with_offset(&self, direction: (isize, isize), distance: isize) -> Option<Self> {
         Self::new(
@@ -88,7 +123,7 @@ impl Coordinates {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
     /// use bonsai_chess::prelude::Coordinates;
     ///
     /// let coords = Coordinates::from_algebraic_notation("e4").unwrap();
@@ -107,6 +142,8 @@ impl Coordinates {
         if let Some(file) = notation.chars().nth(0)
             && let Some(rank) = notation.chars().nth(1)
         {
+            // Map the character rank to its internal 0-indexed row representation.
+            // Note that rank '8' corresponds to row 0.
             let row = match rank {
                 '8' => 0,
                 '7' => 1,
@@ -119,6 +156,7 @@ impl Coordinates {
                 _ => return None,
             };
 
+            // Map the character file to its internal 0-indexed column representation.
             let column = match file {
                 'a' => 0,
                 'b' => 1,
@@ -156,7 +194,7 @@ impl Coordinates {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
     /// use bonsai_chess::prelude::Coordinates;
     ///
     /// let coords = Coordinates::new(0, 0).unwrap(); // Top-left (A8)
@@ -164,6 +202,7 @@ impl Coordinates {
     /// ```
     #[must_use]
     pub fn to_algebraic_notation(&self) -> String {
+        // Inverse mapping of row indices back to algebraic ranks
         let rank = match self.row {
             0 => '8',
             1 => '7',
@@ -176,6 +215,7 @@ impl Coordinates {
             _ => panic!("Coordinates are hard wired to be in range"),
         };
 
+        // Inverse mapping of column indices back to algebraic files
         let file = match self.column {
             0 => 'a',
             1 => 'b',
@@ -191,13 +231,13 @@ impl Coordinates {
         format!("{file}{rank}")
     }
 
-    /// Returns the row index (0-7).
+    /// Returns the internal row index (0-7).
     #[must_use]
     pub const fn row(&self) -> usize {
         self.row
     }
 
-    /// Returns the column index (0-7).
+    /// Returns the internal column index (0-7).
     #[must_use]
     pub const fn column(&self) -> usize {
         self.column

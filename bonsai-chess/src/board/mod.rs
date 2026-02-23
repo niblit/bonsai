@@ -10,12 +10,25 @@
 //! * [`Grid`]: The underlying 2D array data structure.
 //! * [`Square`]: A type alias representing a possibly empty spot on the board.
 
+/// Manages the raw placement and removal of pieces on the 8x8 grid.
 mod board_backend;
+
+/// Manages the high-level game state, turn cycles, move history, and move validation.
 mod board_frontend;
+
+/// Handles parsing and generating Forsyth-Edwards Notation (FEN) strings.
 mod fen;
+
+/// Provides the underlying 2D array representation of the chess board.
 mod grid;
+
+/// Contains standard starting positions and notable test configurations.
 mod positions;
+
+/// Captures the complete state of the board at a specific point in time (used for threefold repetition tracking).
 mod snapshot;
+
+/// Defines a type alias for a potentially unoccupied space on the board.
 mod square;
 
 pub use board_backend::BoardBackend;

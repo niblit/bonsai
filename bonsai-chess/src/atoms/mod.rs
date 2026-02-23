@@ -11,9 +11,16 @@
 //! * [`CastlingRights`]: Tracks the availability of castling for both sides.
 //! * [`MoveCounter`]: Tracks turn history for rules like the 50-move rule and draw claims.
 
+/// Tracks castling permissions for both players on the King-side and Queen-side.
 mod castling_rights;
+
+/// Provides a safe, validated representation of an 8x8 board square.
 mod coordinates;
+
+/// Tracks half-moves and full-moves for game rule enforcement (e.g., the 50-move rule).
 mod move_counter;
+
+/// Represents the two opposing sides in a game of chess (White and Black).
 mod team;
 
 pub use castling_rights::CastlingRights;

@@ -1,3 +1,10 @@
+//! # Sliding Move Generator
+//!
+//! This module provides the shared [`slide`] function, which is the core engine
+//! for generating moves for sliding pieces (Queens, Rooks, Bishops). It evaluates
+//! directional rays outward from a piece's origin, halting when it encounters
+//! other pieces or the edge of the board, while actively respecting pins and checks.
+
 use crate::{
     atoms::{Coordinates, Team},
     board::BoardBackend,
@@ -7,9 +14,10 @@ use crate::{
 
 /// Generates moves for pieces that move in straight lines (sliding pieces).
 ///
-/// This helper function is shared by the Rook, Bishop, and Queen (and the King and Knight
-/// with a limited distance of 1). It iterates outward from the starting square in the
-/// specified directions until it hits the board edge or another piece.
+/// This helper function is shared by the Rook, Bishop, and Queen (and can be used
+/// by the King and Knight with a limited distance of 1). It iterates outward
+/// from the starting square in the specified directions until it hits the board edge
+/// or another piece.
 ///
 /// # Logic
 /// * **Empty Square**: Adds the move and continues sliding further.
@@ -19,10 +27,12 @@ use crate::{
 ///
 /// # Arguments
 ///
-/// * `what_to_slide`: The piece moving and its location.
-/// * `distance`: The maximum number of squares to slide (usually 7 for sliders).
-/// * `directions`: A list of `(row_delta, col_delta)` tuples defining the lines of movement.
-/// * `backend`: The board state to check for occupancy.
+/// * `what_to_slide` - The piece moving and its starting location.
+/// * `distance` - The maximum number of squares to slide (usually 7 for sliding pieces).
+/// * `directions` - A list of `(row_delta, col_delta)` tuples defining the lines of movement.
+/// * `backend` - The board state used to check for occupancy and captures.
+/// * `context` - The pre-calculated legality constraints (pins, checks, and danger squares).
+/// * `buffer` - A mutable vector where the generated, strictly legal [`Ply`] instances will be appended.
 pub fn slide(
     what_to_slide: LocatedPiece,
     distance: usize,

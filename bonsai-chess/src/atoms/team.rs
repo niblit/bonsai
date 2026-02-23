@@ -1,5 +1,24 @@
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+//! # Team Representation
+//!
+//! This module provides the [`Team`] enum, which represents the two opposing
+//! sides in a standard game of chess: White and Black. It is a foundational
+//! type used throughout the engine to determine turn order, piece ownership,
+//! and evaluation perspectives.
+
 /// Represents the two opposing sides in a game of chess.
+///
+/// This enum is used extensively to track whose turn it is to move, as well as
+/// to identify the allegiance of pieces on the board.
+///
+/// # Examples
+///
+/// ```rust
+/// use bonsai_chess::prelude::Team;
+///
+/// let player_color = Team::White;
+/// assert_eq!(player_color, Team::White);
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Team {
     /// The White pieces, which traditionally move first.
     White,
@@ -10,7 +29,8 @@ pub enum Team {
 impl Team {
     /// Returns the opposing team.
     ///
-    /// This is commonly used to switch turns or determine enemy pieces.
+    /// This is commonly used to switch turns after a move is made, or to
+    /// determine enemy pieces when generating captures and evaluating positions.
     ///
     /// # Examples
     ///

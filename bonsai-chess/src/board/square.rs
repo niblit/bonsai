@@ -1,3 +1,9 @@
+//! # Square Definition
+//!
+//! This module defines the [`Square`] type alias, which is the fundamental
+//! building block of the chess board's grid. It represents a single spatial
+//! location that can either be empty or occupied by a piece.
+
 use crate::pieces::Piece;
 
 /// Represents the content of a single cell on the chess board.

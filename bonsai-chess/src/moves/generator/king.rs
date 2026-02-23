@@ -1,26 +1,36 @@
+//! # King Move Generator
+//!
+//! This module contains the move generation logic for Kings.
+//! The King can step exactly one square in any of the 8 directions (orthogonal
+//! and diagonal). Additionally, this module handles the complex rules for
+//! castling (both Kingside and Queenside), ensuring the King does not castle
+//! out of, through, or into check.
+
 use crate::{
     atoms::{CastlingRights, Coordinates, Team},
     board::BoardBackend,
     moves::{
-        CastlingSide, LegalityContext, Ply, SpecialMove,
-        generator::{
-            directions::{
-                DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT, DIAGONALLY_UP_LEFT,
-                DIAGONALLY_UP_RIGHT, DOWN, LEFT, RIGHT, UP,
-            },
-            sliding::slide,
-        },
+        CastlingSide, LegalityContext, Ply, SpecialMove, directions, generator::sliding::slide,
     },
     pieces::{Kind, LocatedPiece},
 };
 
-/// Generates pseudo-legal moves for a King.
+/// Generates strictly legal moves for a King.
 ///
-/// The King moves exactly one square in any direction.
-/// Additionally, if conditions are met, it can perform a special "Castling" move.
+/// The King moves exactly one square in any direction. It cannot step onto
+/// squares controlled by enemy pieces (danger squares). Additionally, if
+/// conditions are met, it can perform a special "Castling" move.
+///
+/// This function relies on the shared `slide` utility with a maximum distance
+/// of 1, and delegates castling checks to a specialized helper.
 ///
 /// # Arguments
-/// * `castling_rights`: Needed to determine if castling is even a candidate move.
+///
+/// * `what_to_move` - The King being moved and its starting location.
+/// * `backend` - The board state used to check for occupancy and path clearance.
+/// * `castling_rights` - The current castling permissions to determine if castling is a candidate.
+/// * `context` - The pre-calculated legality constraints (danger squares and current checks).
+/// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
@@ -28,17 +38,14 @@ pub fn legal_moves(
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
-    let directions = [
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT,
-        DIAGONALLY_UP_LEFT,
-        DIAGONALLY_UP_RIGHT,
-        DIAGONALLY_DOWN_LEFT,
-        DIAGONALLY_DOWN_RIGHT,
-    ];
-    slide(what_to_move, 1, &directions, backend, context, buffer);
+    slide(
+        what_to_move,
+        1,
+        &directions::KING_DIRECTIONS,
+        backend,
+        context,
+        buffer,
+    );
 
     if castling_rights != CastlingRights::no_rights() {
         get_castling_moves(what_to_move, backend, castling_rights, context, buffer);
@@ -47,11 +54,22 @@ pub fn legal_moves(
 
 /// Helper to generate Castling moves if valid.
 ///
-/// Castling is valid only if:
+/// According to FIDE Laws of Chess, castling is valid only if all of the following are true:
 /// 1. The King is not currently in check.
-/// 2. The player has the right to castle (King/Rook haven't moved).
-/// 3. The path between King and Rook is empty.
-/// 4. The squares the King travels through (and lands on) are not under attack.
+/// 2. The player still has the right to castle (neither the King nor the participating Rook has moved).
+/// 3. All squares between the King and the Rook are unoccupied.
+/// 4. The King does not pass through, nor land on, a square attacked by an enemy piece.
+///
+/// *Note: For Queenside castling, the b-file square adjacent to the Rook must be empty,
+/// but it is permitted to be under attack, as the King does not pass through it.*
+///
+/// # Arguments
+///
+/// * `what_to_move` - The King attempting to castle.
+/// * `backend` - The board state used to verify empty paths and safe squares.
+/// * `castling_rights` - The specific short/long rights for the current player.
+/// * `context` - Used to quickly determine if the King is currently in check.
+/// * `buffer` - The vector to append the castling `Ply` to if valid.
 fn get_castling_moves(
     what_to_move: LocatedPiece,
     backend: &BoardBackend,
