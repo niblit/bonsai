@@ -11,8 +11,7 @@ It is designed to be modular and type-safe, preventing invalid board states thro
     * **`BoardBackend`**: Manages the raw 8x8 grid and low-level piece placement.
     * **`BoardFrontend`**: Manages high-level game state, including turn cycles, castling rights, move history, and repetition detection.
 * **Complete Move Generation**:
-    * Generates pseudo-legal moves for all piece types (Pawns, Knights, Kings, and Sliding pieces).
-    * Validates moves against check constraints to produce strictly legal moves.
+    * Generates strictly legal moves for all piece types (Pawns, Knights, Kings, and Sliding pieces).
     * Handles special moves: Castling, En Passant, and Pawn Promotion.
 * **Perft Tested**: Validated against standard Perft (Performance Test) positions to ensure strict adherence to move generation rules.
 * **Rich Game Outcomes**: Distinguishes between various end-game states, including Checkmate, Stalemate, Threefold Repetition, Insufficient Material, and the 50-Move Rule.
@@ -20,42 +19,17 @@ It is designed to be modular and type-safe, preventing invalid board states thro
 ## Architecture
 
 The library is organized into the following modules:
-
-* **`atoms`**: Fundamental types like `Square`, `Color` (Team), `CastlingRights`, and `Coordinates`.
+* **`atoms`**: Fundamental types like `Square`, `Team`, `CastlingRights`, and `Coordinates`.
 * **`board`**: The core state containers (`BoardFrontend`, `BoardBackend`).
 * **`moves`**: Move definitions (`Ply`, `SpecialMove`) and the move generator logic.
 * **`pieces`**: Piece definitions (`Piece`, `Kind`) and location wrappers (`LocatedPiece`).
-* **`rules`**: Enums describing game results (`Outcome`, `WinReason`, `DrawReason`).
-
-## Usage
-
-Add `bonsai-chess` to your dependencies, then use the `prelude` to access core types:
-
-```rust
-use bonsai_chess::prelude::*;
-
-fn main() {
-    // 1. Initialize the game with the standard starting position
-    let mut game = BoardFrontend::from_starting_position();
-
-    // 2. Generate legal moves for the current side (White)
-    let legal_moves = game.get_legal_moves();
-    println!("Number of legal moves: {}", legal_moves.len());
-
-    // 3. Make a move (e.g., picking the first available one)
-    if let Some(first_move) = legal_moves.first() {
-        game.make_move(first_move);
-        println!("Move: {first_move}");
-    }
-
-    // 4. Check game status
-    if let Some(outcome) = game.outcome() {
-        println!("Game over: {:?}", outcome);
-    } else {
-        println!("Game is ongoing.");
-    }
-}
-```
+* **`rules`**: Enums describing game results (`Outcome`).
 
 ## License
-Part of the Bonsai project workspace. Licensed under GPL-3.0-or-later.
+```
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>. 
+```
