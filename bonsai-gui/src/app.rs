@@ -6,7 +6,7 @@ use bonsai_chess::prelude::*;
 use bonsai_engine::best_move;
 
 use crate::{
-    components::{Board, GameOverModal, PromotionModal, Sidebar},
+    components::{Board, PromotionModal, Sidebar},
     feedback::provide_feedback,
 };
 
@@ -23,6 +23,7 @@ pub fn App() -> impl IntoView {
 
     // The current board position
     let current_fen = Memo::new(move |_| game.get().to_fen());
+    let outcome = Memo::new(move |_| game.get().outcome());
 
     // The move history
     let move_log = Memo::new(move |_| game.get().get_move_log());
@@ -174,6 +175,8 @@ pub fn App() -> impl IntoView {
                         history_list=move_log
                         fen=current_fen
                         on_undo=Callback::new(move |()| on_undo())
+                        on_restart=Callback::new(move |()| on_restart())
+                        outcome=outcome
                     />
                 </div>
 
@@ -186,20 +189,6 @@ pub fn App() -> impl IntoView {
                                     team=game.with(bonsai_chess::prelude::BoardFrontend::turn)
                                     on_select=Callback::new(on_promote)
                                     on_cancel=Callback::new(on_cancel_promotion)
-                                />
-                            }
-                        })
-                }}
-
-                {move || {
-                    game.get()
-                        .outcome()
-                        .map(|outcome| {
-                            view! {
-                                <GameOverModal
-                                    outcome=outcome
-                                    on_restart=Callback::new(move |()| on_restart())
-                                    on_undo=Callback::new(move |()| on_undo())
                                 />
                             }
                         })

@@ -1,6 +1,7 @@
+use crate::components::GameOver;
 use crate::components::controls::Controls;
 use crate::components::history::HistoryLog;
-use bonsai_chess::prelude::{BoardFrontend, Ply};
+use bonsai_chess::prelude::{BoardFrontend, Outcome, Ply};
 use leptos::prelude::*;
 
 #[component]
@@ -8,14 +9,24 @@ pub fn Sidebar(
     game: ReadSignal<BoardFrontend>,
     history_list: Memo<Vec<Ply>>,
     fen: Memo<String>,
+    outcome: Memo<Option<Outcome>>,
     on_undo: Callback<()>,
+    on_restart: Callback<()>,
 ) -> impl IntoView {
     view! {
         <div class="w-[80vmin] md:w-64 flex flex-col gap-4 h-64 md:h-[80vmin]">
-            <Controls game=game on_undo=on_undo />
-
+            {move || {
+                outcome
+                    .get()
+                    .map_or_else(
+                        || view! { <Controls game=game on_undo=on_undo /> }.into_any(),
+                        |o| {
+                            view! { <GameOver outcome=o on_restart=on_restart on_undo=on_undo /> }
+                                .into_any()
+                        },
+                    )
+            }}
             <HistoryLog history_list=history_list />
-
             <div class="flex flex-col gap-1">
                 <label class="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                     "FEN"
