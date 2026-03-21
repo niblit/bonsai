@@ -168,6 +168,7 @@ pub fn App() -> impl IntoView {
                         selected_square=selected_square
                         valid_targets=valid_targets
                         on_square_click=Callback::new(handle_square_click)
+                        outcome=outcome
                     />
 
                     <Sidebar
