@@ -59,6 +59,16 @@ pub fn legal_moves(
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
+    generate_pushes(what_to_move, backend, context, buffer);
+    generate_captures(what_to_move, backend, en_passant_target, context, buffer);
+}
+
+fn generate_pushes(
+    what_to_move: LocatedPiece,
+    backend: &BoardBackend,
+    context: &LegalityContext,
+    buffer: &mut Vec<Ply>,
+) {
     let team = what_to_move.piece().team();
     let current_position = what_to_move.position();
     let king_position = match team {
@@ -66,9 +76,7 @@ pub fn legal_moves(
         Team::Black => backend.get_black_king(),
     };
 
-    // Determine move direction and critical rows based on the piece's team.
-    // White moves -1 (Up), Black moves +1 (Down).
-    let (direction, starting_row, promotion_row) = match what_to_move.piece().team() {
+    let (direction, starting_row, promotion_row) = match team {
         Team::White => (-1isize, WHITE_PAWN_STARTING_ROW, WHITE_PAWN_PROMOTION_ROW),
         Team::Black => (1isize, BLACK_PAWN_STARTING_ROW, BLACK_PAWN_PROMOTION_ROW),
     };
@@ -76,7 +84,6 @@ pub fn legal_moves(
     #[allow(clippy::cast_possible_wrap)]
     let forward_row = current_position.row() as isize + direction;
 
-    // --- 1. Forward Movement (Pushes) ---
     if context.is_direction_allowed_for_pin(current_position, direction, 0)
         && let Some(one_forward_coords) = Coordinates::new(forward_row, current_position.column())
     {
@@ -126,8 +133,30 @@ pub fn legal_moves(
             }
         }
     }
-    // --- 2. Diagonal Captures ---
-    // Check both diagonals: left (-1) and right (+1) relative to the pawn.
+}
+
+fn generate_captures(
+    what_to_move: LocatedPiece,
+    backend: &BoardBackend,
+    en_passant_target: Option<Coordinates>,
+    context: &LegalityContext,
+    buffer: &mut Vec<Ply>,
+) {
+    let team = what_to_move.piece().team();
+    let current_position = what_to_move.position();
+    let king_position = match team {
+        Team::White => backend.get_white_king(),
+        Team::Black => backend.get_black_king(),
+    };
+
+    let (direction, _, promotion_row) = match team {
+        Team::White => (-1isize, WHITE_PAWN_STARTING_ROW, WHITE_PAWN_PROMOTION_ROW),
+        Team::Black => (1isize, BLACK_PAWN_STARTING_ROW, BLACK_PAWN_PROMOTION_ROW),
+    };
+
+    #[allow(clippy::cast_possible_wrap)]
+    let forward_row = current_position.row() as isize + direction;
+
     for col_offset in [-1, 1] {
         if context.is_direction_allowed_for_pin(current_position, direction, col_offset) {
             #[allow(clippy::cast_possible_wrap)]
@@ -135,7 +164,6 @@ pub fn legal_moves(
 
             if let Some(capture_coords) = Coordinates::new(forward_row, attack_col) {
                 // A. En Passant
-                // Check if the current capture coordinate matches the en passant target.
                 if let Some(available_en_passant) = en_passant_target
                     && capture_coords == available_en_passant
                 {
@@ -151,7 +179,6 @@ pub fn legal_moves(
                             current_position,
                             capture_coords,
                             what_to_move.piece(),
-                            // In En Passant, the captured piece is strictly a Pawn of the opposite team.
                             Some(Piece::new(
                                 what_to_move.piece().team().opposite(),
                                 Kind::Pawn,
@@ -162,7 +189,6 @@ pub fn legal_moves(
                 }
 
                 // B. Standard Capture
-                // Check if there is an enemy piece on the diagonal square.
                 if let Some(target_piece) = backend.get(capture_coords)
                     && target_piece.team() != what_to_move.piece().team()
                     && context.resolves_single_check(capture_coords, king_position, None)
