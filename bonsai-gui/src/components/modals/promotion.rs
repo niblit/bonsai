@@ -1,4 +1,4 @@
-use crate::components::piece::PieceView;
+use crate::components::game_area::PieceView;
 use bonsai_chess::prelude::*;
 use leptos::prelude::*;
 

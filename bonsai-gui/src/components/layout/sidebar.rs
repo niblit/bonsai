@@ -1,8 +1,9 @@
-use crate::components::GameOver;
-use crate::components::controls::Controls;
-use crate::components::history::HistoryLog;
 use bonsai_chess::prelude::{BoardFrontend, Outcome, Ply};
 use leptos::prelude::*;
+
+use crate::components::layout::controls::Controls;
+use crate::components::layout::game_over::GameOver;
+use crate::components::layout::history::HistoryLog;
 
 #[component]
 pub fn Sidebar(
@@ -25,9 +26,7 @@ pub fn Sidebar(
                                 .into_any()
                         },
                     )
-            }}
-            <HistoryLog history_list=history_list />
-            <div class="flex flex-col gap-1">
+            }} <HistoryLog history_list=history_list /> <div class="flex flex-col gap-1">
                 <label class="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                     "FEN"
                 </label>

@@ -1,13 +1,7 @@
-mod board;
-mod controls;
-mod game_over;
-mod history;
+mod game_area;
+mod layout;
 mod modals;
-mod piece;
-mod sidebar;
-mod square;
 
-pub use board::Board;
-pub use game_over::GameOver;
-pub use modals::*;
-pub use sidebar::Sidebar;
+pub use game_area::Board;
+pub use layout::Sidebar;
+pub use modals::PromotionModal;

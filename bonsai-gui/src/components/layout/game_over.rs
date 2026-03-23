@@ -34,7 +34,7 @@ pub fn GameOver(
 
     view! {
         <div class="bg-zinc-800/90 p-5 rounded-2xl shadow-xl border border-zinc-700/50 flex flex-col gap-5 backdrop-blur-sm">
-            
+
             // Text Header Area
             <div class="flex flex-col items-center justify-center text-center mt-2">
                 <h2 class="text-2xl font-black text-zinc-100 tracking-tight drop-shadow-sm">

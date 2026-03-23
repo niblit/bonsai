@@ -1,18 +1,19 @@
-use crate::components::square::Square;
 use bonsai_chess::prelude::*;
 use leptos::prelude::*;
+
+use crate::components::game_area::Square;
 
 #[component]
 pub fn Board(
     game: ReadSignal<BoardFrontend>,
     selected_square: ReadSignal<Option<Coordinates>>,
     valid_targets: Memo<Vec<Coordinates>>,
-    outcome: Memo<Option<Outcome>>, 
+    outcome: Memo<Option<Outcome>>,
     on_square_click: Callback<(usize, usize)>,
 ) -> impl IntoView {
     view! {
         <div class="select-none">
-            <div 
+            <div
                 class="grid grid-cols-8 grid-rows-8 border-4 border-zinc-700 bg-zinc-800 shadow-2xl aspect-square rounded-xl overflow-hidden w-[80vmin] h-[80vmin] transition-all duration-700"
                 class:blur-xs=move || outcome.get().is_some()
                 class:brightness-80=move || outcome.get().is_some()
