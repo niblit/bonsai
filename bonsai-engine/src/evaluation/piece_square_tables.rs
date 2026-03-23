@@ -15,5 +15,5 @@ pub const KNIGHT_TABLE: [isize; 64] = [
 
 // Helper to flip square index for black pieces (if board uses 0-63)
 pub const fn flip_square(sq: usize) -> usize {
-    sq ^ 56 // Flips ranks
+    sq ^ 0b11_1000 // Flips ranks, the binary number is 56
 }
