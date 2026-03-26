@@ -1,6 +1,8 @@
 use bonsai_chess::prelude::{BoardFrontend, Team};
 use leptos::prelude::*;
 
+use crate::components::layout::undo::Undo;
+
 #[component]
 pub fn Controls(game: ReadSignal<BoardFrontend>, on_undo: Callback<()>) -> impl IntoView {
     view! {
@@ -18,12 +20,7 @@ pub fn Controls(game: ReadSignal<BoardFrontend>, on_undo: Callback<()>) -> impl 
                 }>{move || format!("{:?}", game.with(BoardFrontend::turn))}</span>
             </div>
 
-            <button
-                class="w-full py-2 px-4 bg-[#DA8B8B] hover:bg-[#C43B3B] text-[#0A1329] rounded transition"
-                on:click=move |_| on_undo.run(())
-            >
-                "Undo Move"
-            </button>
+            <Undo on_undo=on_undo />
         </div>
     }
 }

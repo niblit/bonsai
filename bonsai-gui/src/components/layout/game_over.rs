@@ -1,6 +1,8 @@
 use bonsai_chess::prelude::{DrawReason, Outcome, WinReason};
 use leptos::prelude::*;
 
+use crate::components::layout::undo::Undo;
+
 #[component]
 pub fn GameOver(
     outcome: Outcome,
@@ -55,13 +57,7 @@ pub fn GameOver(
                     "New Game"
                 </button>
 
-                // Secondary Action: Undo Move
-                <button
-                    class="w-full px-6 py-3 bg-rose-400/40 hover:bg-rose-600 text-rose-200 hover:text-white border border-rose-900/50 hover:border-rose-500 rounded-xl font-bold text-base transition-all shadow-lg active:scale-[0.98]"
-                    on:click=move |_| on_undo.run(())
-                >
-                    "Undo Move"
-                </button>
+                <Undo on_undo=on_undo/>
             </div>
         </div>
     }
