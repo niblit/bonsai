@@ -57,7 +57,7 @@ pub fn GameOver(
                     "New Game"
                 </button>
 
-                <Undo on_undo=on_undo/>
+                <Undo on_undo=on_undo />
             </div>
         </div>
     }
