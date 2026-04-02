@@ -9,7 +9,7 @@ fn main() {
         buffer.clear();
 
         let bytes_read = handle.read_line(&mut buffer).unwrap_or(0);
-        
+
         if bytes_read == 0 {
             // EOF reached, GUI disconnected or pipe closed.
             break;
