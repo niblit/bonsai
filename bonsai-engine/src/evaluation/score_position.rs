@@ -20,6 +20,10 @@ pub fn evaluate_position(state: &BoardFrontend) -> isize {
         };
     }
 
+    if state.can_claim_fifty_move_rule() || state.can_claim_threefold_repetition() {
+        return DRAW_SCORE;
+    }
+
     let mut score = 0;
     let pieces = state.backend().get_all_pieces();
 

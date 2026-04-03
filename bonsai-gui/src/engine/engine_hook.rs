@@ -1,16 +1,20 @@
-use crate::utils::provide_feedback;
+use crate::{engine::engine_role::EngineRole, utils::provide_feedback};
 use bonsai_chess::prelude::*;
 use bonsai_engine::best_move;
 use leptos::prelude::*;
 use std::time::Duration;
 
-pub fn use_engine(game: ReadSignal<BoardFrontend>, set_game: WriteSignal<BoardFrontend>) {
+pub fn use_engine(
+    game: ReadSignal<BoardFrontend>,
+    set_game: WriteSignal<BoardFrontend>,
+    engine_role: ReadSignal<EngineRole>,
+) {
     Effect::new(move |_| {
         let current_game = game.get();
         let turn = current_game.turn();
         let outcome = current_game.outcome();
 
-        if turn == Team::Black && outcome.is_none() {
+        if engine_role.get().compare_with_team(turn) && outcome.is_none() {
             set_timeout(
                 move || {
                     if let Some(engine_ply) = best_move(current_game.clone(), 4) {

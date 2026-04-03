@@ -1,7 +1,7 @@
 use crate::evaluation::{evaluate_position, score_move};
 use bonsai_chess::prelude::*;
 
-// New Quiescence Search Function
+// Quiescence Search Function
 pub fn quiescence(state: &mut BoardFrontend, mut alpha: isize, beta: isize) -> isize {
     let stand_pat = evaluate_position(state);
 
@@ -18,7 +18,6 @@ pub fn quiescence(state: &mut BoardFrontend, mut alpha: isize, beta: isize) -> i
     let mut moves = state.get_legal_moves();
 
     // OPTIMIZATION: Only consider capturing moves
-    // (Assumes bonsai_chess Ply has piece_captured or similar check)
     moves.retain(|m| m.piece_captured().is_some());
 
     // Sort captures by MVV-LVA

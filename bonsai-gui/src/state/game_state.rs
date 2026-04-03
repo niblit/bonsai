@@ -1,4 +1,4 @@
-use crate::utils::provide_feedback;
+use crate::{engine::EngineRole, utils::provide_feedback};
 use bonsai_chess::prelude::*;
 use leptos::prelude::*;
 
@@ -18,10 +18,12 @@ pub struct GameState {
     pub outcome: Memo<Option<Outcome>>,
     pub move_log: Memo<Vec<Ply>>,
     pub valid_targets: Memo<Vec<Coordinates>>,
+
+    pub engine_role: ReadSignal<EngineRole>,
 }
 
 impl GameState {
-    pub fn new() -> Self {
+    pub fn new(engine_role: ReadSignal<EngineRole>) -> Self {
         let (game, set_game) = signal(BoardFrontend::from_starting_position());
         let (selected_square, set_selected_square) = signal::<Option<Coordinates>>(None);
         let (pending_promotion, set_pending_promotion) = signal::<Option<Ply>>(None);
@@ -52,6 +54,7 @@ impl GameState {
             outcome,
             move_log,
             valid_targets,
+            engine_role,
         }
     }
 
@@ -61,7 +64,7 @@ impl GameState {
         let turn = current_game.turn();
 
         // Lock interaction if Engine is thinking
-        if turn == Team::Black {
+        if self.engine_role.get().compare_with_team(turn) {
             return;
         }
 

@@ -35,30 +35,30 @@ pub fn GameOver(
     };
 
     view! {
-        <div class="bg-zinc-800/90 p-5 rounded-2xl shadow-xl border border-zinc-700/50 flex flex-col gap-5 backdrop-blur-sm">
+      <div class="bg-zinc-800/90 p-5 rounded-2xl shadow-xl border border-zinc-700/50 flex flex-col gap-5 backdrop-blur-sm">
 
-            // Text Header Area
-            <div class="flex flex-col items-center justify-center text-center mt-2">
-                <h2 class="text-2xl font-black text-zinc-100 tracking-tight drop-shadow-sm">
-                    {title}
-                </h2>
-                <span class="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-1">
-                    {description}
-                </span>
-            </div>
-
-            // Buttons Area
-            <div class="flex flex-col gap-3 w-full">
-                // Primary Action: New Game
-                <button
-                    class="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-base transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
-                    on:click=move |_| on_restart.run(())
-                >
-                    "New Game"
-                </button>
-
-                <Undo on_undo=on_undo />
-            </div>
+        // Text Header Area
+        <div class="flex flex-col items-center justify-center text-center mt-2">
+          <h2 class="text-2xl font-black text-zinc-100 tracking-tight drop-shadow-sm">
+            {title}
+          </h2>
+          <span class="text-xs font-bold text-zinc-400 uppercase tracking-widest mt-1">
+            {description}
+          </span>
         </div>
+
+        // Buttons Area
+        <div class="flex flex-col gap-3 w-full">
+          // Primary Action: New Game
+          <button
+            class="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-base transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]"
+            on:click=move |_| on_restart.run(())
+          >
+            "New Game"
+          </button>
+
+          <Undo on_undo=on_undo />
+        </div>
+      </div>
     }
 }

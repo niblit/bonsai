@@ -13,5 +13,11 @@ pub fn PieceView(piece: Piece) -> impl IntoView {
     let src = format!("/static/pieces/california/{team_str}{kind_str}.svg");
     let alt_txt = format!("{:?} {:?}", piece.team(), piece.kind());
 
-    view! { <img alt=alt_txt src=src class="w-[80%] h-[80%] z-10 pointer-events-none" /> }
+    view! {
+      <img
+        alt=alt_txt
+        src=src
+        class="w-[80%] h-[80%] z-10 pointer-events-none"
+      />
+    }
 }
