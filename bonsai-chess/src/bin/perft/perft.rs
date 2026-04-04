@@ -16,7 +16,7 @@ use crate::perft_results::PerftResults;
 /// # Returns
 ///
 /// The aggregated [`PerftResults`] from all threads.
-pub fn root_level_perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
+pub fn root_level_perft(game: &mut Game, depth: usize) -> PerftResults {
     // 1. Handle Depth 0 (Base Case)
     // Perft(0) is just the current board state itself (1 node).
     if depth == 0 {
@@ -66,7 +66,7 @@ pub fn root_level_perft(game: &mut BoardFrontend, depth: usize) -> PerftResults 
 /// When `depth == 1`, we do not need to `make_move` and recurse further. We simply
 /// generate the legal moves and count them. This provides a massive speedup at the
 /// leaf nodes of the tree.
-pub fn perft(game: &mut BoardFrontend, depth: usize) -> PerftResults {
+pub fn perft(game: &mut Game, depth: usize) -> PerftResults {
     let mut results = PerftResults::new();
 
     // BASE CASE (Should only happen if perft called with depth 0)

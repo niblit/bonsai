@@ -15,15 +15,15 @@
 mod castling_rights;
 
 /// Provides a safe, validated representation of an 8x8 board square.
-mod coordinates;
+mod coordinate;
 
 /// Tracks half-moves and full-moves for game rule enforcement (e.g., the 50-move rule).
 mod move_counter;
 
 /// Represents the two opposing sides in a game of chess (White and Black).
-mod team;
+mod side;
 
 pub use castling_rights::CastlingRights;
-pub use coordinates::Coordinates;
+pub use coordinate::Coordinate;
 pub use move_counter::MoveCounter;
-pub use team::Team;
+pub use side::Side;

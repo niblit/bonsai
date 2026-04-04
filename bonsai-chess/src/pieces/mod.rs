@@ -18,7 +18,7 @@ mod located_piece;
 mod piece;
 
 pub use {
-    kind::{Kind, ValidPromotions},
+    kind::{Kind, Promotion},
     located_piece::LocatedPiece,
     piece::Piece,
 };

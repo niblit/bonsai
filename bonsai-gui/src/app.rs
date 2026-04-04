@@ -50,7 +50,7 @@ pub fn App() -> impl IntoView {
             .map(|_| {
               view! {
                 <PromotionModal
-                  team=state.game.with(BoardFrontend::turn)
+                  team=state.game.with(Game::turn)
                   on_select=Callback::new(move |c| state.promote(c))
                   on_cancel=Callback::new(move |()| state.cancel_promotion())
                 />

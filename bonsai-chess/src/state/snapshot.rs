@@ -6,8 +6,8 @@
 //! Repetition draw rule.
 
 use crate::{
-    atoms::{CastlingRights, Coordinates, Team},
-    board::Grid,
+    atoms::{CastlingRights, Coordinate, Side},
+    state::Grid,
 };
 
 /// A hashable representation of the board state used to detect Threefold Repetition.
@@ -18,9 +18,9 @@ use crate::{
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct PositionSnapshot {
     pieces_positions: Grid,
-    turn: Team,
+    turn: Side,
     remaining_castling_rights: CastlingRights,
-    en_passant: Option<Coordinates>,
+    en_passant: Option<Coordinate>,
 }
 
 impl PositionSnapshot {
@@ -35,9 +35,9 @@ impl PositionSnapshot {
     #[must_use]
     pub const fn new(
         pieces_positions: Grid,
-        turn: Team,
+        turn: Side,
         remaining_castling_rights: CastlingRights,
-        en_passant: Option<Coordinates>,
+        en_passant: Option<Coordinate>,
     ) -> Self {
         Self {
             pieces_positions,
@@ -55,7 +55,7 @@ impl PositionSnapshot {
 
     /// Returns the team whose turn it is to move in this snapshot.
     #[must_use]
-    pub const fn get_turn(&self) -> Team {
+    pub const fn get_turn(&self) -> Side {
         self.turn
     }
 
@@ -67,7 +67,7 @@ impl PositionSnapshot {
 
     /// Returns the valid en passant target coordinate, if one exists in this snapshot.
     #[must_use]
-    pub const fn get_en_passant(&self) -> Option<Coordinates> {
+    pub const fn get_en_passant(&self) -> Option<Coordinate> {
         self.en_passant
     }
 }

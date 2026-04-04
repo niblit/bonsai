@@ -1,4 +1,4 @@
-use bonsai_chess::prelude::{BoardFrontend, Outcome, Ply};
+use bonsai_chess::prelude::{Game, Outcome, Ply};
 use leptos::prelude::*;
 
 use crate::components::layout::controls::Controls;
@@ -7,7 +7,7 @@ use crate::components::layout::history::HistoryLog;
 
 #[component]
 pub fn Sidebar(
-    game: ReadSignal<BoardFrontend>,
+    game: ReadSignal<Game>,
     history_list: Memo<Vec<Ply>>,
     fen: Memo<String>,
     outcome: Memo<Option<Outcome>>,

@@ -33,10 +33,10 @@
 //! <digit>   ::= '0' | <digit19>
 
 use crate::{
-    atoms::{CastlingRights, Coordinates, MoveCounter, Team},
-    board::{Grid, PositionSnapshot},
+    atoms::{CastlingRights, Coordinate, MoveCounter, Side},
     moves::CastlingSide,
     pieces::{Kind, Piece},
+    state::{Grid, PositionSnapshot},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -49,11 +49,11 @@ pub enum FenToken {
     RankSeparator,
 
     // Side to move
-    SideToMove(Team),
+    SideToMove(Side),
 
     // Castling
     NoCastling,
-    CastlingEnabled(Team, CastlingSide),
+    CastlingEnabled(Side, CastlingSide),
 
     // En Passant
     NoEnPassant,
@@ -129,8 +129,8 @@ pub fn to_fen(position: PositionSnapshot, clocks: &MoveCounter) -> String {
 
     // 2. Side to move
     match position.get_turn() {
-        Team::White => fen.push('w'),
-        Team::Black => fen.push('b'),
+        Side::White => fen.push('w'),
+        Side::Black => fen.push('b'),
     }
 
     fen.push(' ');
@@ -216,7 +216,7 @@ pub fn from_fen(fen: &str) -> Result<(PositionSnapshot, MoveCounter), FenParsing
 
     // Calculate total halfmoves played
     // Formula: (Fullmove - 1) * 2 + (1 if Black to move else 0)
-    let total_halfmoves = (fullmove_clock.saturating_sub(1) * 2) + usize::from(turn == Team::Black);
+    let total_halfmoves = (fullmove_clock.saturating_sub(1) * 2) + usize::from(turn == Side::Black);
 
     let move_counter = MoveCounter::from(halfmove_clock, total_halfmoves, fullmove_clock);
 
@@ -278,10 +278,10 @@ fn parse_piece_placement(lexer: &mut Lexer) -> Result<Grid, FenParsingError> {
     Ok(Grid::new(grid))
 }
 
-fn parse_side_to_move(lexer: &mut Lexer) -> Result<Team, FenParsingError> {
+fn parse_side_to_move(lexer: &mut Lexer) -> Result<Side, FenParsingError> {
     match lexer.next_token() {
-        Some(FenToken::SideToMove(Team::White)) => Ok(Team::White),
-        Some(FenToken::SideToMove(Team::Black)) => Ok(Team::Black),
+        Some(FenToken::SideToMove(Side::White)) => Ok(Side::White),
+        Some(FenToken::SideToMove(Side::Black)) => Ok(Side::Black),
         Some(t) => Err(FenParsingError::UnexpectedToken(format!(
             "{t:?} in Side to Move"
         ))),
@@ -297,10 +297,10 @@ fn parse_castling_ability(lexer: &mut Lexer) -> Result<CastlingRights, FenParsin
                 // Just continue to space
             }
             Some(FenToken::CastlingEnabled(team, side)) => match (team, side) {
-                (Team::White, CastlingSide::Short) => castling.enable_white_king_side(),
-                (Team::White, CastlingSide::Long) => castling.enable_white_queen_side(),
-                (Team::Black, CastlingSide::Short) => castling.enable_black_king_side(),
-                (Team::Black, CastlingSide::Long) => castling.enable_black_queen_side(),
+                (Side::White, CastlingSide::Short) => castling.enable_white_king_side(),
+                (Side::White, CastlingSide::Long) => castling.enable_white_queen_side(),
+                (Side::Black, CastlingSide::Short) => castling.enable_black_king_side(),
+                (Side::Black, CastlingSide::Long) => castling.enable_black_queen_side(),
             },
             Some(FenToken::WhiteSpace) => break,
             Some(t) => {
@@ -316,7 +316,7 @@ fn parse_castling_ability(lexer: &mut Lexer) -> Result<CastlingRights, FenParsin
 
 fn parse_en_passant_target_square(
     lexer: &mut Lexer,
-) -> Result<Option<Coordinates>, FenParsingError> {
+) -> Result<Option<Coordinate>, FenParsingError> {
     let en_passant;
     match lexer.next_token() {
         Some(FenToken::NoEnPassant) => en_passant = None,
@@ -346,7 +346,7 @@ fn parse_en_passant_target_square(
                 // FEN rank '6' -> index 2 (8-6)
                 let row_idx = 8 - rank_val;
 
-                en_passant = Coordinates::new(row_idx, file_idx);
+                en_passant = Coordinate::new(row_idx, file_idx);
             } else {
                 return Err(FenParsingError::InvalidEnPassant(
                     "Missing rank after file".to_string(),
@@ -442,18 +442,18 @@ impl<'a> Lexer<'a> {
         match c {
             '/' => Some(FenToken::RankSeparator),
             '1'..='8' => Some(FenToken::EmptySquares(c.to_digit(10).unwrap() as usize)),
-            'P' => Some(FenToken::Piece(Piece::new(Team::White, Kind::Pawn))),
-            'N' => Some(FenToken::Piece(Piece::new(Team::White, Kind::Knight))),
-            'B' => Some(FenToken::Piece(Piece::new(Team::White, Kind::Bishop))),
-            'R' => Some(FenToken::Piece(Piece::new(Team::White, Kind::Rook))),
-            'Q' => Some(FenToken::Piece(Piece::new(Team::White, Kind::Queen))),
-            'K' => Some(FenToken::Piece(Piece::new(Team::White, Kind::King))),
-            'p' => Some(FenToken::Piece(Piece::new(Team::Black, Kind::Pawn))),
-            'n' => Some(FenToken::Piece(Piece::new(Team::Black, Kind::Knight))),
-            'b' => Some(FenToken::Piece(Piece::new(Team::Black, Kind::Bishop))),
-            'r' => Some(FenToken::Piece(Piece::new(Team::Black, Kind::Rook))),
-            'q' => Some(FenToken::Piece(Piece::new(Team::Black, Kind::Queen))),
-            'k' => Some(FenToken::Piece(Piece::new(Team::Black, Kind::King))),
+            'P' => Some(FenToken::Piece(Piece::new(Side::White, Kind::Pawn))),
+            'N' => Some(FenToken::Piece(Piece::new(Side::White, Kind::Knight))),
+            'B' => Some(FenToken::Piece(Piece::new(Side::White, Kind::Bishop))),
+            'R' => Some(FenToken::Piece(Piece::new(Side::White, Kind::Rook))),
+            'Q' => Some(FenToken::Piece(Piece::new(Side::White, Kind::Queen))),
+            'K' => Some(FenToken::Piece(Piece::new(Side::White, Kind::King))),
+            'p' => Some(FenToken::Piece(Piece::new(Side::Black, Kind::Pawn))),
+            'n' => Some(FenToken::Piece(Piece::new(Side::Black, Kind::Knight))),
+            'b' => Some(FenToken::Piece(Piece::new(Side::Black, Kind::Bishop))),
+            'r' => Some(FenToken::Piece(Piece::new(Side::Black, Kind::Rook))),
+            'q' => Some(FenToken::Piece(Piece::new(Side::Black, Kind::Queen))),
+            'k' => Some(FenToken::Piece(Piece::new(Side::Black, Kind::King))),
             _ => None,
         }
     }
@@ -461,8 +461,8 @@ impl<'a> Lexer<'a> {
     fn lex_side_to_move(&mut self) -> Option<FenToken> {
         let c = self.input.next()?;
         match c {
-            'w' => Some(FenToken::SideToMove(Team::White)),
-            'b' => Some(FenToken::SideToMove(Team::Black)),
+            'w' => Some(FenToken::SideToMove(Side::White)),
+            'b' => Some(FenToken::SideToMove(Side::Black)),
             _ => None,
         }
     }
@@ -471,10 +471,10 @@ impl<'a> Lexer<'a> {
         let c = self.input.next()?;
         match c {
             '-' => Some(FenToken::NoCastling),
-            'K' => Some(FenToken::CastlingEnabled(Team::White, CastlingSide::Short)),
-            'Q' => Some(FenToken::CastlingEnabled(Team::White, CastlingSide::Long)),
-            'k' => Some(FenToken::CastlingEnabled(Team::Black, CastlingSide::Short)),
-            'q' => Some(FenToken::CastlingEnabled(Team::Black, CastlingSide::Long)),
+            'K' => Some(FenToken::CastlingEnabled(Side::White, CastlingSide::Short)),
+            'Q' => Some(FenToken::CastlingEnabled(Side::White, CastlingSide::Long)),
+            'k' => Some(FenToken::CastlingEnabled(Side::Black, CastlingSide::Short)),
+            'q' => Some(FenToken::CastlingEnabled(Side::Black, CastlingSide::Long)),
             _ => None,
         }
     }

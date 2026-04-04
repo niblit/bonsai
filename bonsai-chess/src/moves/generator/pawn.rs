@@ -7,10 +7,10 @@
 //! promotions.
 
 use crate::{
-    atoms::{Coordinates, Team},
-    board::BoardBackend,
+    atoms::{Coordinate, Side},
     moves::{LegalityContext, Ply, SpecialMove},
-    pieces::{Kind, LocatedPiece, Piece, ValidPromotions},
+    pieces::{Kind, LocatedPiece, Piece, Promotion},
+    state::Board,
 };
 
 /// The row index where White pawns start the game (0-indexed).
@@ -29,10 +29,10 @@ const BLACK_PAWN_PROMOTION_ROW: usize = 7;
 
 /// A pre-allocated array of all possible pawn promotions to iterate over.
 const PROMOTIONS: &[SpecialMove] = &[
-    SpecialMove::Promotion(ValidPromotions::Queen),
-    SpecialMove::Promotion(ValidPromotions::Rook),
-    SpecialMove::Promotion(ValidPromotions::Bishop),
-    SpecialMove::Promotion(ValidPromotions::Knight),
+    SpecialMove::Promotion(Promotion::Queen),
+    SpecialMove::Promotion(Promotion::Rook),
+    SpecialMove::Promotion(Promotion::Bishop),
+    SpecialMove::Promotion(Promotion::Knight),
 ];
 
 /// Generates all strictly legal moves for a specific pawn.
@@ -54,8 +54,8 @@ const PROMOTIONS: &[SpecialMove] = &[
 /// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
-    en_passant_target: Option<Coordinates>,
+    backend: &Board,
+    en_passant_target: Option<Coordinate>,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
@@ -65,27 +65,27 @@ pub fn legal_moves(
 
 fn generate_pushes(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
+    backend: &Board,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     let team = what_to_move.piece().team();
     let current_position = what_to_move.position();
     let king_position = match team {
-        Team::White => backend.get_white_king(),
-        Team::Black => backend.get_black_king(),
+        Side::White => backend.get_white_king(),
+        Side::Black => backend.get_black_king(),
     };
 
     let (direction, starting_row, promotion_row) = match team {
-        Team::White => (-1isize, WHITE_PAWN_STARTING_ROW, WHITE_PAWN_PROMOTION_ROW),
-        Team::Black => (1isize, BLACK_PAWN_STARTING_ROW, BLACK_PAWN_PROMOTION_ROW),
+        Side::White => (-1isize, WHITE_PAWN_STARTING_ROW, WHITE_PAWN_PROMOTION_ROW),
+        Side::Black => (1isize, BLACK_PAWN_STARTING_ROW, BLACK_PAWN_PROMOTION_ROW),
     };
 
     #[allow(clippy::cast_possible_wrap)]
     let forward_row = current_position.row() as isize + direction;
 
-    if context.is_direction_allowed_for_pin(current_position, direction, 0)
-        && let Some(one_forward_coords) = Coordinates::new(forward_row, current_position.column())
+    if context.is_legal_pin_direction(current_position, direction, 0)
+        && let Some(one_forward_coords) = Coordinate::new(forward_row, current_position.column())
     {
         // Path must be empty for both single and double pushes
         if backend.get(one_forward_coords).is_none() {
@@ -118,7 +118,7 @@ fn generate_pushes(
                 let two_forward_row = current_position.row() as isize + 2 * direction;
 
                 if let Some(two_forward_coords) =
-                    Coordinates::new(two_forward_row, current_position.column())
+                    Coordinate::new(two_forward_row, current_position.column())
                     && backend.get(two_forward_coords).is_none()
                     && context.resolves_single_check(two_forward_coords, king_position, None)
                 {
@@ -137,38 +137,38 @@ fn generate_pushes(
 
 fn generate_captures(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
-    en_passant_target: Option<Coordinates>,
+    backend: &Board,
+    en_passant_target: Option<Coordinate>,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     let team = what_to_move.piece().team();
     let current_position = what_to_move.position();
     let king_position = match team {
-        Team::White => backend.get_white_king(),
-        Team::Black => backend.get_black_king(),
+        Side::White => backend.get_white_king(),
+        Side::Black => backend.get_black_king(),
     };
 
     let (direction, _, promotion_row) = match team {
-        Team::White => (-1isize, WHITE_PAWN_STARTING_ROW, WHITE_PAWN_PROMOTION_ROW),
-        Team::Black => (1isize, BLACK_PAWN_STARTING_ROW, BLACK_PAWN_PROMOTION_ROW),
+        Side::White => (-1isize, WHITE_PAWN_STARTING_ROW, WHITE_PAWN_PROMOTION_ROW),
+        Side::Black => (1isize, BLACK_PAWN_STARTING_ROW, BLACK_PAWN_PROMOTION_ROW),
     };
 
     #[allow(clippy::cast_possible_wrap)]
     let forward_row = current_position.row() as isize + direction;
 
     for col_offset in [-1, 1] {
-        if context.is_direction_allowed_for_pin(current_position, direction, col_offset) {
+        if context.is_legal_pin_direction(current_position, direction, col_offset) {
             #[allow(clippy::cast_possible_wrap)]
             let attack_col = current_position.column() as isize + col_offset;
 
-            if let Some(capture_coords) = Coordinates::new(forward_row, attack_col) {
+            if let Some(capture_coords) = Coordinate::new(forward_row, attack_col) {
                 // A. En Passant
                 if let Some(available_en_passant) = en_passant_target
                     && capture_coords == available_en_passant
                 {
                     let captured_pawn_position =
-                        Coordinates::new(current_position.row(), capture_coords.column()).unwrap();
+                        Coordinate::new(current_position.row(), capture_coords.column()).unwrap();
 
                     if context.resolves_single_check(
                         capture_coords,

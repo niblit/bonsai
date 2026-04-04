@@ -5,7 +5,7 @@
 //! on FIDE laws of chess to define the exact scenarios under which a game
 //! is terminated.
 
-use crate::atoms::Team;
+use crate::atoms::Side;
 
 /// Represents the final result of a chess game.
 ///
@@ -35,7 +35,7 @@ pub enum Outcome {
     /// The game ended in a decisive win for one team.
     Win {
         /// The team that won the game.
-        winner: Team,
+        winner: Side,
 
         /// The specific reason for the win.
         reason: WinReason,
@@ -62,7 +62,7 @@ impl Outcome {
     /// assert_eq!(draw.winner(), None);
     /// ```
     #[must_use]
-    pub const fn winner(&self) -> Option<Team> {
+    pub const fn winner(&self) -> Option<Side> {
         match self {
             Self::Win { winner, .. } => Some(*winner),
             Self::Draw { .. } => None,

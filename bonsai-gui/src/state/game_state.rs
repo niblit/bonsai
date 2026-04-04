@@ -4,11 +4,11 @@ use leptos::prelude::*;
 
 #[derive(Copy, Clone)]
 pub struct GameState {
-    pub game: ReadSignal<BoardFrontend>,
-    pub set_game: WriteSignal<BoardFrontend>,
+    pub game: ReadSignal<Game>,
+    pub set_game: WriteSignal<Game>,
 
-    pub selected_square: ReadSignal<Option<Coordinates>>,
-    set_selected_square: WriteSignal<Option<Coordinates>>,
+    pub selected_square: ReadSignal<Option<Coordinate>>,
+    set_selected_square: WriteSignal<Option<Coordinate>>,
 
     pub pending_promotion: ReadSignal<Option<Ply>>,
     set_pending_promotion: WriteSignal<Option<Ply>>,
@@ -17,15 +17,16 @@ pub struct GameState {
     pub fen: Memo<String>,
     pub outcome: Memo<Option<Outcome>>,
     pub move_log: Memo<Vec<Ply>>,
-    pub valid_targets: Memo<Vec<Coordinates>>,
+    pub valid_targets: Memo<Vec<Coordinate>>,
 
     pub engine_role: ReadSignal<EngineRole>,
 }
 
 impl GameState {
+    #[must_use]
     pub fn new(engine_role: ReadSignal<EngineRole>) -> Self {
-        let (game, set_game) = signal(BoardFrontend::from_starting_position());
-        let (selected_square, set_selected_square) = signal::<Option<Coordinates>>(None);
+        let (game, set_game) = signal(Game::from_starting_position());
+        let (selected_square, set_selected_square) = signal::<Option<Coordinate>>(None);
         let (pending_promotion, set_pending_promotion) = signal::<Option<Ply>>(None);
 
         let fen = Memo::new(move |_| game.get().to_fen());
@@ -59,7 +60,7 @@ impl GameState {
     }
 
     pub fn handle_square_click(&self, row: usize, col: usize) {
-        let last_click = Coordinates::new(row, col).unwrap();
+        let last_click = Coordinate::new(row, col).unwrap();
         let mut current_game = self.game.get();
         let turn = current_game.turn();
 
@@ -100,7 +101,7 @@ impl GameState {
         }
     }
 
-    fn select_own_piece(&self, coord: Coordinates, turn: Team, game: &BoardFrontend) {
+    fn select_own_piece(&self, coord: Coordinate, turn: Side, game: &Game) {
         if game.backend().get(coord).is_some_and(|p| p.team() == turn) {
             self.set_selected_square.set(Some(coord));
         } else {
@@ -108,7 +109,7 @@ impl GameState {
         }
     }
 
-    pub fn promote(&self, choice: ValidPromotions) {
+    pub fn promote(&self, choice: Promotion) {
         if let Some(base_ply) = self.pending_promotion.get() {
             let final_ply = self.game.get().get_legal_moves().into_iter().find(|m| {
                 m.starting_square() == base_ply.starting_square()
@@ -131,13 +132,13 @@ impl GameState {
     }
 
     pub fn undo(&self) {
-        self.set_game.update(BoardFrontend::undo_last_move);
-        self.set_game.update(BoardFrontend::undo_last_move);
+        self.set_game.update(Game::undo_last_move);
+        self.set_game.update(Game::undo_last_move);
         self.set_selected_square.set(None);
     }
 
     pub fn restart(&self) {
-        self.set_game.set(BoardFrontend::from_starting_position());
+        self.set_game.set(Game::from_starting_position());
         self.set_selected_square.set(None);
         self.set_pending_promotion.set(None);
     }

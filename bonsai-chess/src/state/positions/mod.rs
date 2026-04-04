@@ -6,9 +6,9 @@
 
 use crate::{
     BOARD_COLUMNS,
-    atoms::Team,
-    board::Grid,
+    atoms::Side,
     pieces::{Kind, Piece},
+    state::Grid,
 };
 
 /// The standard initial configuration of a chess board.
@@ -27,29 +27,29 @@ use crate::{
 /// This serves as the source of truth for [`crate::board::BoardBackend::from_starting_position`].
 pub const STARTING_POSITION: Grid = Grid::new([
     [
-        Some(Piece::new(Team::Black, Kind::Rook)),
-        Some(Piece::new(Team::Black, Kind::Knight)),
-        Some(Piece::new(Team::Black, Kind::Bishop)),
-        Some(Piece::new(Team::Black, Kind::Queen)),
-        Some(Piece::new(Team::Black, Kind::King)),
-        Some(Piece::new(Team::Black, Kind::Bishop)),
-        Some(Piece::new(Team::Black, Kind::Knight)),
-        Some(Piece::new(Team::Black, Kind::Rook)),
+        Some(Piece::new(Side::Black, Kind::Rook)),
+        Some(Piece::new(Side::Black, Kind::Knight)),
+        Some(Piece::new(Side::Black, Kind::Bishop)),
+        Some(Piece::new(Side::Black, Kind::Queen)),
+        Some(Piece::new(Side::Black, Kind::King)),
+        Some(Piece::new(Side::Black, Kind::Bishop)),
+        Some(Piece::new(Side::Black, Kind::Knight)),
+        Some(Piece::new(Side::Black, Kind::Rook)),
     ],
-    [Some(Piece::new(Team::Black, Kind::Pawn)); BOARD_COLUMNS],
+    [Some(Piece::new(Side::Black, Kind::Pawn)); BOARD_COLUMNS],
     [None; BOARD_COLUMNS],
     [None; BOARD_COLUMNS],
     [None; BOARD_COLUMNS],
     [None; BOARD_COLUMNS],
-    [Some(Piece::new(Team::White, Kind::Pawn)); BOARD_COLUMNS],
+    [Some(Piece::new(Side::White, Kind::Pawn)); BOARD_COLUMNS],
     [
-        Some(Piece::new(Team::White, Kind::Rook)),
-        Some(Piece::new(Team::White, Kind::Knight)),
-        Some(Piece::new(Team::White, Kind::Bishop)),
-        Some(Piece::new(Team::White, Kind::Queen)),
-        Some(Piece::new(Team::White, Kind::King)),
-        Some(Piece::new(Team::White, Kind::Bishop)),
-        Some(Piece::new(Team::White, Kind::Knight)),
-        Some(Piece::new(Team::White, Kind::Rook)),
+        Some(Piece::new(Side::White, Kind::Rook)),
+        Some(Piece::new(Side::White, Kind::Knight)),
+        Some(Piece::new(Side::White, Kind::Bishop)),
+        Some(Piece::new(Side::White, Kind::Queen)),
+        Some(Piece::new(Side::White, Kind::King)),
+        Some(Piece::new(Side::White, Kind::Bishop)),
+        Some(Piece::new(Side::White, Kind::Knight)),
+        Some(Piece::new(Side::White, Kind::Rook)),
     ],
 ]);

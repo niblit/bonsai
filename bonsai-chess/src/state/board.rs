@@ -10,8 +10,7 @@
 
 use crate::{
     BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE,
-    atoms::{Coordinates, Team},
-    board::{Grid, Square, positions::STARTING_POSITION},
+    atoms::{Coordinate, Side},
     moves::{
         CastlingSide, LegalityContext, Ply, SpecialMove,
         directions::{
@@ -20,6 +19,7 @@ use crate::{
         },
     },
     pieces::{Kind, LocatedPiece, Piece},
+    state::{Grid, Square, positions::STARTING_POSITION},
 };
 
 /// Manages the low-level state of the chess board (the 8x8 grid).
@@ -35,13 +35,13 @@ use crate::{
 /// * Game endings (Checkmate/Stalemate).
 /// * Move history logs (for 50-move rule or repetition).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct BoardBackend {
+pub struct Board {
     grid: Grid,
-    white_king_location: Coordinates,
-    black_king_location: Coordinates,
+    white_king_location: Coordinate,
+    black_king_location: Coordinate,
 }
 
-impl BoardBackend {
+impl Board {
     /// Creates a new board set up with the standard chess starting position.
     ///
     /// # Panics
@@ -59,8 +59,8 @@ impl BoardBackend {
     pub fn from_starting_position() -> Self {
         Self {
             grid: STARTING_POSITION,
-            white_king_location: Coordinates::new(7, 4).unwrap(),
-            black_king_location: Coordinates::new(0, 4).unwrap(),
+            white_king_location: Coordinate::new(7, 4).unwrap(),
+            black_king_location: Coordinate::new(0, 4).unwrap(),
         }
     }
 
@@ -82,18 +82,18 @@ impl BoardBackend {
         for (row_index, row) in grid.0.iter().enumerate() {
             for (column_index, sq) in row.iter().enumerate() {
                 if let Some(p) = sq {
-                    let location = Coordinates::new(row_index, column_index);
+                    let location = Coordinate::new(row_index, column_index);
 
                     if p.kind() == Kind::King {
                         match p.team() {
-                            Team::White => {
+                            Side::White => {
                                 if white_king_location.is_none() {
                                     white_king_location = location;
                                 } else {
                                     panic!("You can only have one white king on the board")
                                 }
                             }
-                            Team::Black => {
+                            Side::Black => {
                                 if black_king_location.is_none() {
                                     black_king_location = location;
                                 } else {
@@ -147,24 +147,21 @@ impl BoardBackend {
 
                     let (rook_start, rook_end) = match side {
                         CastlingSide::Short => (
-                            Coordinates::new(
+                            Coordinate::new(
                                 ply.ending_square().row(),
                                 SHORT_CASTLE_ROOK_START_COLUMN,
                             ),
-                            Coordinates::new(
+                            Coordinate::new(
                                 ply.ending_square().row(),
                                 SHORT_CASTLE_ROOK_END_COLUMN,
                             ),
                         ),
                         CastlingSide::Long => (
-                            Coordinates::new(
+                            Coordinate::new(
                                 ply.ending_square().row(),
                                 LONG_CASTLE_ROOK_START_COLUMN,
                             ),
-                            Coordinates::new(
-                                ply.ending_square().row(),
-                                LONG_CASTLE_ROOK_END_COLUMN,
-                            ),
+                            Coordinate::new(ply.ending_square().row(), LONG_CASTLE_ROOK_END_COLUMN),
                         ),
                     };
 
@@ -222,21 +219,18 @@ impl BoardBackend {
 
                     let (rook_start, rook_end) = match side {
                         CastlingSide::Short => (
-                            Coordinates::new(
+                            Coordinate::new(
                                 ply.ending_square().row(),
                                 SHORT_CASTLE_ROOK_END_COLUMN,
                             ),
-                            Coordinates::new(
+                            Coordinate::new(
                                 ply.ending_square().row(),
                                 SHORT_CASTLE_ROOK_START_COLUMN,
                             ),
                         ),
                         CastlingSide::Long => (
-                            Coordinates::new(
-                                ply.ending_square().row(),
-                                LONG_CASTLE_ROOK_END_COLUMN,
-                            ),
-                            Coordinates::new(
+                            Coordinate::new(ply.ending_square().row(), LONG_CASTLE_ROOK_END_COLUMN),
+                            Coordinate::new(
                                 ply.ending_square().row(),
                                 LONG_CASTLE_ROOK_START_COLUMN,
                             ),
@@ -269,37 +263,37 @@ impl BoardBackend {
     ///
     /// Overwrites whatever was previously there. If the piece is a King, it also
     /// updates the cached King location.
-    pub fn set(&mut self, piece: Piece, coordinates: Coordinates) {
+    pub fn set(&mut self, piece: Piece, coordinates: Coordinate) {
         self.grid[coordinates.row()][coordinates.column()] = Some(piece);
 
         if piece.kind() == Kind::King {
             match piece.team() {
-                Team::White => self.white_king_location = coordinates,
-                Team::Black => self.black_king_location = coordinates,
+                Side::White => self.white_king_location = coordinates,
+                Side::Black => self.black_king_location = coordinates,
             }
         }
     }
 
     /// Removes a piece from the board, leaving the square empty.
-    pub fn unset(&mut self, coordinates: Coordinates) {
+    pub fn unset(&mut self, coordinates: Coordinate) {
         self.grid[coordinates.row()][coordinates.column()] = None;
     }
 
     /// Retrieves the content of a square.
     #[must_use]
-    pub fn get(&self, coordinates: Coordinates) -> Square {
+    pub fn get(&self, coordinates: Coordinate) -> Square {
         self.grid[coordinates.row()][coordinates.column()]
     }
 
     /// Returns the cached position of the White King.
     #[must_use]
-    pub const fn get_white_king(&self) -> Coordinates {
+    pub const fn get_white_king(&self) -> Coordinate {
         self.white_king_location
     }
 
     /// Returns the cached position of the Black King.
     #[must_use]
-    pub const fn get_black_king(&self) -> Coordinates {
+    pub const fn get_black_king(&self) -> Coordinate {
         self.black_king_location
     }
 
@@ -312,13 +306,13 @@ impl BoardBackend {
     /// Returns a list of all White pieces.
     #[must_use]
     pub fn get_white_pieces(&self) -> Vec<LocatedPiece> {
-        self.filter_pieces(|p: Piece| p.team() == Team::White)
+        self.filter_pieces(|p: Piece| p.team() == Side::White)
     }
 
     /// Returns a list of all Black pieces.
     #[must_use]
     pub fn get_black_pieces(&self) -> Vec<LocatedPiece> {
-        self.filter_pieces(|p: Piece| p.team() == Team::Black)
+        self.filter_pieces(|p: Piece| p.team() == Side::Black)
     }
 
     /// Returns a reference to the underlying [`Grid`].
@@ -338,13 +332,13 @@ impl BoardBackend {
     /// * `location`: The coordinate to check.
     /// * `attacker_team`: The team that might be attacking this square.
     #[must_use]
-    pub fn is_square_under_attack(&self, location: Coordinates, attacker_team: Team) -> bool {
+    pub fn is_square_under_attack(&self, location: Coordinate, attacker_team: Side) -> bool {
         let start_row = location.row().cast_signed();
         let start_column = location.column().cast_signed();
 
         for (row_delta, column_delta) in KNIGHT_DIRECTIONS {
             if let Some(target) =
-                Coordinates::new(start_row + row_delta, start_column + column_delta)
+                Coordinate::new(start_row + row_delta, start_column + column_delta)
                 && let Some(piece) = self.get(target)
                 && piece.team() == attacker_team
                 && piece.kind() == Kind::Knight
@@ -355,7 +349,7 @@ impl BoardBackend {
 
         for (row_delta, column_delta) in KING_DIRECTIONS {
             if let Some(target) =
-                Coordinates::new(start_row + row_delta, start_column + column_delta)
+                Coordinate::new(start_row + row_delta, start_column + column_delta)
                 && let Some(piece) = self.get(target)
                 && piece.team() == attacker_team
                 && piece.kind() == Kind::King
@@ -369,13 +363,13 @@ impl BoardBackend {
         // - White pawns attack UP (-1 row), so we look DOWN (+1 row) to find them.
         // - Black pawns attack DOWN (+1 row), so we look UP (-1 row) to find them.
         let pawn_dirs = match attacker_team {
-            Team::White => [DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT],
-            Team::Black => [DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT],
+            Side::White => [DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT],
+            Side::Black => [DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT],
         };
 
         for (row_delta, column_delta) in pawn_dirs {
             if let Some(target) =
-                Coordinates::new(start_row + row_delta, start_column + column_delta)
+                Coordinate::new(start_row + row_delta, start_column + column_delta)
                 && let Some(piece) = self.get(target)
                 && piece.team() == attacker_team
                 && piece.kind() == Kind::Pawn
@@ -386,7 +380,7 @@ impl BoardBackend {
 
         for (row_delta, column_delta) in ORTHOGONAL_DIRECTIONS {
             let mut step = 1;
-            while let Some(target) = Coordinates::new(
+            while let Some(target) = Coordinate::new(
                 start_row + row_delta * step,
                 start_column + column_delta * step,
             ) {
@@ -404,7 +398,7 @@ impl BoardBackend {
 
         for (row_delta, column_delta) in DIAGONAL_DIRECTIONS {
             let mut step = 1;
-            while let Some(target) = Coordinates::new(
+            while let Some(target) = Coordinate::new(
                 start_row + row_delta * step,
                 start_column + column_delta * step,
             ) {
@@ -441,10 +435,10 @@ impl BoardBackend {
     ///
     /// * `turn`: The team whose King is being evaluated.
     #[must_use]
-    pub fn calculate_legalty_context(&self, turn: Team) -> LegalityContext {
+    pub fn calculate_legality_context(&self, turn: Side) -> LegalityContext {
         let king_position = match turn {
-            Team::White => self.white_king_location,
-            Team::Black => self.black_king_location,
+            Side::White => self.white_king_location,
+            Side::Black => self.black_king_location,
         };
 
         let mut checkers = Vec::with_capacity(2);
@@ -538,8 +532,8 @@ impl BoardBackend {
         // - White pawns attack UP (-1 row), so we look DOWN (+1 row) to find them.
         // - Black pawns attack DOWN (+1 row), so we look UP (-1 row) to find them.
         let pawn_dirs = match turn.opposite() {
-            Team::White => [DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT],
-            Team::Black => [DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT],
+            Side::White => [DIAGONALLY_DOWN_LEFT, DIAGONALLY_DOWN_RIGHT],
+            Side::Black => [DIAGONALLY_UP_LEFT, DIAGONALLY_UP_RIGHT],
         };
 
         for direction in pawn_dirs {
@@ -565,7 +559,7 @@ impl BoardBackend {
                 if let Some(current) = self.grid[row][column]
                     && filter(current)
                 {
-                    let location = Coordinates::new(row, column).expect("Board iteration produced invalid coordinates, either BOARD_ROWS_RANGE or BOARD_COLUMNS_RANGE is not correctly defined");
+                    let location = Coordinate::new(row, column).expect("Board iteration produced invalid coordinates, either BOARD_ROWS_RANGE or BOARD_COLUMNS_RANGE is not correctly defined");
 
                     let located_piece = LocatedPiece::new(current, location);
 

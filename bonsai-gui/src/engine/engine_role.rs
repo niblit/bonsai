@@ -1,4 +1,4 @@
-use bonsai_chess::prelude::Team;
+use bonsai_chess::prelude::Side;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum EngineRole {
@@ -9,10 +9,11 @@ pub enum EngineRole {
 }
 
 impl EngineRole {
-    pub fn compare_with_team(&self, other: Team) -> bool {
+    #[must_use]
+    pub fn compare_with_team(self, other: Side) -> bool {
         match self {
-            Self::White => other == Team::White,
-            Self::Black => other == Team::Black,
+            Self::White => other == Side::White,
+            Self::Black => other == Side::Black,
             Self::Both => true,
             Self::Neither => false,
         }

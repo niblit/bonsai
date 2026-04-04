@@ -6,12 +6,12 @@
 //! the logic to the respective sub-modules for those pieces.
 
 use crate::{
-    board::BoardBackend,
     moves::{
         LegalityContext, Ply,
         generator::{bishop, rook},
     },
     pieces::LocatedPiece,
+    state::Board,
 };
 
 /// Generates strictly legal moves for a Queen.
@@ -34,7 +34,7 @@ use crate::{
 /// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
+    backend: &Board,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {

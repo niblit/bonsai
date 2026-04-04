@@ -5,9 +5,9 @@
 //! only pieces capable of jumping over other pieces to reach their destination.
 
 use crate::{
-    board::BoardBackend,
     moves::{LegalityContext, Ply, directions, generator::sliding::slide},
     pieces::LocatedPiece,
+    state::Board,
 };
 
 /// Generates strictly legal moves for a Knight.    
@@ -32,7 +32,7 @@ use crate::{
 /// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
+    backend: &Board,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {

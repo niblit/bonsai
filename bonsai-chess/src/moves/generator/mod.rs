@@ -33,10 +33,10 @@ mod rook;
 mod sliding;
 
 use crate::{
-    atoms::{CastlingRights, Coordinates},
-    board::BoardBackend,
+    atoms::{CastlingRights, Coordinate},
     moves::Ply,
     pieces::{Kind, LocatedPiece},
+    state::Board,
 };
 
 pub use legality_context::LegalityContext;
@@ -79,8 +79,8 @@ pub use legality_context::LegalityContext;
 /// ```
 pub fn generate_legal_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
-    en_passant_target: Option<Coordinates>,
+    backend: &Board,
+    en_passant_target: Option<Coordinate>,
     castling_rights: CastlingRights,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,

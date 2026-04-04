@@ -7,12 +7,12 @@
 //! out of, through, or into check.
 
 use crate::{
-    atoms::{CastlingRights, Coordinates, Team},
-    board::BoardBackend,
+    atoms::{CastlingRights, Coordinate, Side},
     moves::{
         CastlingSide, LegalityContext, Ply, SpecialMove, directions, generator::sliding::slide,
     },
     pieces::{Kind, LocatedPiece},
+    state::Board,
 };
 
 /// Generates strictly legal moves for a King.
@@ -33,7 +33,7 @@ use crate::{
 /// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
+    backend: &Board,
     castling_rights: CastlingRights,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
@@ -72,7 +72,7 @@ pub fn legal_moves(
 /// * `buffer` - The vector to append the castling `Ply` to if valid.
 fn get_castling_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
+    backend: &Board,
     castling_rights: CastlingRights,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
@@ -96,19 +96,19 @@ fn get_castling_moves(
     }
 
     let castling_row = match ally {
-        Team::White => 7,
-        Team::Black => 0,
+        Side::White => 7,
+        Side::Black => 0,
     };
 
     // Helper to get Coordinate safely
     let to_coordinates =
-        |column: usize| -> Coordinates { Coordinates::new(castling_row, column).unwrap() };
+        |column: usize| -> Coordinate { Coordinate::new(castling_row, column).unwrap() };
 
     // --- Kingside (Short) ---
     // Checks: Rights + Path Empty (F, G) + Path Safe (F, G)
     let can_castle_short = match ally {
-        Team::White => castling_rights.white_king_side(),
-        Team::Black => castling_rights.black_king_side(),
+        Side::White => castling_rights.white_king_side(),
+        Side::Black => castling_rights.black_king_side(),
     };
 
     if can_castle_short {
@@ -123,7 +123,7 @@ fn get_castling_moves(
             && !backend.is_square_under_attack(g_square, enemy);
 
         let is_rook_in_place = backend
-            .get(Coordinates::new(castling_row, FILE_H).unwrap())
+            .get(Coordinate::new(castling_row, FILE_H).unwrap())
             .is_some_and(|potential_rook| {
                 potential_rook.kind() == Kind::Rook && potential_rook.team() == ally
             });
@@ -143,8 +143,8 @@ fn get_castling_moves(
     // Checks: Rights + Path Empty (B, C, D) + Path Safe (C, D)
     // Note: B-file must be empty, but does NOT need to be safe from attack.
     let can_castle_long = match ally {
-        Team::White => castling_rights.white_queen_side(),
-        Team::Black => castling_rights.black_queen_side(),
+        Side::White => castling_rights.white_queen_side(),
+        Side::Black => castling_rights.black_queen_side(),
     };
 
     if can_castle_long {
@@ -163,7 +163,7 @@ fn get_castling_moves(
             && !backend.is_square_under_attack(d_square, enemy);
 
         let is_rook_in_place = backend
-            .get(Coordinates::new(castling_row, FILE_A).unwrap())
+            .get(Coordinate::new(castling_row, FILE_A).unwrap())
             .is_some_and(|potential_rook| {
                 potential_rook.kind() == Kind::Rook && potential_rook.team() == ally
             });

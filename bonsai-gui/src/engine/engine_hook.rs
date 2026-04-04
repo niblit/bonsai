@@ -5,8 +5,8 @@ use leptos::prelude::*;
 use std::time::Duration;
 
 pub fn use_engine(
-    game: ReadSignal<BoardFrontend>,
-    set_game: WriteSignal<BoardFrontend>,
+    game: ReadSignal<Game>,
+    set_game: WriteSignal<Game>,
     engine_role: ReadSignal<EngineRole>,
 ) {
     Effect::new(move |_| {
@@ -17,7 +17,7 @@ pub fn use_engine(
         if engine_role.get().compare_with_team(turn) && outcome.is_none() {
             set_timeout(
                 move || {
-                    if let Some(engine_ply) = best_move(current_game.clone(), 4) {
+                    if let Some(engine_ply) = best_move(current_game.clone(), 5) {
                         set_game.update(|g| g.make_move(&engine_ply));
                         provide_feedback(&engine_ply);
                     }

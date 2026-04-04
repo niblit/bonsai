@@ -9,7 +9,7 @@ use crate::{
 use bonsai_chess::prelude::*;
 
 pub fn alpha_beta(
-    state: &mut BoardFrontend,
+    state: &mut Game,
     depth: usize,
     mut alpha: isize,
     mut beta: isize,

@@ -26,7 +26,7 @@
 mod atoms;
 
 /// Manages the board state, including the grid representation and frontend/backend abstractions.
-mod board;
+mod state;
 
 /// Handles move definitions, generation logic, and special move types (e.g., en passant, castling).
 mod moves;
@@ -65,9 +65,9 @@ pub const BOARD_COLUMNS_RANGE: std::ops::Range<usize> = 0..BOARD_COLUMNS;
 /// ```
 pub mod prelude {
     pub use crate::atoms::*;
-    pub use crate::board::*;
     pub use crate::moves::*;
     pub use crate::pieces::*;
     pub use crate::rules::*;
+    pub use crate::state::*;
     pub use crate::{BOARD_COLUMNS, BOARD_COLUMNS_RANGE, BOARD_ROWS, BOARD_ROWS_RANGE};
 }

@@ -6,12 +6,12 @@ use leptos::prelude::*;
 pub fn Square(
     row: usize,
     col: usize,
-    game: ReadSignal<BoardFrontend>,
-    selected_square: ReadSignal<Option<Coordinates>>,
-    valid_targets: Memo<Vec<Coordinates>>,
+    game: ReadSignal<Game>,
+    selected_square: ReadSignal<Option<Coordinate>>,
+    valid_targets: Memo<Vec<Coordinate>>,
     on_click: Callback<(usize, usize)>, // Changed from Box<dyn Fn...>
 ) -> impl IntoView {
-    let coords = Coordinates::new(row, col).unwrap();
+    let coords = Coordinate::new(row, col).unwrap();
 
     // Derived signals for UI state
     let is_selected = move || selected_square.get() == Some(coords);

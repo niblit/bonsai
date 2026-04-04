@@ -20,12 +20,12 @@ use crate::{BOARD_COLUMNS_RANGE, BOARD_ROWS_RANGE};
 ///     * Column 0 = File A
 ///     * Column 7 = File H
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Coordinates {
+pub struct Coordinate {
     row: usize,
     column: usize,
 }
 
-impl Coordinates {
+impl Coordinate {
     /// Creates a new `Coordinates` instance if the provided row and column are within bounds.
     ///
     /// Returns `Some(Coordinates)` if `row` and `column` are between 0 and 7 (inclusive).
@@ -254,7 +254,7 @@ mod tests {
     fn test_new_valid() {
         for row in BOARD_ROWS_RANGE {
             for column in BOARD_COLUMNS_RANGE {
-                let c = Coordinates::new(row, column);
+                let c = Coordinate::new(row, column);
                 assert!(c.is_some());
             }
         }
@@ -262,42 +262,42 @@ mod tests {
 
     #[test]
     fn test_new_invalid() {
-        assert!(Coordinates::new(BOARD_ROWS, BOARD_COLUMNS).is_none());
-        assert!(Coordinates::new(BOARD_ROWS, 0).is_none());
-        assert!(Coordinates::new(0, BOARD_COLUMNS).is_none());
+        assert!(Coordinate::new(BOARD_ROWS, BOARD_COLUMNS).is_none());
+        assert!(Coordinate::new(BOARD_ROWS, 0).is_none());
+        assert!(Coordinate::new(0, BOARD_COLUMNS).is_none());
     }
 
     #[test]
     fn test_mixed_integer_types() {
         // usize (standard)
-        assert!(Coordinates::new(0usize, 0usize).is_some());
+        assert!(Coordinate::new(0usize, 0usize).is_some());
 
         // i32
-        assert!(Coordinates::new(0i32, 0i32).is_some());
+        assert!(Coordinate::new(0i32, 0i32).is_some());
 
         // u8
-        assert!(Coordinates::new(0u8, 1u8).is_some());
+        assert!(Coordinate::new(0u8, 1u8).is_some());
 
         // i8 (negative check)
-        assert!(Coordinates::new(-1i8, 0i8).is_none());
+        assert!(Coordinate::new(-1i8, 0i8).is_none());
 
         // isize and u8
-        assert!(Coordinates::new(6isize, 0u8).is_some());
+        assert!(Coordinate::new(6isize, 0u8).is_some());
     }
 
     #[test]
     fn test_from_algebraic_notation_valid() {
         // Test corners
-        let a8 = Coordinates::from_algebraic_notation("a8").unwrap();
+        let a8 = Coordinate::from_algebraic_notation("a8").unwrap();
         assert_eq!(a8.row(), 0);
         assert_eq!(a8.column(), 0);
 
-        let h1 = Coordinates::from_algebraic_notation("h1").unwrap();
+        let h1 = Coordinate::from_algebraic_notation("h1").unwrap();
         assert_eq!(h1.row(), 7);
         assert_eq!(h1.column(), 7);
 
         // Test center
-        let e4 = Coordinates::from_algebraic_notation("e4").unwrap();
+        let e4 = Coordinate::from_algebraic_notation("e4").unwrap();
         assert_eq!(e4.row(), 4);
         assert_eq!(e4.column(), 4);
     }
@@ -305,31 +305,31 @@ mod tests {
     #[test]
     fn test_from_algebraic_notation_invalid() {
         // Length checks
-        assert!(Coordinates::from_algebraic_notation("").is_none());
-        assert!(Coordinates::from_algebraic_notation("a").is_none());
-        assert!(Coordinates::from_algebraic_notation("a12").is_none());
+        assert!(Coordinate::from_algebraic_notation("").is_none());
+        assert!(Coordinate::from_algebraic_notation("a").is_none());
+        assert!(Coordinate::from_algebraic_notation("a12").is_none());
 
         // Invalid Files
-        assert!(Coordinates::from_algebraic_notation("i1").is_none()); // 'i' is out of bounds
-        assert!(Coordinates::from_algebraic_notation("z8").is_none());
+        assert!(Coordinate::from_algebraic_notation("i1").is_none()); // 'i' is out of bounds
+        assert!(Coordinate::from_algebraic_notation("z8").is_none());
 
         // Invalid Ranks
-        assert!(Coordinates::from_algebraic_notation("a0").is_none());
-        assert!(Coordinates::from_algebraic_notation("a9").is_none());
+        assert!(Coordinate::from_algebraic_notation("a0").is_none());
+        assert!(Coordinate::from_algebraic_notation("a9").is_none());
 
         // Case sensitivity (assuming strict lowercase 'a'-'h')
-        assert!(Coordinates::from_algebraic_notation("A1").is_none());
+        assert!(Coordinate::from_algebraic_notation("A1").is_none());
     }
 
     #[test]
     fn test_to_algebraic_notation() {
-        let c = Coordinates::new(0, 0).unwrap();
+        let c = Coordinate::new(0, 0).unwrap();
         assert_eq!(c.to_algebraic_notation(), "a8");
 
-        let c = Coordinates::new(7, 7).unwrap();
+        let c = Coordinate::new(7, 7).unwrap();
         assert_eq!(c.to_algebraic_notation(), "h1");
 
-        let c = Coordinates::new(4, 4).unwrap(); // rank 4 (index 4), file e (index 4)
+        let c = Coordinate::new(4, 4).unwrap(); // rank 4 (index 4), file e (index 4)
         assert_eq!(c.to_algebraic_notation(), "e4");
     }
 
@@ -338,12 +338,12 @@ mod tests {
         // Iterate over every valid square on the board
         for row in BOARD_ROWS_RANGE {
             for column in BOARD_COLUMNS_RANGE {
-                let original = Coordinates::new(row, column).unwrap();
+                let original = Coordinate::new(row, column).unwrap();
 
                 let notation = original.to_algebraic_notation();
 
                 // Ensure we can parse what we output
-                let parsed = Coordinates::from_algebraic_notation(&notation)
+                let parsed = Coordinate::from_algebraic_notation(&notation)
                     .expect("Generated notation should be valid");
 
                 assert_eq!(

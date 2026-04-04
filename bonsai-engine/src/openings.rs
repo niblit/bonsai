@@ -1,6 +1,6 @@
 use bonsai_chess::prelude::*;
 
-pub const fn search_opening_book(_state: &BoardFrontend) -> Option<Ply> {
+pub const fn search_opening_book(_state: &Game) -> Option<Ply> {
     // Implement Polyglot parser here
     None
 }

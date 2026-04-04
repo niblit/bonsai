@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[must_use]
-pub fn evaluate_position(state: &BoardFrontend) -> isize {
+pub fn evaluate_position(state: &Game) -> isize {
     if let Some(outcome) = state.outcome() {
         return match outcome {
             Outcome::Win { winner, .. } => {
@@ -42,14 +42,14 @@ pub fn evaluate_position(state: &BoardFrontend) -> isize {
 
         let position_bonus = match kind {
             Kind::Pawn => {
-                if team == Team::White {
+                if team == Side::White {
                     PAWN_TABLE[sq_index]
                 } else {
                     PAWN_TABLE[flip_square(sq_index)]
                 }
             }
             Kind::Knight => {
-                if team == Team::White {
+                if team == Side::White {
                     KNIGHT_TABLE[sq_index]
                 } else {
                     KNIGHT_TABLE[flip_square(sq_index)]

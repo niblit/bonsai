@@ -19,14 +19,14 @@
 /// assert_eq!(player_color, Team::White);
 /// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum Team {
+pub enum Side {
     /// The White pieces, which traditionally move first.
     White,
     /// The Black pieces, which move second.
     Black,
 }
 
-impl Team {
+impl Side {
     /// Returns the opposing team.
     ///
     /// This is commonly used to switch turns after a move is made, or to

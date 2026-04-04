@@ -5,7 +5,7 @@
 //! particularly useful for move generation and board iteration where both identity
 //! and location are simultaneously required.
 
-use crate::{atoms::Coordinates, pieces::Piece};
+use crate::{atoms::Coordinate, pieces::Piece};
 
 /// A composite struct representing a specific piece at a specific location.
 ///
@@ -28,7 +28,7 @@ use crate::{atoms::Coordinates, pieces::Piece};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct LocatedPiece {
     piece: Piece,
-    position: Coordinates,
+    position: Coordinate,
 }
 
 impl LocatedPiece {
@@ -50,7 +50,7 @@ impl LocatedPiece {
     /// let located_rook = LocatedPiece::new(white_rook, a1);
     /// ```
     #[must_use]
-    pub const fn new(piece: Piece, position: Coordinates) -> Self {
+    pub const fn new(piece: Piece, position: Coordinate) -> Self {
         Self { piece, position }
     }
 
@@ -86,7 +86,7 @@ impl LocatedPiece {
     /// assert_eq!(located.position(), e8);
     /// ```
     #[must_use]
-    pub const fn position(&self) -> Coordinates {
+    pub const fn position(&self) -> Coordinate {
         self.position
     }
 }

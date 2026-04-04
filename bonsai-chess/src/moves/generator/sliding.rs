@@ -6,10 +6,10 @@
 //! other pieces or the edge of the board, while actively respecting pins and checks.
 
 use crate::{
-    atoms::{Coordinates, Team},
-    board::BoardBackend,
+    atoms::{Coordinate, Side},
     moves::{LegalityContext, Ply},
     pieces::{Kind, LocatedPiece},
+    state::Board,
 };
 
 /// Generates moves for pieces that move in straight lines (sliding pieces).
@@ -37,13 +37,13 @@ pub fn slide(
     what_to_slide: LocatedPiece,
     distance: usize,
     directions: &[(isize, isize)],
-    backend: &BoardBackend,
+    backend: &Board,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {
     let is_king = what_to_slide.piece().kind() == Kind::King;
     let start = what_to_slide.position();
-    let king_position = if what_to_slide.piece().team() == Team::White {
+    let king_position = if what_to_slide.piece().team() == Side::White {
         backend.get_white_king()
     } else {
         backend.get_black_king()
@@ -52,8 +52,7 @@ pub fn slide(
     #[allow(unused_labels)]
     'direction_loop: for &(row_direction, column_direction) in directions {
         // [PIN CHECK] - If pinned, skip directions that don't match the pin ray
-        if !is_king && !context.is_direction_allowed_for_pin(start, row_direction, column_direction)
-        {
+        if !is_king && !context.is_legal_pin_direction(start, row_direction, column_direction) {
             continue 'direction_loop;
         }
 
@@ -66,7 +65,7 @@ pub fn slide(
             let start_column_isize: isize = what_to_slide.position().column().try_into().unwrap();
             let new_column = start_column_isize + (column_direction * step_isize);
 
-            if let Some(end) = Coordinates::new(new_row, new_column) {
+            if let Some(end) = Coordinate::new(new_row, new_column) {
                 // [KING DANGER CHECK]
                 if is_king && context.danger_squares().contains(&end) {
                     continue 'distance_loop; // Skip this square, king can't step into danger

@@ -1,5 +1,5 @@
-mod alpha_beta_prunning;
+mod alpha_beta;
 mod quiescence;
 
-pub use alpha_beta_prunning::alpha_beta;
+pub use alpha_beta::alpha_beta;
 pub use quiescence::quiescence;

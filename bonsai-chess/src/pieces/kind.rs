@@ -39,12 +39,12 @@ impl Kind {
     /// assert_eq!(piece_kind, Kind::Queen);
     /// ```
     #[must_use]
-    pub const fn from_valid_promotions(vp: ValidPromotions) -> Self {
+    pub const fn from_valid_promotions(vp: Promotion) -> Self {
         match vp {
-            ValidPromotions::Queen => Self::Queen,
-            ValidPromotions::Rook => Self::Rook,
-            ValidPromotions::Bishop => Self::Bishop,
-            ValidPromotions::Knight => Self::Knight,
+            Promotion::Queen => Self::Queen,
+            Promotion::Rook => Self::Rook,
+            Promotion::Bishop => Self::Bishop,
+            Promotion::Knight => Self::Knight,
         }
     }
 }
@@ -71,7 +71,7 @@ impl std::fmt::Display for Kind {
 /// By using a distinct enum, we enforce this restriction at the type system level,
 /// making illegal promotions (like promoting to a King) impossible to represent in safe code.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum ValidPromotions {
+pub enum Promotion {
     /// Promote to a Queen.
     Queen,
     /// Promote to a Rook.
@@ -82,7 +82,7 @@ pub enum ValidPromotions {
     Knight,
 }
 
-impl std::fmt::Display for ValidPromotions {
+impl std::fmt::Display for Promotion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Defer to the standard Kind display implementation
         let kind = Kind::from_valid_promotions(*self);

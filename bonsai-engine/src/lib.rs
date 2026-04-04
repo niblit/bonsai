@@ -14,7 +14,7 @@ mod search;
 mod transposition_table;
 
 #[must_use]
-pub fn best_move(mut state: BoardFrontend, total_depth: usize) -> Option<Ply> {
+pub fn best_move(mut state: Game, total_depth: usize) -> Option<Ply> {
     // 1. Check Opening Book first (Placeholder logic)
     if let Some(book_move) = search_opening_book(&state) {
         return Some(book_move);
@@ -56,10 +56,10 @@ mod tests {
     use super::*;
 
     /// Helper to setup board from FEN
-    fn get_board(fen: &str) -> BoardFrontend {
+    fn get_board(fen: &str) -> Game {
         // Assuming BoardFrontend implements FromStr or has a similar method.
         // If not, replace this with: BoardFrontend::new(fen) or similar.
-        BoardFrontend::from_fen(fen)
+        Game::from_fen(fen)
     }
 
     #[test]

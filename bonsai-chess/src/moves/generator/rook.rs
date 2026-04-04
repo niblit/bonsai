@@ -6,12 +6,12 @@
 //! by a friendly piece, or capture an enemy piece.
 
 use crate::{
-    board::BoardBackend,
     moves::{
         LegalityContext, Ply,
         generator::{directions, sliding},
     },
     pieces::LocatedPiece,
+    state::Board,
 };
 
 /// Generates strictly legal moves for a Rook.
@@ -29,7 +29,7 @@ use crate::{
 /// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
+    backend: &Board,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {

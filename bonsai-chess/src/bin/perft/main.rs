@@ -17,7 +17,7 @@ use crate::{expected::PERFT_EXPECTED, perft::root_level_perft};
 fn main() {
     // Iterate through each depth level defined in our expected results.
     for (depth, &expected) in PERFT_EXPECTED.iter().enumerate() {
-        let mut game = BoardFrontend::from_starting_position();
+        let mut game = Game::from_starting_position();
 
         println!("--- Depth: {depth} ---");
 

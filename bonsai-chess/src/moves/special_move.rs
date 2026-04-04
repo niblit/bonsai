@@ -5,7 +5,7 @@
 //! displacement and direct capture. These moves require complex, multi-step
 //! updates to the board state.
 
-use crate::{atoms::Coordinates, pieces::ValidPromotions};
+use crate::{atoms::Coordinate, pieces::Promotion};
 
 /// Represents moves that involve mechanics beyond standard displacement or capture.
 ///
@@ -45,7 +45,7 @@ pub enum SpecialMove {
     /// * `Coordinates`: The location of the **captured pawn**.
     ///   Note: This is *not* the destination square of the moving pawn (which is empty).
     ///   The backend needs this specific coordinate to remove the captured pawn.
-    EnPassant(Coordinates),
+    EnPassant(Coordinate),
 
     /// Pawn Promotion.
     ///
@@ -54,7 +54,7 @@ pub enum SpecialMove {
     /// # Payload
     /// * [`ValidPromotions`]: The specific piece type selected by the player
     ///   (Queen, Rook, Bishop, or Knight).
-    Promotion(ValidPromotions),
+    Promotion(Promotion),
 }
 
 /// Represents the side of the board where the king castled.

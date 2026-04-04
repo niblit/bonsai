@@ -11,10 +11,10 @@
 //! * [`Square`]: A type alias representing a possibly empty spot on the board.
 
 /// Manages the raw placement and removal of pieces on the 8x8 grid.
-mod board_backend;
+mod board;
 
 /// Manages the high-level game state, turn cycles, move history, and move validation.
-mod board_frontend;
+mod game;
 
 /// Handles parsing and generating Forsyth-Edwards Notation (FEN) strings.
 mod fen;
@@ -31,9 +31,9 @@ mod snapshot;
 /// Defines a type alias for a potentially unoccupied space on the board.
 mod square;
 
-pub use board_backend::BoardBackend;
-pub use board_frontend::BoardFrontend;
+pub use board::Board;
 pub use fen::{FenParsingError, from_fen, to_fen};
+pub use game::Game;
 pub use grid::Grid;
 pub use snapshot::PositionSnapshot;
 pub use square::Square;

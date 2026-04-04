@@ -2,7 +2,7 @@ use crate::evaluation::{evaluate_position, score_move};
 use bonsai_chess::prelude::*;
 
 // Quiescence Search Function
-pub fn quiescence(state: &mut BoardFrontend, mut alpha: isize, beta: isize) -> isize {
+pub fn quiescence(state: &mut Game, mut alpha: isize, beta: isize) -> isize {
     let stand_pat = evaluate_position(state);
 
     // Beta cutoff (Standing pat is good enough)

@@ -4,15 +4,15 @@ use leptos::prelude::*;
 
 #[component]
 pub fn PromotionModal(
-    team: Team,
-    on_select: Callback<ValidPromotions>,
+    team: Side,
+    on_select: Callback<Promotion>,
     on_cancel: Callback<()>,
 ) -> impl IntoView {
     let options = [
-        ValidPromotions::Queen,
-        ValidPromotions::Rook,
-        ValidPromotions::Bishop,
-        ValidPromotions::Knight,
+        Promotion::Queen,
+        Promotion::Rook,
+        Promotion::Bishop,
+        Promotion::Knight,
     ];
 
     view! {

@@ -5,9 +5,9 @@ use crate::components::game_area::Square;
 
 #[component]
 pub fn Board(
-    game: ReadSignal<BoardFrontend>,
-    selected_square: ReadSignal<Option<Coordinates>>,
-    valid_targets: Memo<Vec<Coordinates>>,
+    game: ReadSignal<Game>,
+    selected_square: ReadSignal<Option<Coordinate>>,
+    valid_targets: Memo<Vec<Coordinate>>,
     outcome: Memo<Option<Outcome>>,
     on_square_click: Callback<(usize, usize)>,
 ) -> impl IntoView {

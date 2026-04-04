@@ -4,7 +4,7 @@
 //! with both a specific type ([`Kind`]) and allegiance ([`Team`]). It serves as the
 //! standard unit occupying squares on the chess board.
 
-use crate::{atoms::Team, pieces::Kind};
+use crate::{atoms::Side, pieces::Kind};
 
 /// Represents a standard chess piece (e.g., "White Pawn", "Black King").
 ///
@@ -25,7 +25,7 @@ use crate::{atoms::Team, pieces::Kind};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Piece {
     kind: Kind,
-    team: Team,
+    team: Side,
 }
 
 impl Piece {
@@ -39,7 +39,7 @@ impl Piece {
     /// let black_queen = Piece::new(Team::Black, Kind::Queen);
     /// ```
     #[must_use]
-    pub const fn new(team: Team, kind: Kind) -> Self {
+    pub const fn new(team: Side, kind: Kind) -> Self {
         Self { kind, team }
     }
 
@@ -69,7 +69,7 @@ impl Piece {
     /// assert_eq!(piece.team(), Team::Black);
     /// ```
     #[must_use]
-    pub const fn team(self) -> Team {
+    pub const fn team(self) -> Side {
         self.team
     }
 }
@@ -95,8 +95,8 @@ impl std::fmt::Display for Piece {
         let kind = self.kind().to_string();
 
         let fen_piece = match self.team() {
-            Team::White => kind.to_ascii_uppercase(),
-            Team::Black => kind.to_ascii_lowercase(),
+            Side::White => kind.to_ascii_uppercase(),
+            Side::Black => kind.to_ascii_lowercase(),
         };
 
         write!(f, "{fen_piece}")

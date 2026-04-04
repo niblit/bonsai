@@ -6,7 +6,7 @@
 //! with formatting traits for easy visualization and dereferencing traits for
 //! ergonomic array access.
 
-use crate::{BOARD_COLUMNS, BOARD_ROWS, board::Square};
+use crate::{BOARD_COLUMNS, BOARD_ROWS, state::Square};
 
 /// A wrapper struct representing the internal 8x8 chess board state.
 /// This creates a local type so we can implement traits like Display.

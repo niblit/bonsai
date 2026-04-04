@@ -14,8 +14,7 @@
 use std::{collections::HashMap, vec};
 
 use crate::{
-    atoms::{CastlingRights, Coordinates, MoveCounter, Team},
-    board::{PositionSnapshot, board_backend::BoardBackend, from_fen, to_fen},
+    atoms::{CastlingRights, Coordinate, MoveCounter, Side},
     moves::{Ply, generate_legal_moves},
     pieces::Kind,
     rules::{
@@ -23,11 +22,12 @@ use crate::{
         FORCED_FIFTY_MOVE_RULE_THRESHOLD, FORCED_THREEFOLD_REPETITION_THRESHOLD, Outcome,
         WinReason,
     },
+    state::{PositionSnapshot, board::Board, from_fen, to_fen},
 };
 
 /// The main game controller for a chess game.
 ///
-/// `BoardFrontend` wraps the low-level [`BoardBackend`] and enforces the rules of chess.
+/// `Game` wraps the low-level [`BoardBackend`] and enforces the rules of chess.
 /// It manages:
 /// * **Turn Cycle**: Whose turn it is.
 /// * **Move Validation**: Generating legal moves and preventing illegal ones (like moving into check).
@@ -35,18 +35,18 @@ use crate::{
 /// * **Game Endings**: Detecting Checkmate, Stalemate, Draws (Repetition, Insufficient Material, etc.).
 /// * **FEN Parsing**: Loading game states from standard notation.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct BoardFrontend {
+pub struct Game {
     /// The physical state of the board (grid).
-    backend: BoardBackend,
+    backend: Board,
 
     /// The player currently authorized to move.
-    turn: Team,
+    turn: Side,
 
     /// A history of castling rights. Used to restore rights when undoing moves.
     castling_rights_log: Vec<CastlingRights>,
 
     /// The specific square available for En Passant capture, if any.
-    en_passant_target: Option<Coordinates>,
+    en_passant_target: Option<Coordinate>,
 
     /// Tracks halfmoves, fullmoves, and the 50-move rule counter.
     move_counter: MoveCounter,
@@ -66,7 +66,7 @@ pub struct BoardFrontend {
     legal_moves_buffer: Vec<Ply>,
 }
 
-impl BoardFrontend {
+impl Game {
     /// Creates a hashable snapshot of the current position.
     ///
     /// This is primarily used to populate the repetition table for detecting
@@ -97,8 +97,8 @@ impl BoardFrontend {
     #[must_use]
     pub fn from_starting_position() -> Self {
         Self {
-            backend: BoardBackend::from_starting_position(),
-            turn: Team::White,
+            backend: Board::from_starting_position(),
+            turn: Side::White,
             castling_rights_log: vec![CastlingRights::new()],
             en_passant_target: None,
 
@@ -129,7 +129,7 @@ impl BoardFrontend {
     #[must_use]
     pub fn from_fen(fen: &str) -> Self {
         if let Ok((position_snapshot, clock)) = from_fen(fen) {
-            let backend = BoardBackend::new(position_snapshot.get_grid());
+            let backend = Board::new(position_snapshot.get_grid());
             Self {
                 backend,
                 turn: position_snapshot.get_turn(),
@@ -141,8 +141,8 @@ impl BoardFrontend {
                 outcome: None,
                 in_check: backend.is_square_under_attack(
                     match position_snapshot.get_turn() {
-                        Team::White => backend.get_white_king(),
-                        Team::Black => backend.get_black_king(),
+                        Side::White => backend.get_white_king(),
+                        Side::Black => backend.get_black_king(),
                     },
                     position_snapshot.get_turn().opposite(),
                 ),
@@ -161,13 +161,13 @@ impl BoardFrontend {
 
     /// Returns the team whose turn it is to move.
     #[must_use]
-    pub const fn turn(&self) -> Team {
+    pub const fn turn(&self) -> Side {
         self.turn
     }
 
     /// Returns a reference to the low-level board backend.
     #[must_use]
-    pub const fn backend(&self) -> &BoardBackend {
+    pub const fn backend(&self) -> &Board {
         &self.backend
     }
 
@@ -178,12 +178,12 @@ impl BoardFrontend {
     #[must_use]
     pub fn get_legal_moves(&mut self) -> Vec<Ply> {
         self.legal_moves_buffer.clear();
-        let legality_context = self.backend.calculate_legalty_context(self.turn);
+        let legality_context = self.backend.calculate_legality_context(self.turn);
 
         // 2. Generate strictly legal moves
         let pieces = match self.turn {
-            Team::White => self.backend.get_white_pieces(),
-            Team::Black => self.backend.get_black_pieces(),
+            Side::White => self.backend.get_white_pieces(),
+            Side::Black => self.backend.get_black_pieces(),
         };
 
         let castling = self
@@ -207,17 +207,17 @@ impl BoardFrontend {
 
     /// Helper to identify if a move is a pawn double-push that enables En Passant.
     #[must_use]
-    fn get_en_passant_target(ply: &Ply) -> Option<Coordinates> {
+    fn get_en_passant_target(ply: &Ply) -> Option<Coordinate> {
         if ply.piece_moved().kind() == Kind::Pawn {
             let jump_distance = ply
                 .starting_square()
                 .row()
                 .abs_diff(ply.ending_square().row());
             if jump_distance == 2
-                && let Some(en_passant_coords) = Coordinates::new(
+                && let Some(en_passant_coords) = Coordinate::new(
                     match ply.piece_moved().team() {
-                        Team::White => ply.starting_square().row() - 1,
-                        Team::Black => ply.starting_square().row() + 1,
+                        Side::White => ply.starting_square().row() - 1,
+                        Side::Black => ply.starting_square().row() + 1,
                     },
                     ply.starting_square().column(),
                 )
@@ -398,11 +398,11 @@ impl BoardFrontend {
 
         if ply.piece_moved().kind() == Kind::King {
             match ply.piece_moved().team() {
-                Team::White => {
+                Side::White => {
                     castling_rights.disable_white_king_side();
                     castling_rights.disable_white_queen_side();
                 }
-                Team::Black => {
+                Side::Black => {
                     castling_rights.disable_black_king_side();
                     castling_rights.disable_black_queen_side();
                 }
@@ -444,8 +444,8 @@ impl BoardFrontend {
     pub fn is_in_check(&self) -> bool {
         // 1. Find the King
         let king_position = match self.turn {
-            Team::White => self.backend.get_white_king(),
-            Team::Black => self.backend.get_black_king(),
+            Side::White => self.backend.get_white_king(),
+            Side::Black => self.backend.get_black_king(),
         };
 
         // 2. Check if that square is under attack
@@ -466,7 +466,7 @@ impl BoardFrontend {
     /// # Arguments
     ///
     /// * `resigning_player` - The team that is resigning (e.g., `Team::White`).
-    pub const fn resign(&mut self, resigning_player: Team) {
+    pub const fn resign(&mut self, resigning_player: Side) {
         self.outcome = Some(Outcome::Win {
             winner: resigning_player.opposite(),
             reason: WinReason::Resign,
@@ -482,7 +482,7 @@ impl BoardFrontend {
     /// # Arguments
     ///
     /// * `flagged_player` - The team that ran out of time.
-    pub const fn win_on_time(&mut self, flagged_player: Team) {
+    pub const fn win_on_time(&mut self, flagged_player: Side) {
         self.outcome = Some(Outcome::Win {
             winner: flagged_player.opposite(),
             reason: WinReason::WinOnTime,
@@ -497,7 +497,7 @@ impl BoardFrontend {
     /// # Arguments
     ///
     /// * `forfeited_player` - The team that lost the game.
-    pub const fn forfeit(&mut self, forfeited_player: Team) {
+    pub const fn forfeit(&mut self, forfeited_player: Side) {
         self.outcome = Some(Outcome::Win {
             winner: forfeited_player.opposite(),
             reason: WinReason::Forfeit,

@@ -9,7 +9,7 @@
 //! Move generators for individual pieces then use this context to only yield
 //! strictly legal moves, significantly improving performance.
 
-use crate::atoms::Coordinates;
+use crate::atoms::Coordinate;
 
 /// Provides the legality constraints for the current position before move generation.
 ///
@@ -19,11 +19,11 @@ use crate::atoms::Coordinates;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LegalityContext {
     /// Squares containing enemy pieces currently checking our King.
-    checkers: Vec<Coordinates>,
+    checkers: Vec<Coordinate>,
     /// Friendly pieces pinned to the King, and the `(delta_row, delta_column)` direction ray of the pin.
-    pinned_pieces: Vec<(Coordinates, (isize, isize))>,
+    pinned_pieces: Vec<(Coordinate, (isize, isize))>,
     /// Squares adjacent to the King that are controlled by the enemy.
-    danger_squares: Vec<Coordinates>,
+    danger_squares: Vec<Coordinate>,
 }
 
 impl LegalityContext {
@@ -45,9 +45,9 @@ impl LegalityContext {
     /// ```
     #[must_use]
     pub const fn from(
-        checkers: Vec<Coordinates>,
-        pinned_pieces: Vec<(Coordinates, (isize, isize))>,
-        danger_squares: Vec<Coordinates>,
+        checkers: Vec<Coordinate>,
+        pinned_pieces: Vec<(Coordinate, (isize, isize))>,
+        danger_squares: Vec<Coordinate>,
     ) -> Self {
         Self {
             checkers,
@@ -58,19 +58,19 @@ impl LegalityContext {
 
     /// Returns a slice of coordinates representing the position of enemy pieces delivering check.
     #[must_use]
-    pub fn checkers(&self) -> &[Coordinates] {
+    pub fn checkers(&self) -> &[Coordinate] {
         &self.checkers
     }
 
     /// Returns a slice of tuples representing pinned pieces and their pin direction vectors.
     #[must_use]
-    pub fn pinned_pieces(&self) -> &[(Coordinates, (isize, isize))] {
+    pub fn pinned_pieces(&self) -> &[(Coordinate, (isize, isize))] {
         &self.pinned_pieces
     }
 
     /// Returns a slice of coordinates representing squares the King cannot move to.
     #[must_use]
-    pub fn danger_squares(&self) -> &[Coordinates] {
+    pub fn danger_squares(&self) -> &[Coordinate] {
         &self.danger_squares
     }
 
@@ -113,9 +113,9 @@ impl LegalityContext {
     /// * `row_delta` - The row direction of the intended move.
     /// * `column_delta` - The column direction of the intended move.
     #[must_use]
-    pub fn is_direction_allowed_for_pin(
+    pub fn is_legal_pin_direction(
         &self,
-        location_of_piece_to_move: Coordinates,
+        location_of_piece_to_move: Coordinate,
         row_delta: isize,
         column_delta: isize,
     ) -> bool {
@@ -146,9 +146,9 @@ impl LegalityContext {
     #[must_use]
     pub fn resolves_single_check(
         &self,
-        target: Coordinates,
-        king_position: Coordinates,
-        captured_ep_pawn: Option<Coordinates>,
+        target: Coordinate,
+        king_position: Coordinate,
+        captured_ep_pawn: Option<Coordinate>,
     ) -> bool {
         if !self.in_single_check() {
             return true;

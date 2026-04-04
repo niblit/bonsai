@@ -1,11 +1,11 @@
-use bonsai_chess::prelude::{Piece, Team};
+use bonsai_chess::prelude::{Piece, Side};
 use leptos::prelude::*;
 
 #[component]
 pub fn PieceView(piece: Piece) -> impl IntoView {
     let team_str = match piece.team() {
-        Team::White => "w",
-        Team::Black => "b",
+        Side::White => "w",
+        Side::Black => "b",
     };
 
     let kind_str = piece.kind().to_string();

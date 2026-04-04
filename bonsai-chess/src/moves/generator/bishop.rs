@@ -7,9 +7,9 @@
 //! is permanently restricted to squares of the same color as its starting square.
 
 use crate::{
-    board::BoardBackend,
     moves::{LegalityContext, Ply, directions, generator::sliding::slide},
     pieces::LocatedPiece,
+    state::Board,
 };
 
 /// Generates strictly legal moves for a Bishop.
@@ -33,7 +33,7 @@ use crate::{
 /// * `buffer` - A mutable vector where the generated [`Ply`] instances will be appended.
 pub fn legal_moves(
     what_to_move: LocatedPiece,
-    backend: &BoardBackend,
+    backend: &Board,
     context: &LegalityContext,
     buffer: &mut Vec<Ply>,
 ) {

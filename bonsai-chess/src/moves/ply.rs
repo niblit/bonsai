@@ -6,10 +6,10 @@
 //! during an `undo` operation.
 
 use crate::{
-    atoms::Coordinates,
-    board::Square,
+    atoms::Coordinate,
     moves::SpecialMove,
     pieces::{Kind, Piece},
+    state::Square,
 };
 
 /// Represents a single completed move by one player (a "half-move").
@@ -38,11 +38,11 @@ use crate::{
 /// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Ply {
-    starting_square: Coordinates,
-    ending_square: Coordinates,
+    from: Coordinate,
+    to: Coordinate,
 
-    piece_moved: Piece,
-    piece_captured: Square,
+    moved: Piece,
+    captured: Square,
 
     special_move: Option<SpecialMove>,
 }
@@ -59,8 +59,8 @@ impl Ply {
     /// * `special_move` - An `Option` containing context for castling, en passant, or promotion.
     #[must_use]
     pub const fn new(
-        starting_square: Coordinates,
-        ending_square: Coordinates,
+        starting_square: Coordinate,
+        ending_square: Coordinate,
 
         piece_moved: Piece,
         piece_captured: Square,
@@ -68,10 +68,10 @@ impl Ply {
         special_move: Option<SpecialMove>,
     ) -> Self {
         Self {
-            starting_square,
-            ending_square,
-            piece_moved,
-            piece_captured,
+            from: starting_square,
+            to: ending_square,
+            moved: piece_moved,
+            captured: piece_captured,
             special_move,
         }
     }
@@ -85,8 +85,8 @@ impl Ply {
     /// // assert_eq!(ply.starting_square().to_algebraic_notation(), "e2");
     /// ```
     #[must_use]
-    pub const fn starting_square(&self) -> Coordinates {
-        self.starting_square
+    pub const fn starting_square(&self) -> Coordinate {
+        self.from
     }
 
     /// Returns the coordinate the piece moved to.
@@ -98,14 +98,14 @@ impl Ply {
     /// // assert_eq!(ply.ending_square().to_algebraic_notation(), "e4");
     /// ```
     #[must_use]
-    pub const fn ending_square(&self) -> Coordinates {
-        self.ending_square
+    pub const fn ending_square(&self) -> Coordinate {
+        self.to
     }
 
     /// Returns the piece that was moved.
     #[must_use]
     pub const fn piece_moved(&self) -> Piece {
-        self.piece_moved
+        self.moved
     }
 
     /// Returns the piece that was captured, if any.
@@ -114,7 +114,7 @@ impl Ply {
     /// It is `None` for quiet moves.
     #[must_use]
     pub const fn piece_captured(&self) -> Square {
-        self.piece_captured
+        self.captured
     }
 
     /// Returns the special move details, if applicable.
@@ -142,15 +142,15 @@ impl Ply {
 impl std::fmt::Display for Ply {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Pawns are not denoted by a letter in standard algebraic notation
-        let piece = match self.piece_moved.kind() {
+        let piece = match self.moved.kind() {
             Kind::Pawn => String::new(),
-            _ => self.piece_moved.kind().to_string(),
+            _ => self.moved.kind().to_string(),
         };
 
-        let origin = self.starting_square.to_algebraic_notation();
+        let origin = self.from.to_algebraic_notation();
 
         // Determine if this is a capture ('x') or a quiet move ('-')
-        let capture_or_not = if self.piece_captured.is_some()
+        let capture_or_not = if self.captured.is_some()
             || matches!(self.special_move, Some(SpecialMove::EnPassant(_)))
         {
             "x"
@@ -158,7 +158,7 @@ impl std::fmt::Display for Ply {
             "-"
         };
 
-        let destination = self.ending_square.to_algebraic_notation();
+        let destination = self.to.to_algebraic_notation();
 
         // Append promotion suffix (e.g., "=Q") if applicable
         let promotion = if let Some(SpecialMove::Promotion(promoted_piece)) = self.special_move {
