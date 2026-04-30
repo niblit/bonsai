@@ -15,7 +15,7 @@ use std::{collections::HashMap, vec, fmt::Write};
 
 use crate::{
     atoms::{CastlingRights, Coordinate, MoveCounter, Side},
-    moves::{Ply, generate_legal_moves},
+    moves::{Ply, SpecialMove, generate_legal_moves},
     pieces::Kind,
     rules::{
         CAN_CLAIM_FIFTY_MOVE_RULE_THRESHOLD, CAN_CLAIM_THREEFOLD_REPETITION_THRESHOLD, DrawReason,
@@ -165,6 +165,17 @@ impl Game {
     pub fn to_pgn(&self) -> String {
         let mut pgn = String::new();
 
+        let mut replay_game = self.clone();
+        let mut moves = Vec::new();
+        while let Some(m) = replay_game.move_log.last().copied() {
+            moves.push(m);
+            replay_game.undo_last_move();
+        }
+        moves.reverse();
+
+        let initial_fen = replay_game.to_fen();
+        let is_standard = initial_fen.starts_with("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq");
+
         // 1. Add required PGN Headers
         pgn.push_str("[Event \"Bonsai Chess Game\"]\n");
         pgn.push_str("[Site \"https://bonsai.niblit.dev\"]\n");
@@ -182,15 +193,98 @@ impl Game {
         
         let _ = writeln!(pgn, "[Result \"{result_str}\"]");
 
-        pgn.push_str("[Mode \"online\"]\n");
+        if !is_standard {
+            pgn.push_str("[SetUp \"1\"]\n");
+            let _ = writeln!(pgn, "[FEN \"{initial_fen}\"]");
+        }
+
+        pgn.push_str("[Mode \"online\"]\n\n");
 
         // 2. Format the Move Log
-        let move_log = self.get_move_log();
-        for (i, chunk) in move_log.chunks(2).enumerate() {
-            // White's move
+        let mut move_sans = Vec::new();
+        for ply in &moves {
+            let mut san = String::new();
+            
+            if let Some(SpecialMove::Castle(castling_side)) = ply.special_move() {
+                san.push_str(match castling_side {
+                    crate::moves::CastlingSide::Short => "O-O",
+                    crate::moves::CastlingSide::Long => "O-O-O",
+                });
+            } else {
+                let piece = ply.piece_moved();
+                if piece.kind() != Kind::Pawn {
+                    san.push_str(&piece.kind().to_string());
+                    
+                    let legal_moves = replay_game.get_legal_moves();
+                    let mut similar_starts = Vec::new();
+                    for m in legal_moves {
+                        if m.piece_moved().kind() == piece.kind() 
+                            && m.ending_square() == ply.ending_square() 
+                            && m.starting_square() != ply.starting_square() {
+                            similar_starts.push(m.starting_square());
+                        }
+                    }
+                    
+                    if !similar_starts.is_empty() {
+                        let mut same_file = false;
+                        let mut same_rank = false;
+                        for start in &similar_starts {
+                            if start.column() == ply.starting_square().column() {
+                                same_file = true;
+                            }
+                            if start.row() == ply.starting_square().row() {
+                                same_rank = true;
+                            }
+                        }
+                        
+                        let file_char = (ply.starting_square().column() as u8 + b'a') as char;
+                        let rank_char = (8 - ply.starting_square().row() as u8 + b'0') as char;
+                        
+                        if !same_file {
+                            san.push(file_char);
+                        } else if !same_rank {
+                            san.push(rank_char);
+                        } else {
+                            san.push(file_char);
+                            san.push(rank_char);
+                        }
+                    }
+                }
+                
+                let is_capture = ply.piece_captured().is_some() || matches!(ply.special_move(), Some(SpecialMove::EnPassant(_)));
+                
+                if is_capture {
+                    if piece.kind() == Kind::Pawn {
+                        let file_char = (ply.starting_square().column() as u8 + b'a') as char;
+                        san.push(file_char);
+                    }
+                    san.push('x');
+                }
+                
+                san.push_str(&ply.ending_square().to_algebraic_notation());
+                
+                if let Some(SpecialMove::Promotion(promoted_piece)) = ply.special_move() {
+                    san.push('=');
+                    san.push_str(&promoted_piece.to_string());
+                }
+            }
+            
+            replay_game.make_move(ply);
+            
+            if replay_game.outcome().is_some() {
+                if let Some(Outcome::Win { reason: WinReason::Checkmate, .. }) = replay_game.outcome() {
+                    san.push('#');
+                }
+            } else if replay_game.is_in_check() {
+                san.push('+');
+            }
+            
+            move_sans.push(san);
+        }
+
+        for (i, chunk) in move_sans.chunks(2).enumerate() {
             let _ = write!(pgn, "{}.{} ", i + 1, chunk[0]);
             
-            // Black's move (if it exists in this turn)
             if let Some(black_move) = chunk.get(1) {
                 let _ = write!(pgn, "{black_move} ");
             }
