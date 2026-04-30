@@ -1,9 +1,11 @@
-use bonsai_chess::prelude::Ply;
+use bonsai_chess::prelude::{Game, Ply};
 use leptos::html::Div;
 use leptos::prelude::*;
 
+use crate::utils::download_pgn_file;
+
 #[component]
-pub fn HistoryLog(history_list: Memo<Vec<Ply>>) -> impl IntoView {
+pub fn HistoryLog(history_list: Memo<Vec<Ply>>, game: ReadSignal<Game>) -> impl IntoView {
     // Reference to an invisible element at the bottom of the list
     let end_of_list_ref = NodeRef::<Div>::new();
 
@@ -18,6 +20,14 @@ pub fn HistoryLog(history_list: Memo<Vec<Ply>>) -> impl IntoView {
             }
         });
     });
+
+    let handle_export = move |_| {
+        game.with(|g| {
+            let pgn_text = g.to_pgn();
+            // Call the web-sys helper function
+            download_pgn_file(&pgn_text, "bonsai_game.pgn");
+        });
+    };
 
     view! {
       <div class="flex flex-col gap-1 h-full min-h-24">
@@ -83,6 +93,18 @@ pub fn HistoryLog(history_list: Memo<Vec<Ply>>) -> impl IntoView {
             <div node_ref=end_of_list_ref class="h-0 w-0"></div>
           </div>
         </div>
+                
+        <button 
+          on:click=handle_export
+          class="mt-1 w-full flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg shadow border border-zinc-700 transition-all font-semibold text-sm"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          "Export PGN"
+        </button>
       </div>
     }
 }

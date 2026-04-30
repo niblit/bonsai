@@ -28,7 +28,7 @@ pub fn Sidebar(
                   .into_any()
               },
             )
-        }} <HistoryLog history_list=history_list />
+        }} <HistoryLog history_list=history_list game=game/>
         <div class="flex flex-col gap-1">
           <label class="text-xs text-zinc-400 font-bold uppercase tracking-wider">
             "FEN"

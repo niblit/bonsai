@@ -11,7 +11,7 @@
 //! tracking position snapshots (for threefold repetition), and determining game outcomes
 //! like Checkmate or Stalemate.
 
-use std::{collections::HashMap, vec};
+use std::{collections::HashMap, vec, fmt::Write};
 
 use crate::{
     atoms::{CastlingRights, Coordinate, MoveCounter, Side},
@@ -157,6 +157,49 @@ impl Game {
     #[must_use]
     pub fn to_fen(&self) -> String {
         to_fen(self.create_snapshot(), &self.move_counter)
+    }
+
+
+    /// Generates a PGN (Portable Game Notation) string of the current game.
+    #[must_use]
+    pub fn to_pgn(&self) -> String {
+        let mut pgn = String::new();
+
+        // 1. Add required PGN Headers
+        pgn.push_str("[Event \"Bonsai Chess Game\"]\n");
+        pgn.push_str("[Site \"https://bonsai.niblit.dev\"]\n");
+        pgn.push_str("[Date \"??\"]\n");
+        pgn.push_str("[Round \"1\"]\n");
+        pgn.push_str("[White \"Bonsai Website User\"]\n");
+        pgn.push_str("[Black \"Bonsai Chess Engine\"]\n");
+
+        let result_str = match self.outcome() {
+            Some(Outcome::Win { winner: Side::White, .. }) => "1-0",
+            Some(Outcome::Win { winner: Side::Black, .. }) => "0-1",
+            Some(Outcome::Draw { .. }) => "1/2-1/2",
+            None => "*",
+        };
+        
+        let _ = writeln!(pgn, "[Result \"{result_str}\"]");
+
+        pgn.push_str("[Mode \"online\"]\n");
+
+        // 2. Format the Move Log
+        let move_log = self.get_move_log();
+        for (i, chunk) in move_log.chunks(2).enumerate() {
+            // White's move
+            let _ = write!(pgn, "{}.{} ", i + 1, chunk[0]);
+            
+            // Black's move (if it exists in this turn)
+            if let Some(black_move) = chunk.get(1) {
+                let _ = write!(pgn, "{black_move} ");
+            }
+        }
+
+        // 3. Append the game result marker to the very end
+        pgn.push_str(result_str);
+
+        pgn
     }
 
     /// Returns the team whose turn it is to move.

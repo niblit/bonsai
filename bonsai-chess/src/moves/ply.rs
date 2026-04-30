@@ -141,6 +141,15 @@ impl Ply {
 /// * `e7-e8=Q` (Pawn promotion)
 impl std::fmt::Display for Ply {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(SpecialMove::Castle(castling_side)) = self.special_move {
+            let long_algebraic_notation = match castling_side {
+                crate::moves::CastlingSide::Short => "0-0",
+                crate::moves::CastlingSide::Long => "0-0-0",
+            };
+
+            return write!(f, "{long_algebraic_notation}");
+        }
+        
         // Pawns are not denoted by a letter in standard algebraic notation
         let piece = match self.moved.kind() {
             Kind::Pawn => String::new(),

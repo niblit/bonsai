@@ -1,7 +1,7 @@
 use bonsai_chess::prelude::{Game, Side};
 use leptos::prelude::*;
 
-use crate::components::layout::undo::Undo;
+use crate::{components::layout::undo::Undo};
 
 #[component]
 pub fn Controls(game: ReadSignal<Game>, on_undo: Callback<()>) -> impl IntoView {
