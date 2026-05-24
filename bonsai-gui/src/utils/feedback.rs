@@ -31,6 +31,13 @@ fn vibrate(is_capture: bool) {
     if let Some(window) = web_sys::window() {
         let nav = window.navigator();
 
+        // Feature detection to prevent Safari/Desktop from throwing a TypeError
+        // A JS exception here would abort WASM execution and leak the StoredValue RefCell borrow!
+        let has_vibrate = js_sys::Reflect::has(&nav, &JsValue::from_str("vibrate")).unwrap_or(false);
+        if !has_vibrate {
+            return;
+        }
+
         let pattern = if is_capture {
             JsValue::from(30)
         } else {
