@@ -8,8 +8,8 @@ pub fn download_pgn_file(pgn_content: &str, filename: &str) {
     let array = js_sys::Array::new();
     array.push(&wasm_bindgen::JsValue::from_str(pgn_content));
     
-    let mut options = web_sys::BlobPropertyBag::new();
-    options.type_("text/plain");
+    let options = web_sys::BlobPropertyBag::new();
+    options.set_type("text/plain");
     
     let blob = web_sys::Blob::new_with_str_sequence_and_options(&array, &options)
         .expect("Failed to create blob");
